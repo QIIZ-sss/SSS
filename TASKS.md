@@ -17,16 +17,16 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | DOC-0 | — | 0 | Done — commit `853c0be` |
 | P1.1 | A2 (discovery) | 1 | Done — findings below |
 | P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Done |
-| P1.3 | A2 | 1 | Done (automated checks PASS; MANUAL 2-tab test pending) |
-| P1.4 | A2 regression | 1 | Done (automated, incl. "new game requires Ready" after P2.1); MANUAL 2-tab test pending |
-| P2.1 | A4 | 2 | Done (automated); MANUAL pending |
-| P2.2 | A5 | 2 | Done (automated); MANUAL pending |
+| P1.3 | A2 | 1 | Done (automated); MANUAL (Chrome desktop, 2 tabs) performed by human — no failures reported |
+| P1.4 | A2 regression | 1 | Done (automated, incl. "new game requires Ready" after P2.1); MANUAL (Chrome desktop, 2 tabs) performed by human — no failures reported |
+| P2.1 | A4 | 2 | Done (automated); MANUAL (Chrome desktop, 2 tabs) performed by human — no failures reported |
+| P2.2 | A5 | 2 | Done (automated); MANUAL (Chrome desktop, 2 tabs) performed by human — no failures reported |
 | P2.3 | between-round transition | 2 | Done (automated); MANUAL pending |
 | P2.4 | A3 | 2 | Done (automated); MANUAL pending |
 | P2.5 | A7 | 2 | Done — server timer verified (no code change); client display MANUAL pending |
-| P3.1 | A1 | 3 | Done (automated); MANUAL F12 check pending |
+| P3.1 | A1 | 3 | Done (automated); MANUAL (Chrome desktop, 2 tabs) performed by human — no failures reported (DevTools check) |
 | P3.2 | A6 | 3 | Done (automated); MANUAL pending |
-| P4.1 | B4 | 4 | Done (server e2e + client DOM test); MANUAL real refresh pending |
+| P4.1 | B4 | 4 | Done (server e2e + client DOM test); MANUAL (Chrome desktop, 2 tabs) performed by human — no failures reported (real refresh) |
 | P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
 | P5.2 | B2 | 5 | Done (headless Chrome 375 / 820 px, 9 screens); real devices MANUAL pending |
 | P5.3 | B3 | 5 | Done (logic + headless Chrome DOM test); mobile keypad MANUAL pending |
@@ -48,6 +48,21 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 - Negative controls (`node tests/negative-control/run.js`, not in `check_all.sh`): EXPECTED FAIL on old commits — harness @ `853c0be` 11/20, D2 @ `36c2e47` 9/16, B2 @ `32d371d` 8/9.
 - Not automated: B5 LAN check (needs `vite --host` + a non-loopback address; recorded in P5.4) and every MANUAL item below.
 - Every task that changes behaviour should add or update a test here and keep `tests/check_all.sh` green.
+
+### Manual test log (human tester)
+
+Only what the human reported is recorded here. Automated results are **not** manual evidence.
+
+| # | Manual check | Covers | Status |
+|---|---|---|---|
+| 1 | Phase 1 two-tab flow: game ends → LOBBY after 10 s → Ready again → new game at Round 1 | A2 (P1.3/P1.4), P2.1 | Performed 2026-10-02, Chrome desktop, 2 tabs — reported done, no failures reported |
+| 2 | START disabled + "Waiting for…" hint in lobby (FFA and Team) | P2.1, P2.2 | Performed 2026-10-02, Chrome desktop, 2 tabs — reported done, no failures reported |
+| 3 | DevTools on the guesser: `currentWord` empty in PLAYING, present in ROUND_OVER | P3.1 (A1) | Performed 2026-10-02, Chrome desktop, 2 tabs — reported done, no failures reported |
+| 4 | Real browser refresh mid-game (drawer and guesser) returns to the same room | P4.1 (B4) | Performed 2026-10-02, Chrome desktop, 2 tabs — reported done, no failures reported |
+| 5 | Finger / stylus drawing on a real phone and iPad (no scroll/zoom), eraser | B1, D2 | **NOT TESTED** |
+| 6 | PIN boxes on a real phone (numeric keypad, auto-advance, paste) | B3 | **NOT TESTED** |
+| 7 | LAN play with more than 3 devices (`npm run dev -- --host`) | B5 | **NOT TESTED** |
+| 8 | Result modal and screens on Safari / iPad | B2 and UI | **NOT TESTED** |
 
 ---
 
