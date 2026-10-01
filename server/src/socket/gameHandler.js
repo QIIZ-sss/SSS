@@ -68,7 +68,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const player = room.players.find(p => p.socketId === socket.id);
     if (player && (team === 'Red' || team === 'Blue')) {
       player.team = team;
-      io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timerManager.getRemainingTime(room.id)));
+      roomManager.emitRoomData(io, room, timerManager.getRemainingTime(room.id));
     }
   });
 
@@ -80,7 +80,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const player = room.players.find(p => p.socketId === socket.id);
     if (player) {
       player.isReady = !player.isReady;
-      io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timerManager.getRemainingTime(room.id)));
+      roomManager.emitRoomData(io, room, timerManager.getRemainingTime(room.id));
     }
   });
 
@@ -114,7 +114,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       room.maxPlayers = Math.max(2, Math.min(16, settings.maxPlayers));
     }
 
-    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timerManager.getRemainingTime(room.id)));
+    roomManager.emitRoomData(io, room, timerManager.getRemainingTime(room.id));
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
   });
 
@@ -221,7 +221,7 @@ function joinPlayerToRoom(io, socket, room, username, avatar, timerManager, roun
     });
   }
 
-  io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timerManager.getRemainingTime(room.id)));
+  roomManager.emitRoomData(io, room, timerManager.getRemainingTime(room.id));
   io.to(room.id).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
     sender: 'System',
     text: `${username} joined room ${room.code}!`,
@@ -256,7 +256,7 @@ function handlePlayerLeave(io, socket, timerManager, roundManager) {
     if (removedIndex >= 0) {
       roundManager.handlePlayerRemoved(io, room, removedIndex, socket.data.username);
     }
-    io.to(roomId).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timerManager.getRemainingTime(roomId)));
+    roomManager.emitRoomData(io, room, timerManager.getRemainingTime(roomId));
     io.to(roomId).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
       sender: 'System',
       text: `${socket.data.username} left the room.`,

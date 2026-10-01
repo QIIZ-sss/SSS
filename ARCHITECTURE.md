@@ -203,7 +203,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | C→S | `draw_clear`, `draw_sync` | — | `Canvas.jsx`, `SoloAIGame.jsx:43` |
 | C→S | `send_chat` | `{text}` | `ChatBox.jsx:30` |
 | C→S | `solo_ai_predict` | `{pixels}` (no `targetWord`) | `SoloAIGame.jsx:99` |
-| S→C | `room_data` | `sanitizeRoom()` output (same for all) | `RoomManager.js:86-116` |
+| S→C | `room_data` | `sanitizeRoom()` output — **per player since P3.1** (`currentWord` only for drawer / reveal states) | `RoomManager.js` `sanitizeRoom`, `emitRoomData` |
 | S→C | `room_list_updated` | room summaries | `RoomManager.js:69-84` |
 | S→C | `round_change` | `{currentDrawer, currentRound, totalRounds, status}` | `RoundManager.js:43-48` |
 | S→C | `word_selection` | `{words}` — drawer socket only | `RoundManager.js:54-60` |
@@ -219,7 +219,9 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 
 ## 8. Player data visibility (current)
 
-`CURRENT FACT` — one `room_data` payload is broadcast to the whole room (`io.to(room.id)`) and always contains `currentWord` (`RoomManager.js:109`).
+**Updated in P3.1 (pre-approved contract change):** `room_data` is sent per player by `RoomManager.emitRoomData()`; `sanitizeRoom(room, t, viewer)` sets `currentWord` to `''` unless the viewer is the current drawer or `status` is in `GAME_RULES.REVEAL_WORD_STATUSES`. The table below is the **baseline** (`0d8fb96`) behaviour, kept for history; after P3.1 every "LEAK" cell is closed (verified by a leak-scan e2e).
+
+Baseline `CURRENT FACT` — one `room_data` payload was broadcast to the whole room (`io.to(room.id)`) and always contained `currentWord` (`RoomManager.js:109`).
 
 | State | Drawer receives | Guesser receives | Evidence |
 |---|---|---|---|
@@ -322,7 +324,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 ## 18. Architecture risks
 
-- One shared `room_data` payload for all roles → any new field is a potential leak.
+- `room_data` is per player since P3.1; any new secret field must go through `sanitizeRoom(room, t, viewer)`.
 - Username-based identity → slot/host takeover by name collision.
 - Overlapping round loops: mitigated — `start_game` is LOBBY-only since P2.1 and the 4 s transition is cancellable since P1.3.
 - Mid-game joins still extend the current round (new player is appended to the rotation).

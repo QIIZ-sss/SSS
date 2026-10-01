@@ -1,6 +1,7 @@
 // RoomManager: Room Lifecycle and 5-Digit Code Generator
 const { GAME_MODES, MINI_CHALLENGES } = require('../../../shared/gameConfig');
 const { SOCKET_EVENTS } = require('../../../shared/events');
+const { GAME_RULES } = require('../../../shared/contract');
 
 class RoomManager {
   constructor() {
@@ -83,7 +84,12 @@ class RoomManager {
     return list;
   }
 
-  sanitizeRoom(room, timerRemaining = 0) {
+  // Role-based view (A1): the answer goes only to the drawer, or to everyone in reveal states
+  canSeeWord(room, viewerUsername) {
+    return viewerUsername === room.currentDrawer || GAME_RULES.REVEAL_WORD_STATUSES.includes(room.status);
+  }
+
+  sanitizeRoom(room, timerRemaining = 0, viewerUsername = null) {
     return {
       id: room.id,
       code: room.code,
@@ -106,13 +112,23 @@ class RoomManager {
       status: room.status,
       currentRound: room.currentRound,
       currentDrawer: room.currentDrawer,
-      currentWord: room.currentWord || '',
+      currentWord: this.canSeeWord(room, viewerUsername) ? (room.currentWord || '') : '',
       correctGuessersCount: room.correctGuessers ? room.correctGuessers.length : 0,
       currentChallenge: room.currentChallenge,
       forcedColor: room.forcedColor,
       timeRemaining: timerRemaining,
       wordLength: room.currentWord ? room.currentWord.length : 0
     };
+  }
+
+  // Send room_data to each player with their own role-based view (never one shared payload)
+  emitRoomData(io, room, timerRemaining = 0) {
+    room.players.forEach(p => {
+      const target = io.sockets.sockets.get(p.socketId);
+      if (target) {
+        target.emit(SOCKET_EVENTS.ROOM_DATA, this.sanitizeRoom(room, timerRemaining, p.username));
+      }
+    });
   }
 }
 

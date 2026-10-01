@@ -59,7 +59,7 @@ class RoundManager {
       status: 'WORD_SELECTION'
     });
 
-    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, 10));
+    this.roomManager.emitRoomData(io, room, 10);
     io.to(room.id).emit(SOCKET_EVENTS.DRAW_CLEAR);
 
     // Send word choices exclusively to current drawer
@@ -93,7 +93,7 @@ class RoundManager {
       roundTime: room.roundTime
     });
 
-    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, room.roundTime));
+    this.roomManager.emitRoomData(io, room, room.roundTime);
 
     // Server-Authoritative Countdown Loop
     this.timerManager.startTimer(room.id, room.roundTime, () => {
@@ -124,7 +124,7 @@ class RoundManager {
       correctGuessers: room.correctGuessers
     });
 
-    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, 0));
+    this.roomManager.emitRoomData(io, room, 0);
 
     // Increment drawer index for next turn
     room.drawerIndex++;
@@ -200,7 +200,7 @@ class RoundManager {
       teamScores: room.teams
     });
 
-    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, 0));
+    this.roomManager.emitRoomData(io, room, 0);
 
     // Final scores stay visible during GAME_OVER; server returns the room to LOBBY afterwards
     this.timerManager.scheduleTransition(room.id, GAME_RULES.GAME_OVER_DELAY_MS, () => {
@@ -231,7 +231,7 @@ class RoundManager {
     room.teams.Red.score = 0;
     room.teams.Blue.score = 0;
 
-    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, 0));
+    this.roomManager.emitRoomData(io, room, 0);
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, this.roomManager.getPublicRoomList());
   }
 }

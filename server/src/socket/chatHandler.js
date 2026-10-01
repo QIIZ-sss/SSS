@@ -45,7 +45,7 @@ function setupChatHandlers(io, socket, timerManager, roundManager) {
         });
 
         socket.emit(SOCKET_EVENTS.CORRECT_GUESS, { points: pointsEarned });
-        io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timeRemaining));
+        roomManager.emitRoomData(io, room, timeRemaining);
 
         if (room.correctGuessers.length >= totalGuessers) {
           roundManager.endRound(io, room, 'Everyone guessed correctly! 🎯');

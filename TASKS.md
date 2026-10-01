@@ -24,7 +24,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P2.3 | between-round transition | 2 | Done (automated); MANUAL pending |
 | P2.4 | A3 | 2 | Done (automated); MANUAL pending |
 | P2.5 | A7 | 2 | Done — server timer verified (no code change); client display MANUAL pending |
-| P3.1 | A1 | 3 | Not started |
+| P3.1 | A1 | 3 | Done (automated); MANUAL F12 check pending |
 | P3.2 | A6 | 3 | Not started |
 | P4.1 | B4 | 4 | Not started |
 | P5.1 | B1 | 5 | Not started |
@@ -362,6 +362,12 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** DevTools/Playwright frame capture filtered for the word and for `currentWord`.
 - **Regression requirements:** Drawer still sees the word; P2.4 reveal; scoring.
 - **Commit requirement:** `fix(P3.1): prevent answer leakage`.
+- **Status:** Done (automated); MANUAL DevTools check NOT TESTED.
+  - **Contract change (pre-approved by human):** `room_data` is now role-based. Same event name and fields; `currentWord` is `''` for any viewer who is not the current drawer unless `status` is in `GAME_RULES.REVEAL_WORD_STATUSES` (`ROUND_OVER`, `GAME_OVER`). `wordLength` unchanged. Sent per player via `RoomManager.emitRoomData()` instead of one room broadcast.
+  - Files: `server/src/gameLogic/RoomManager.js` (`canSeeWord`, `sanitizeRoom(room, t, viewer)`, `emitRoomData`), `server/src/gameLogic/RoundManager.js`, `server/src/socket/gameHandler.js`, `server/src/socket/chatHandler.js` (all `room_data` emits switched). 4 server files, within the pre-approved contract change. Client consumers needed no change: they already treat `''` as "no word" (verified by the P2.4 render test).
+  - Already correct, verified: candidate words go only to the drawer (`word_selection`); correct-guess notice is neutral; `round_start`/`round_change`/`game_over` carry no word.
+  - Checks: leak e2e 7/7 PASS — every event received by every non-drawer during WORD_SELECTION/PLAYING scanned for the answer and for the other candidates (141 events, 3 drawers, incl. after a correct guess and a mid-game join): 0 leaks; drawer still gets the word; non-drawers get it in ROUND_OVER; `wordLength` kept. All earlier suites PASS (A2 e2e now guesses via a test oracle instead of the leaked word).
+  - Remaining indirect channel (by design, not a leak to non-guessers): chat from players who already guessed is delivered only to the drawer and other correct guessers (`isConcealedChat`).
 
 ### P3.2 — Drawer chat restriction (A6)
 
