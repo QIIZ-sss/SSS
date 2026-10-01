@@ -2,7 +2,7 @@
 
 This document has two strictly separated parts:
 
-- **Part A — CURRENT ARCHITECTURE**: only what was verified by reading the repository at baseline commit `0d8fb96` (`chore: baseline snapshot`). Every CURRENT FACT cites the file that proves it. Facts come from code reading; no server or test was executed during discovery.
+- **Part A — CURRENT ARCHITECTURE**: only what was verified by reading the repository at baseline commit `0d8fb96` (`chore: baseline snapshot`), updated by later tasks where marked (e.g. "Updated in P1.3"). Every CURRENT FACT cites the file that proves it. Line numbers refer to the baseline unless a section says otherwise.
 - **Part B — TARGET ARCHITECTURE**: long-term direction. Nothing in Part B is implemented unless Part A says so.
 
 Labels used:
@@ -45,7 +45,7 @@ Labels used:
 | `server/src/controllers/{authController,leaderboardController}.js` | `POST /api/auth/login`, `GET /api/leaderboard` |
 | `server/src/ai_model/*` | DoodleNet `model.json`, `group1-shard1of1.bin`, `class_names.txt` |
 
-Shared files required by the live server: `shared/events.js`, `shared/gameConfig.js`, `shared/utils.js`.
+Shared files required by the live server: `shared/events.js`, `shared/gameConfig.js`, `shared/utils.js`, and (since P1.3) `shared/contract.js` from `server/src/gameLogic/RoundManager.js`.
 
 ### 2.2 Live client path
 
@@ -68,7 +68,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 | `client/src/main.jsx`, `client/src/styles.css`, `client/src/App.css` | `main.jsx` not loaded by `index.html`; `App.css` not imported anywhere |
 | `client/src/screens/`, `client/src/components/{DrawCanvas,bits}.jsx`, `client/src/lib/`, `client/src/net/socket.js` | Only used by the legacy `screens/` chain |
 | `shared/constants.js` | Only imported by dead `roomHandler.js` |
-| `shared/contract.js` | Imported by nothing (see §4) |
+| ~~`shared/contract.js`~~ | No longer dead: required by the live server since P1.3; still not imported by the client (see §4) |
 
 `README.md` documents the legacy game and file layout, not the live one (`DOCUMENTATION CLAIM` vs `CURRENT FACT` conflict, see §17).
 
@@ -107,11 +107,11 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 - `shared/utils.js` — `calculateGuesserScore`, `calculateDrawerScore`, `normalizeGuess`; re-declares its own `SCORING` (live).
 - `shared/constants.js` — duplicates `GAME_MODES`, `MINI_CHALLENGES`, `CHALLENGE_DETAILS`, `SCORING`, palette and an older `SOCKET_EVENTS` without `ROUND_CHANGE`/`SHAPE_PREVIEW` (dead).
 - `shared/events.js`, `gameConfig.js`, `utils.js`, `constants.js` mix `export const` with a guarded `module.exports`. The CommonJS server loads them via Node's require(esm) support (works on Node v24; `UNCERTAIN` on older Node).
-- `shared/contract.js` — `GAME_STATUS`, `GAME_RULES` (`MIN_PLAYERS_FFA`, `MIN_PLAYERS_PER_TEAM`, `MIN_PLAYERS_TEAM_TOTAL`, `REQUIRE_ALL_READY`, `DRAWER_CAN_CHAT`, `REVEAL_WORD_STATUSES`, `ROOM_PIN_LENGTH`, `RECONNECT_GRACE_MS`), `WORD_DIFFICULTY`, `SOLO_AI`, `isValidPredictRequest()`. CommonJS-only (`module.exports`, no `export`). **No file imports it.**
+- `shared/contract.js` — `GAME_STATUS`, `GAME_RULES` (`MIN_PLAYERS_FFA`, `MIN_PLAYERS_PER_TEAM`, `MIN_PLAYERS_TEAM_TOTAL`, `REQUIRE_ALL_READY`, `DRAWER_CAN_CHAT`, `REVEAL_WORD_STATUSES`, `ROOM_PIN_LENGTH`, `RECONNECT_GRACE_MS`), `WORD_DIFFICULTY`, `SOLO_AI`, `isValidPredictRequest()`. CommonJS-only (`module.exports`, no `export`). At baseline no file imported it. **Updated in P1.3:** `server/src/gameLogic/RoundManager.js` requires it for `GAME_RULES.GAME_OVER_DELAY_MS` (10000); the client still does not import it.
 
 `DOCUMENTATION CLAIM` — `HANDOFF.md` §1: "all constants live in `shared/contract.js` in one place".
 
-`GAP (architectural)` — `shared/contract.js` is **not** the runtime source of truth. Values it defines are hardcoded elsewhere, e.g.:
+`GAP (architectural)` — `shared/contract.js` is **not yet** the runtime source of truth (server uses one value; client none). Values it defines are hardcoded elsewhere, e.g.:
 
 | Concept | Hardcoded at |
 |---|---|
@@ -121,7 +121,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 | AI correct score 500 | `gameHandler.js:149`, `SoloAIGame.jsx:72` |
 | PIN length 5 | `RoomManager.js:14`, `client/src/App.jsx:18-22,80` |
 
-Planned resolution: **P1.2** (see `TASKS.md`) makes `contract.js` loadable by both client and server and starts using it for the values a task touches. This needs approval because it modifies `shared/`.
+Planned resolution: **P1.2** (see `TASKS.md`) makes `contract.js` loadable by the client (the server already loads it) and starts using it for the values a task touches. This needs approval because it modifies `shared/`.
 
 ## 5. Room management
 
@@ -136,38 +136,45 @@ Planned resolution: **P1.2** (see `TASKS.md`) makes `contract.js` loadable by bo
 
 ## 6. Game state handling (current state machine)
 
-`CURRENT FACT` — status is a plain string on the room, set in `server/src/gameLogic/RoundManager.js`; the constant `GAME_STATUS` is not used.
+`CURRENT FACT` — status is a plain string on the room, set in `server/src/gameLogic/RoundManager.js`; the constant `GAME_STATUS` is not used. **Updated in P1.3.**
 
 ```text
 LOBBY
-  │ start_game (host only; no ready/min-player/status check)      gameHandler.js:116-127
+  │ start_game (host only; no ready/min-player/status check)      gameHandler.js start_game handler
   ▼
-WORD_SELECTION  (10 s timer; auto-pick wordChoices[0])            RoundManager.js:14-69
+WORD_SELECTION  (10 s timer; auto-pick wordChoices[0])            RoundManager.startTurnSelection
   │ select_word (drawer) or timeout
   ▼
-PLAYING         (roundTime timer)                                  RoundManager.js:71-90
+PLAYING         (roundTime timer)                                  RoundManager.startRoundDrawing
   │ timeout | all guessers correct | Solo AI correct
   ▼
-ROUND_OVER                                                         RoundManager.js:92-133
-  │ setTimeout(4000) — handle not stored, cannot be cancelled
-  ├─ currentRound <= totalRounds → WORD_SELECTION
-  └─ currentRound >  totalRounds → GAME_OVER                       RoundManager.js:135-162
-GAME_OVER
-  └─ (no server transition back to LOBBY exists)
+ROUND_OVER                                                         RoundManager.endRound
+  │ 4 s via TimerManager.scheduleTransition (cancellable; cleared by stopTimer)
+  ├─ not final turn  → WORD_SELECTION
+  └─ final turn or room empty → GAME_OVER                          RoundManager.endGameMatch
+GAME_OVER       (final scores kept; no timer_tick)
+  │ GAME_RULES.GAME_OVER_DELAY_MS (10 s) via scheduleTransition
+  ▼
+LOBBY           (round/score/ready state reset)                    RoundManager.returnToLobby
 ```
 
-### 6.1 Round counter (root of "Round 4/3")
+Pending transitions are stored per room in `TimerManager.roomTransitions`; `TimerManager.stopTimer()` clears them, so the empty-room path (`gameHandler.js` `handlePlayerLeave` → `stopTimer`) and every new transition cancel any stale timeout.
 
-`CURRENT FACT`:
+### 6.1 Round counter (root of "Round 4/3") — fixed in P1.3
 
-- In `endRound`, `drawerIndex++`; when it wraps, `currentRound++` happens **before** the `totalRounds` check — `RoundManager.js:117-123`.
-- The check `currentRound > totalRounds` happens 4 s later — `RoundManager.js:126-132`.
-- `endGameMatch` therefore broadcasts `room_data` with `currentRound = totalRounds + 1` — `RoundManager.js:161`.
-- Clients render `ROUND {currentRound} / {totalRounds}` — `client/src/gameModes/MultiplayerGame.jsx:74`, `TeamGame.jsx:71`.
-- `MultiplayerGame`/`TeamGame` only special-case `status === 'LOBBY'`, so the arena keeps showing — `MultiplayerGame.jsx:21`, `TeamGame.jsx:21`.
-- "BACK TO LOBBY" only closes the modal client-side: `onClick={() => setGameOverModal(null)}` — `client/src/App.jsx:555`. No event is sent.
-- `start_game` resets scores/round but not `isReady` — `gameHandler.js:120-124`.
-- A round counts as "complete" when `drawerIndex` reaches `players.length`; players leaving mid-game change `players.length` without adjusting `drawerIndex` (`gameHandler.js:206`) — `UNCERTAIN` effect on turn order.
+Baseline (`0d8fb96`) behaviour, kept for history:
+
+- `currentRound++` happened in `endRound` **before** the `totalRounds` check, so `endGameMatch` broadcast `currentRound = totalRounds + 1`.
+- Clients render `ROUND {currentRound} / {totalRounds}` (`client/src/gameModes/MultiplayerGame.jsx:74`, `TeamGame.jsx:71`) and only special-case `status === 'LOBBY'`, so the arena kept showing "ROUND 4 / 3".
+- "BACK TO LOBBY" only closed the modal client-side; no server path left `GAME_OVER`.
+
+Current (`CURRENT FACT`, after P1.3):
+
+- `endRound` increments `currentRound` only if `currentRound < totalRounds`; otherwise it marks the final turn — `server/src/gameLogic/RoundManager.js` `endRound`.
+- `endGameMatch` keeps scores and schedules `returnToLobby()` after `GAME_RULES.GAME_OVER_DELAY_MS` — `RoundManager.js`, `shared/contract.js`.
+- `returnToLobby()` resets `currentRound`, `drawerIndex`, drawer, word, word options, correct guessers, challenge, forced colour, drawing history, player scores, `isReady`, team scores; emits `room_data` and `room_list_updated`.
+- Result modal: button `LEAVE ROOM` calls the existing `handleLeaveRoom` (`leave_room` → Home); the modal closes automatically when `room_data.status === 'LOBBY'` — `client/src/App.jsx`.
+- Still open (not P1.3): `start_game` resets scores/round but not `isReady` and has no status guard (`gameHandler.js:116-127`, P2.1); players leaving mid-game do not adjust `drawerIndex` (`gameHandler.js:206`, P2.3).
 
 ### 6.2 Timer
 
@@ -300,7 +307,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 | # | Documentation claim | Current fact |
 |---|---|---|
-| 1 | `contract.js` is the single source of truth (`HANDOFF.md` §1) | Not imported anywhere (§4) |
+| 1 | `contract.js` is the single source of truth (`HANDOFF.md` §1) | Server imports one value since P1.3; client imports none (§4) |
 | 2 | `HANDOFF.md` C2/C3/C4 cite "BUG-05/06/07" | Those numbers are `QA_REPORT.md` numbering and collide with the team's 14-bug list |
 | 3 | `README.md` describes the "วาดต่อ" game and file map | Live code is `server.js` + `gameLogic/` + `socket/` (§2) |
 | 4 | QA NW-07 PASS (reconnect keeps score) | No reconnect; player removed on disconnect (§14) |
@@ -315,7 +322,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 - One shared `room_data` payload for all roles → any new field is a potential leak.
 - Username-based identity → slot/host takeover by name collision.
-- Uncancellable 4 s `setTimeout` plus unguarded `start_game` → possible overlapping round loops.
+- Unguarded `start_game` (no status check). The uncancellable 4 s `setTimeout` was replaced in P1.3 by `TimerManager.scheduleTransition` (cleared on every new transition).
 - Player leave does not adjust `drawerIndex`; drawer leaving mid-round is not handled.
 - Duplicate constants across `shared/` files and hardcoded values in live code.
 - Large dead/legacy tree → agents may edit the wrong file.

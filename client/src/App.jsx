@@ -39,6 +39,10 @@ export default function App() {
 
     const handleRoomData = (data) => {
       setRoomData(data);
+      // Server returned the room to LOBBY after GAME_OVER: close the results modal
+      if (data && data.status === 'LOBBY') {
+        setGameOverModal(null);
+      }
     };
 
     const handleWordSelection = ({ words }) => {
@@ -552,9 +556,9 @@ export default function App() {
 
             <button
               className="w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase border-3 border-border-dark shadow-[4px_4px_0px_#18181B] hover:opacity-90 transition-all"
-              onClick={() => setGameOverModal(null)}
+              onClick={handleLeaveRoom}
             >
-              BACK TO LOBBY
+              LEAVE ROOM
             </button>
           </div>
         </div>

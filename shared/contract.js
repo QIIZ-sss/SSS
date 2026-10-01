@@ -24,6 +24,7 @@ const GAME_RULES = Object.freeze({
   REVEAL_WORD_STATUSES: Object.freeze(['ROUND_OVER', 'GAME_OVER']),
   ROOM_PIN_LENGTH: 5,
   RECONNECT_GRACE_MS: 30000,      // เก็บที่ผู้เล่นที่หลุดไว้ 30 วินาที
+  GAME_OVER_DELAY_MS: 10000,      // GAME_OVER ค้างไว้ 10 วินาที แล้ว server พากลับ LOBBY เอง
 });
 
 // ---------- ระดับความยากของคำ ----------

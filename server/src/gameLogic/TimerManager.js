@@ -5,6 +5,32 @@ class TimerManager {
   constructor(io) {
     this.io = io;
     this.roomTimers = new Map(); // roomId -> { timerId, remainingTime, callback }
+    this.roomTransitions = new Map(); // roomId -> pending state-transition timeoutId
+  }
+
+  /**
+   * Schedule a one-shot state transition for a room (replaces any pending one)
+   * @param {string} roomId
+   * @param {number} delayMs
+   * @param {Function} callback
+   */
+  scheduleTransition(roomId, delayMs, callback) {
+    this.clearTransition(roomId);
+
+    const timeoutId = setTimeout(() => {
+      this.roomTransitions.delete(roomId);
+      callback();
+    }, delayMs);
+
+    this.roomTransitions.set(roomId, timeoutId);
+  }
+
+  clearTransition(roomId) {
+    const timeoutId = this.roomTransitions.get(roomId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.roomTransitions.delete(roomId);
+    }
   }
 
   /**
@@ -47,6 +73,7 @@ class TimerManager {
       timer.stop();
       this.roomTimers.delete(roomId);
     }
+    this.clearTransition(roomId);
   }
 }
 

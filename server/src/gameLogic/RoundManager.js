@@ -2,6 +2,7 @@
 const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES, MINI_CHALLENGES, DEFAULT_COLOR_PALETTE } = require('../../../shared/gameConfig');
 const { calculateGuesserScore, calculateDrawerScore, normalizeGuess } = require('../../../shared/utils');
+const { GAME_RULES } = require('../../../shared/contract');
 const Word = require('../models/Word');
 const Score = require('../models/Score');
 
@@ -117,19 +118,25 @@ class RoundManager {
     // Increment drawer index for next turn
     room.drawerIndex++;
 
+    // Never advance currentRound past totalRounds (prevents "Round 4/3")
+    let isFinalTurn = false;
     if (room.drawerIndex >= room.players.length) {
       room.drawerIndex = 0;
-      room.currentRound++;
+      if (room.currentRound >= room.totalRounds) {
+        isFinalTurn = true;
+      } else {
+        room.currentRound++;
+      }
     }
 
     // Auto-advance turn after 4s pause without requiring client refresh!
-    setTimeout(() => {
-      if (room.currentRound > room.totalRounds || room.players.length === 0) {
+    this.timerManager.scheduleTransition(room.id, 4000, () => {
+      if (isFinalTurn || room.players.length === 0) {
         this.endGameMatch(io, room);
       } else {
         this.startTurnSelection(io, room);
       }
-    }, 4000);
+    });
   }
 
   endGameMatch(io, room) {
@@ -159,6 +166,38 @@ class RoundManager {
     });
 
     io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, 0));
+
+    // Final scores stay visible during GAME_OVER; server returns the room to LOBBY afterwards
+    this.timerManager.scheduleTransition(room.id, GAME_RULES.GAME_OVER_DELAY_MS, () => {
+      if (room.status === 'GAME_OVER') {
+        this.returnToLobby(io, room);
+      }
+    });
+  }
+
+  returnToLobby(io, room) {
+    this.timerManager.stopTimer(room.id);
+    room.status = 'LOBBY';
+
+    // Reset round/score/ready state only when entering LOBBY
+    room.currentRound = 0;
+    room.drawerIndex = 0;
+    room.currentDrawer = null;
+    room.currentWord = '';
+    room.wordOptions = [];
+    room.correctGuessers = [];
+    room.currentChallenge = MINI_CHALLENGES.NONE;
+    room.forcedColor = null;
+    room.drawingHistory = [];
+    room.players.forEach(p => {
+      p.score = 0;
+      p.isReady = false;
+    });
+    room.teams.Red.score = 0;
+    room.teams.Blue.score = 0;
+
+    io.to(room.id).emit(SOCKET_EVENTS.ROOM_DATA, this.roomManager.sanitizeRoom(room, 0));
+    io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, this.roomManager.getPublicRoomList());
   }
 }
 

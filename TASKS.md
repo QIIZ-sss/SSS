@@ -14,10 +14,10 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 
 | Task | Req | Phase | Status |
 |---|---|---|---|
-| DOC-0 | — | 0 | Prepared, **PENDING HUMAN REVIEW** |
-| P1.1 | A2 (discovery) | 1 | Not started |
-| P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Not started — needs approval (`shared/`) |
-| P1.3 | A2 | 1 | Not started |
+| DOC-0 | — | 0 | Done — commit `853c0be` |
+| P1.1 | A2 (discovery) | 1 | Done — findings below |
+| P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Not started — needs approval (`shared/`); server side already imports `contract.js` since P1.3 |
+| P1.3 | A2 | 1 | Done (automated checks PASS; MANUAL 2-tab test pending) |
 | P1.4 | A2 regression | 1 | Not started |
 | P2.1 | A4 | 2 | Not started |
 | P2.2 | A5 | 2 | Not started |
@@ -121,7 +121,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Acceptance criteria:** Human review approves all four files.
 - **Test procedure:** `git status` shows only the four new files.
 - **Regression requirements:** None (no code change).
-- **Commit requirement:** After approval only — stage exactly these four files, verify with `git diff --cached --stat`, one commit `docs: add project control documents`. **Commit: PENDING HUMAN REVIEW.**
+- **Commit requirement:** After approval only — stage exactly these four files, verify with `git diff --cached --stat`, one commit `docs: add project control documents`. **Committed: `853c0be`.**
 
 ---
 
@@ -141,6 +141,12 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Optional non-mutating runtime observation (only if dependencies are already installed — installing requires approval).
 - **Regression requirements:** —
 - **Commit requirement:** None, or a docs-only update to `TASKS.md` if approved.
+- **Status:** Done. Findings (code reading at `853c0be`), recorded with the P1.3 commit:
+  - `currentRound++` ran before the `totalRounds` check (`RoundManager.js` `endRound`), so `endGameMatch` broadcast `currentRound = totalRounds + 1`.
+  - No `GAME_OVER → LOBBY` path existed; the START button lives only in `RoomLobby` (shown in `LOBBY`), so a finished room was stuck.
+  - The 4 s ROUND_OVER `setTimeout` was not stored: START during ROUND_OVER could double-start a turn, and an emptied seed room `83921` could be turned into `GAME_OVER` by the stale timeout.
+  - Out of P1.3 scope, left for later tasks: `start_game` status guard (U3 → P2.1), `drawerIndex` not adjusted on leave and drawer-leaves-mid-round (→ P2.3), header logo click leaves the room client-side only without `leave_room` (new: U8).
+  - Decision (human): Option A — server auto-returns to `LOBBY` after `GAME_RULES.GAME_OVER_DELAY_MS` (10 s); no new socket event.
 
 ### P1.2 — Make `shared/contract.js` a real runtime source of truth
 
@@ -149,7 +155,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Goal:** `shared/contract.js` can be imported by both the CommonJS server and the Vite client, and the values needed by Phase 1–3 tasks are read from it instead of hardcoded.
 - **Current problem:** `contract.js` is CommonJS-only and imported by nothing; status strings, rules, AI words/thresholds, PIN length are hardcoded or duplicated (ARCH §4).
 - **Discovery requirements:** Determine how `events.js`/`gameConfig.js` load in both runtimes; decide the minimal module format change; list every place each needed value is hardcoded; check whether any `contract.js` value conflicts with current behaviour (e.g. `WORD_DIFFICULTY` uppercase vs lowercase in `database.js`, Solo AI payload shape).
-- **Allowed files:** TBD after read-only discovery. Candidate: `shared/contract.js` plus the first consumers needed by P1.3.
+- **Allowed files:** TBD after read-only discovery. Candidate: `shared/contract.js` plus client consumers. Note: since P1.3 the server already `require`s `contract.js` (`RoundManager.js`); remaining scope is client loadability and migrating other hardcoded values.
 - **Forbidden changes:** Changing any value's meaning; changing socket event names/payloads; deleting `constants.js` or other duplicates (dead-code cleanup is out of scope); bulk replacement of hardcoded values unrelated to an active task.
 - **Implementation requirements:** **Approval required** (modifies `shared/`). Smallest change that lets both runtimes import `contract.js`. Adopt values incrementally — each later task switches only the values it touches.
 - **Acceptance criteria:** Server starts and client builds/loads with `contract.js` imported on the live path; no behaviour change; no duplicate competing value introduced.
@@ -164,13 +170,17 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Goal:** `ROUND_OVER → GAME_OVER → LOBBY` works; no Round 4/3 when `totalRounds = 3`.
 - **Current problem:** ARCH §6.1 — counter overshoot, no server event to return to lobby, modal button is client-only.
 - **Discovery requirements:** Use P1.1 output. Check whether an existing event can carry "return to lobby" before proposing a new one.
-- **Allowed files:** TBD after read-only discovery (P1.1).
+- **Allowed files (approved after P1.1):** `shared/contract.js`, `server/src/gameLogic/RoundManager.js`, `server/src/gameLogic/TimerManager.js`, `client/src/App.jsx`.
 - **Forbidden changes:** Between-round logic (P2.3); ready/min-player validation (P2.1/P2.2); timer redesign; unrelated UI.
 - **Implementation requirements:** Final round ends in `GAME_OVER` without ever exposing `currentRound > totalRounds`; timer stopped and pending transitions cannot fire after `GAME_OVER`; a server-authoritative path returns the room to `LOBBY` (who may trigger it — host or each player — must be stated in discovery and approved if it adds/changes an event). A new socket event requires approval.
 - **Acceptance criteria:** See P1.4 checklist.
 - **Test procedure:** 2+ clients, `totalRounds = 3`, play to the end, press the return button, observe all clients and WebSocket frames.
 - **Regression requirements:** P1.4.
 - **Commit requirement:** `fix(P1.3): fix game over transition`.
+- **Status:** Done.
+  - Implemented: `GAME_RULES.GAME_OVER_DELAY_MS = 10000` in `shared/contract.js` (first runtime import of `contract.js`, server only); `TimerManager.scheduleTransition()/clearTransition()` with `stopTimer()` also clearing the pending transition; `endRound` never increments past `totalRounds`; `endGameMatch` schedules `returnToLobby()`, which resets round/score/ready state and emits `room_data` + `room_list_updated`; result-modal button is `LEAVE ROOM` → existing `leave_room` → Home; modal closes automatically when `room_data.status` becomes `LOBBY` (option (a), chosen to let players stay in the room).
+  - Checks: `node --check` PASS (3 files); `GAME_OVER_DELAY_MS` resolves to `10000` at runtime PASS; server startup PASS; client `vite build` PASS; fake-clock state-machine harness 20/20 PASS (baseline negative control 11/20); real-server 2-socket e2e 6/6 PASS. Harness/e2e scripts were run from a scratch directory, not committed.
+  - MANUAL 2-tab browser test: NOT TESTED.
 
 ### P1.4 — A2 regression
 
@@ -573,3 +583,4 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 | U5 | DONT_LIFT_PEN / GEOMETRIC_ONLY enforced only on client | ARCH §3.2, §10 | new task |
 | U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |
 | U7 | Dead/legacy code tree (ARCH §2.3) | ARCH §2.3 | cleanup task, only with explicit approval |
+| U8 | Header logo click clears `currentRoomId` without emitting `leave_room` → player stays in the room server-side | `client/src/App.jsx` header logo `onClick` | P2.3 or new task |
