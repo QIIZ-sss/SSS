@@ -31,7 +31,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P5.2 | B2 | 5 | Partial — known overflow fixed; full 375 px / iPad check MANUAL pending |
 | P5.3 | B3 | 5 | Done (logic tested); mobile keypad MANUAL pending |
 | P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
-| P6.1 | C1 | 6 | Not started |
+| P6.1 | C1 | 6 | Done |
 | P6.2 | C2 | 6 | Not started |
 | P6.3 | C3 | 6 | Not started |
 | P6.4 | C4 | 6 | Not started |
@@ -528,6 +528,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Clear `localStorage`, reload.
 - **Regression requirements:** Login, empty-name rejection.
 - **Commit requirement:** `fix(C1): remove default placeholder name`.
+- **Status:** Done. `client/src/App.jsx` username initial state is `''` when nothing is saved (wrapped in try/catch for blocked storage); "กกก" no longer exists anywhere in `client/src`, `server/src`, `shared`. Checks: render test 3/3 PASS (fresh visit → empty nickname + login screen; saved name still used); build PASS.
 
 ### P6.2 — README run instructions (C2)
 

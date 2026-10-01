@@ -76,7 +76,9 @@ export const pinAfterBackspace = (digits, idx) => {
 };
 
 export default function App() {
-  const [username, setUsername] = useState(localStorage.getItem('game_username') || 'กกก');
+  const [username, setUsername] = useState(() => {
+    try { return localStorage.getItem('game_username') || ''; } catch (e) { return ''; }
+  });
   const [avatar, setAvatar] = useState(localStorage.getItem('game_avatar') || '🐼');
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('game_username'));
 
