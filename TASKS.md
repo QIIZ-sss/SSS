@@ -1,0 +1,575 @@
+# TASKS.md — JUST DRAW IT
+
+Task plan derived from `HANDOFF.md` §3 (requirements A1–A9, B1–B5, C1–C4, D1–D3), the team's original 14-bug report, and the read-only discovery recorded in `ARCHITECTURE.md`.
+
+Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `ARCHITECTURE.md` (cited by section, e.g. `ARCH §6.1`).
+
+**Files allowed** — no task has completed its own task-level discovery yet, so every task says `TBD after read-only discovery`. "Candidate files" are hints from repo-level discovery only; they are **not** approved. After a task's discovery, replace TBD with the verified list and get approval if `AGENTS.md` §2 is triggered.
+
+**QA evidence** — all existing `qa/QA_REPORT.md` results are DOCUMENTATION CLAIMS (many hardcoded `PASS`). A task is verified only by new runtime evidence produced for that task.
+
+---
+
+## 0. Status overview
+
+| Task | Req | Phase | Status |
+|---|---|---|---|
+| DOC-0 | — | 0 | Prepared, **PENDING HUMAN REVIEW** |
+| P1.1 | A2 (discovery) | 1 | Not started |
+| P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Not started — needs approval (`shared/`) |
+| P1.3 | A2 | 1 | Not started |
+| P1.4 | A2 regression | 1 | Not started |
+| P2.1 | A4 | 2 | Not started |
+| P2.2 | A5 | 2 | Not started |
+| P2.3 | between-round transition | 2 | Not started |
+| P2.4 | A3 | 2 | Not started |
+| P2.5 | A7 | 2 | Not started |
+| P3.1 | A1 | 3 | Not started |
+| P3.2 | A6 | 3 | Not started |
+| P4.1 | B4 | 4 | Not started |
+| P5.1 | B1 | 5 | Not started |
+| P5.2 | B2 | 5 | Not started |
+| P5.3 | B3 | 5 | Not started |
+| P5.4 | B5 | 5 | Not started — after P4.1 (see sequencing) |
+| P6.1 | C1 | 6 | Not started |
+| P6.2 | C2 | 6 | Not started |
+| P6.3 | C3 | 6 | Not started |
+| P6.4 | C4 | 6 | Not started |
+| P6.5 | D1 | 6 | Not started |
+| P7.1 | A8 | 7 | Not started |
+| P7.2 | A9 | 7 | Not started |
+| P7.3 | D2 | 7 | Not started |
+| P7.4 | D3 | 7 | Not started — needs team decision |
+
+---
+
+## 1. Requirement coverage
+
+| Req | Short description (`HANDOFF.md` §3) | Task(s) |
+|---|---|---|
+| A1 | Answer leak in WebSocket | P3.1 |
+| A2 | Back to Lobby shows Round 4/3 | P1.1, P1.3, P1.4 |
+| A3 | No answer reveal on timeout | P2.4 |
+| A4 | Start without all Ready | P2.1 |
+| A5 | Start alone / Team with empty team | P2.2 |
+| A6 | Drawer can chat | P3.2 |
+| A7 | Timer stops counting | P2.5 |
+| A8 | Review/repair Solo AI code path | P7.1 |
+| A9 | AI shows a word while not confident | P7.2 |
+| B1 | Page scrolls while drawing | P5.1 |
+| B2 | Mobile/iPad layout | P5.2 |
+| B3 | PIN boxes need tapping one by one | P5.3 |
+| B4 | Refresh kicks to Home (reconnect) | P4.1 |
+| B5 | Socket connects to `localhost` | P5.4 |
+| C1 | Default name "กกก" | P6.1 |
+| C2 | README commands that do not exist | P6.2 |
+| C3 | Port in use crashes silently | P6.3 |
+| C4 | Avatars 👾 🚀 missing | P6.4 |
+| D1 | Words by Easy/Medium/Hard | P6.5 |
+| D2 | Real partial eraser | P7.3 |
+| D3 | Challenge / Don't Lift Pen popup | P7.4 |
+
+No requirement is Deferred or Removed.
+
+## 2. Original 14-bug mapping (team bug report)
+
+| Bug | Requirement | Current status (code reading) | Evidence |
+|---|---|---|---|
+| BUG-01 Leave Lobby shows Round 4/3 | A2 | OPEN | ARCH §6.1; HANDOFF A2; QA F-02 FAIL (claim) |
+| BUG-02 Starts without all Ready | A4 | OPEN | ARCH §3.2; HANDOFF A4 |
+| BUG-03 Solo vs AI mode | **A8/A9 — NEEDS HUMAN CONFIRMATION** | OPEN (defects in ARCH §13) | Bug text is too broad to map with certainty; A8/A9 are the only Solo AI requirements. Do not force the mapping. |
+| BUG-04 Team mode with one player | A5 | OPEN | ARCH §3.2; HANDOFF A5; QA H-03 FAIL (claim) |
+| BUG-05 Challenge / Don't Lift Pen popup | D3 | OPEN (inline banner + `alert()`) | ARCH §10; HANDOFF D3 |
+| BUG-06 Phone / iPad screen sizes | B2 | UNCERTAIN (QA UI-01 PASS is hardcoded) | HANDOFF B2 |
+| BUG-07 Answer visible via F12 | A1 | OPEN | ARCH §8; QA SEC-01 FAIL (claim) |
+| BUG-08 Drawer can type in chat | A6 | OPEN | ARCH §3.2, §8.1; QA G-04 FAIL (claim) |
+| BUG-09 Word difficulty Easy/Medium/Hard | D1 | OPEN (field exists, unused) | ARCH §9 |
+| BUG-10 Default name "กกก" | C1 | OPEN | `client/src/App.jsx:13`; HANDOFF C1 |
+| BUG-11 Timeout should reveal answer | A3 | PARTIAL (payload yes, UI no) | ARCH §8; QA T-04 PASS is payload-only |
+| BUG-12 Page scrolls while drawing | B1 | OPEN | ARCH §12 |
+| BUG-13 Refresh kicks to Home | B4 | OPEN — feature not implemented | ARCH §14 |
+| BUG-14 PIN requires clicking each box | B3 | OPEN | `client/src/App.jsx:457-497` |
+
+Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
+
+**Numbering warning:** `HANDOFF.md` C2/C3/C4 cite "BUG-05/06/07" from `qa/QA_REPORT.md`. Those are **not** the team's BUG-05/06/07 above. Always qualify bug IDs with their source.
+
+## 3. Sequencing and parallelism
+
+- Phase 1 before Phase 2/3 (state machine and contract are shared foundations).
+- P1.3 (end of game) and P2.3 (between rounds) are separate tasks and separate commits.
+- P3.1 (A1) and P4.1 (B4) both touch per-role state payloads — do P3.1 first; P4.1 must reuse its visibility logic.
+- **B4 before B5:** discovery shows both touch `client/src/services/socket.js` / client connection setup. Implement and verify P4.1 first, then P5.4. Parallelize only if task-level discovery proves no shared files.
+- Phase 5 tasks may run in parallel with server work only if they touch different files and no contracts.
+- Every parallel task uses its own branch, e.g. `game/A2`, `security/A1`, `mobile/B1`, `mobile/B2`, `mobile/B3`, `network/B5`, `session/B4`, `game/A7`.
+- Before merge: inspect `git diff`, resolve conflicts deliberately, run relevant tests, verify no unrelated files, get human approval.
+
+---
+
+## Phase 0 — Documentation
+
+### DOC-0 — Project control documents
+
+- **Task ID:** DOC-0
+- **Requirement IDs:** — (process)
+- **Goal:** Add `AGENTS.md`, `ARCHITECTURE.md`, `TASKS.md`, `CLAUDE.md` (contains only `@AGENTS.md`).
+- **Current problem:** No control documents existed.
+- **Discovery requirements:** Done (read-only discovery gate).
+- **Allowed files:** `AGENTS.md`, `ARCHITECTURE.md`, `TASKS.md`, `CLAUDE.md`
+- **Forbidden changes:** Any application source, config, package, or QA file; deleting dead code.
+- **Implementation requirements:** Documentation only.
+- **Acceptance criteria:** Human review approves all four files.
+- **Test procedure:** `git status` shows only the four new files.
+- **Regression requirements:** None (no code change).
+- **Commit requirement:** After approval only — stage exactly these four files, verify with `git diff --cached --stat`, one commit `docs: add project control documents`. **Commit: PENDING HUMAN REVIEW.**
+
+---
+
+## Phase 1 — Shared contract + game end
+
+### P1.1 — Focused discovery: state machine and round counter
+
+- **Task ID:** P1.1
+- **Requirement IDs:** A2 (discovery)
+- **Goal:** Confirm exactly how rounds, turns, `currentRound`, and the end-of-game boundary behave, to scope P1.3 and P2.3.
+- **Current problem:** `currentRound++` happens before the `totalRounds` check; no `GAME_OVER → LOBBY` path; "BACK TO LOBBY" is client-only (ARCH §6, §6.1).
+- **Discovery requirements:** Read only the state machine path: `RoundManager.js`, `TimerManager.js`, `start_game`/leave/disconnect in `gameHandler.js`, `chatHandler.js` round-end trigger, Solo AI round-end trigger, client handling of `room_data.status`, `game_over`, and the result modal. Do **not** repeat full-repo discovery. Determine: effect of players leaving on `drawerIndex`; effect of the uncancellable 4 s `setTimeout`; what the client needs to return to lobby.
+- **Allowed files:** None (read-only). Output: findings appended to this task + verified file list for P1.3/P2.3.
+- **Forbidden changes:** Any file change.
+- **Implementation requirements:** —
+- **Acceptance criteria:** Written findings with file:line evidence; proposed allowed-file list for P1.3 and P2.3; list of any contract change needed (event/payload) flagged for approval.
+- **Test procedure:** Optional non-mutating runtime observation (only if dependencies are already installed — installing requires approval).
+- **Regression requirements:** —
+- **Commit requirement:** None, or a docs-only update to `TASKS.md` if approved.
+
+### P1.2 — Make `shared/contract.js` a real runtime source of truth
+
+- **Task ID:** P1.2
+- **Requirement IDs:** Architectural gap (ARCH §4); prerequisite for A2–A6, B3, B4, D1, A8/A9 using shared values.
+- **Goal:** `shared/contract.js` can be imported by both the CommonJS server and the Vite client, and the values needed by Phase 1–3 tasks are read from it instead of hardcoded.
+- **Current problem:** `contract.js` is CommonJS-only and imported by nothing; status strings, rules, AI words/thresholds, PIN length are hardcoded or duplicated (ARCH §4).
+- **Discovery requirements:** Determine how `events.js`/`gameConfig.js` load in both runtimes; decide the minimal module format change; list every place each needed value is hardcoded; check whether any `contract.js` value conflicts with current behaviour (e.g. `WORD_DIFFICULTY` uppercase vs lowercase in `database.js`, Solo AI payload shape).
+- **Allowed files:** TBD after read-only discovery. Candidate: `shared/contract.js` plus the first consumers needed by P1.3.
+- **Forbidden changes:** Changing any value's meaning; changing socket event names/payloads; deleting `constants.js` or other duplicates (dead-code cleanup is out of scope); bulk replacement of hardcoded values unrelated to an active task.
+- **Implementation requirements:** **Approval required** (modifies `shared/`). Smallest change that lets both runtimes import `contract.js`. Adopt values incrementally — each later task switches only the values it touches.
+- **Acceptance criteria:** Server starts and client builds/loads with `contract.js` imported on the live path; no behaviour change; no duplicate competing value introduced.
+- **Test procedure:** Start server (`npm run dev` in `server/`), start client (`npm run dev` in `client/`), confirm no load errors in server log and browser console; play one round.
+- **Regression requirements:** Room create/join, start, draw, guess, round end still work.
+- **Commit requirement:** `refactor(P1.2): load shared contract on live path` — one commit.
+
+### P1.3 — End-of-game transition (A2)
+
+- **Task ID:** P1.3
+- **Requirement IDs:** A2 (BUG-01)
+- **Goal:** `ROUND_OVER → GAME_OVER → LOBBY` works; no Round 4/3 when `totalRounds = 3`.
+- **Current problem:** ARCH §6.1 — counter overshoot, no server event to return to lobby, modal button is client-only.
+- **Discovery requirements:** Use P1.1 output. Check whether an existing event can carry "return to lobby" before proposing a new one.
+- **Allowed files:** TBD after read-only discovery (P1.1).
+- **Forbidden changes:** Between-round logic (P2.3); ready/min-player validation (P2.1/P2.2); timer redesign; unrelated UI.
+- **Implementation requirements:** Final round ends in `GAME_OVER` without ever exposing `currentRound > totalRounds`; timer stopped and pending transitions cannot fire after `GAME_OVER`; a server-authoritative path returns the room to `LOBBY` (who may trigger it — host or each player — must be stated in discovery and approved if it adds/changes an event). A new socket event requires approval.
+- **Acceptance criteria:** See P1.4 checklist.
+- **Test procedure:** 2+ clients, `totalRounds = 3`, play to the end, press the return button, observe all clients and WebSocket frames.
+- **Regression requirements:** P1.4.
+- **Commit requirement:** `fix(P1.3): fix game over transition`.
+
+### P1.4 — A2 regression
+
+- **Task ID:** P1.4
+- **Requirement IDs:** A2
+- **Goal:** Verify P1.3 end-to-end.
+- **Current problem:** —
+- **Discovery requirements:** Identify which existing QA scripts (F-01, F-02, F-04) can be reused and whether they assert real outcomes.
+- **Allowed files:** TBD (test files only, if new tests are written; location needs approval if a new folder is required).
+- **Forbidden changes:** Application source.
+- **Implementation requirements:** Record actual results.
+- **Acceptance criteria:**
+  - no Round 4/3 at any point;
+  - final round ends correctly;
+  - timer stops after `GAME_OVER` (no further `timer_tick`);
+  - room returns to `LOBBY`;
+  - round state (`currentRound`, `drawerIndex`, drawer, word, challenge) resets on return to `LOBBY`;
+  - ready state resets on return to `LOBBY`;
+  - scores remain available during `GAME_OVER` for the Result/Podium;
+  - scores are cleared **only** on return to `LOBBY` / new-game initialization;
+  - a new game requires players to Ready again (effective once P2.1 lands; record status before/after);
+  - a new game begins at Round 1.
+- **Test procedure:** Manual 2–3 client run plus WebSocket frame capture; mark any unautomated item `MANUAL`.
+- **Regression requirements:** Leave/rejoin (F-03/F-04), host transfer.
+- **Commit requirement:** Test-only commit if tests were added: `test(P1.4): A2 regression`.
+
+---
+
+## Phase 2 — Server game core
+
+### P2.1 — Ready validation (A4)
+
+- **Task ID:** P2.1
+- **Requirement IDs:** A4 (BUG-02)
+- **Goal:** Server rejects `start_game` when required players are not ready.
+- **Current problem:** No ready check; START button always enabled (ARCH §3.2).
+- **Discovery requirements:** Confirm `GAME_RULES.REQUIRE_ALL_READY` semantics ("host does not need to press Ready"); how rejection is reported to the client with the existing contract; whether `start_game` should also be rejected outside `LOBBY` (see Unassigned findings U3).
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Min-player rules (P2.2); payload changes without approval.
+- **Implementation requirements:** Server is authoritative; client START disabled state reads the same shared rule (UX only).
+- **Acceptance criteria:** With any non-host player not ready, the START button is disabled **and** a direct `start_game` emit does not start the game.
+- **Test procedure:** UI test + direct socket emit from a script; capture result.
+- **Regression requirements:** Normal start with all ready; P1.4 "new game requires Ready".
+- **Commit requirement:** `fix(P2.1): enforce ready validation`.
+
+### P2.2 — Minimum-player validation (A5)
+
+- **Task ID:** P2.2
+- **Requirement IDs:** A5 (BUG-04)
+- **Goal:** Server rejects invalid FFA and Team starts.
+- **Current problem:** 1 player can start FFA/Team (ARCH §3.2).
+- **Discovery requirements:** Rules from `GAME_RULES.MIN_PLAYERS_FFA`, `MIN_PLAYERS_PER_TEAM`, `MIN_PLAYERS_TEAM_TOTAL`; confirm Solo AI is exempt.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Ready logic beyond integration with P2.1.
+- **Implementation requirements:** Shared values only; server authoritative; client UX disable.
+- **Acceptance criteria:** 1 player FFA cannot start; Team with an empty team cannot start (button and direct emit); Solo AI still starts alone.
+- **Test procedure:** UI + direct emit.
+- **Regression requirements:** Valid starts in all three modes.
+- **Commit requirement:** `fix(P2.2): enforce minimum players`.
+
+### P2.3 — Between-round transition
+
+- **Task ID:** P2.3
+- **Requirement IDs:** Game core (supports A2, A3, A7)
+- **Goal:** `ROUND_OVER → WORD_SELECTION → PLAYING` is correct and separate from the end-of-game path (P1.3).
+- **Current problem:** Uncancellable `setTimeout`; `drawerIndex` not adjusted when players leave; `currentWord` not cleared at `WORD_SELECTION` (ARCH §6, §8).
+- **Discovery requirements:** Use P1.1 output.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** End-of-game logic already fixed in P1.3 (except integration); timer redesign (P2.5).
+- **Implementation requirements:** correct next drawer; round timer reset; round-specific state reset (correct guessers, drawing, challenge, word); next word selection; `totalRounds` enforced; never enter `GAME_OVER` early.
+- **Acceptance criteria:** 3 players × 3 rounds: each player draws once per round in order; 9 turns then `GAME_OVER`; no early or extra rounds; state reset each turn.
+- **Test procedure:** Multi-client run with logged `round_change`/`room_data`.
+- **Regression requirements:** P1.4.
+- **Commit requirement:** `fix(P2.3): fix between-round transition`.
+
+### P2.4 — Timeout reveal (A3)
+
+- **Task ID:** P2.4
+- **Requirement IDs:** A3 (BUG-11)
+- **Goal:** When nobody guesses before timeout, `PLAYING → ROUND_OVER` and the answer is visible to all players in the UI.
+- **Current problem:** `round_end.word` is sent but no client listens; guesser UI always shows underscores (ARCH §8).
+- **Discovery requirements:** Which existing payload the UI should use for the reveal (`round_end` or `room_data` in `ROUND_OVER`) consistent with P3.1 visibility rules.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Revealing the word in any other state.
+- **Implementation requirements:** Coordinate with P3.1 (reveal only in `ROUND_OVER`/`GAME_OVER`).
+- **Acceptance criteria:** Timeout with no correct guess → every client visibly shows the answer during `ROUND_OVER`.
+- **Test procedure:** 2 clients, wait for timeout, screenshot both + frames.
+- **Regression requirements:** All-guessed early end still reveals; P3.1 leak checks.
+- **Commit requirement:** `fix(P2.4): reveal answer on timeout`.
+
+### P2.5 — Timer verification / fix (A7)
+
+- **Task ID:** P2.5
+- **Requirement IDs:** A7
+- **Goal:** Prove (or fix) that the timer counts down correctly across rounds.
+- **Current problem:** Status `UNCERTAIN`; existing T-02 evidence shows identical values (ARCH §6.2).
+- **Discovery requirements:** Review `TimerManager.js`, `useGameTimer.js`, `TimerBadge.jsx`; define the project's accepted sync tolerance (needs human value if none exists).
+- **Allowed files:** TBD after read-only discovery (none if verification passes).
+- **Forbidden changes:** Redesigning the timer without a failing observation.
+- **Implementation requirements:** Fix only if a defect is observed.
+- **Acceptance criteria:** timer decreases during `PLAYING`; reaches 0 when the round ends by timeout; resets at each new round; clients synchronized within tolerance; continues for ≥ 3 consecutive rounds without refresh. Evidence must show **decreasing values over time** (e.g. samples every 5 s per HANDOFF A7), not identical screenshots.
+- **Test procedure:** Log `timer_tick` values with timestamps on 2 clients over 3 rounds.
+- **Regression requirements:** P1.4 (timer stops after `GAME_OVER`).
+- **Commit requirement:** `fix(P2.5): fix timer synchronization` (or `test(P2.5): ...` if verification only).
+
+---
+
+## Phase 3 — Security
+
+### P3.1 — Answer leakage (A1)
+
+- **Task ID:** P3.1
+- **Requirement IDs:** A1 (BUG-07)
+- **Goal:** Guessers cannot obtain the answer from any client-visible data.
+- **Current problem:** One `room_data` with `currentWord` is broadcast to all (ARCH §8).
+- **Discovery requirements:** Every emit that includes room state or the word (`room_data`, `round_end`, `draw_sync`, chat, logs); how to deliver per-role state with the existing event (`GAME_RULES.REVEAL_WORD_STATUSES`); impact on drawer UI and Solo AI.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Event renames; payload shape changes without approval (omitting `currentWord` for guessers is a payload-meaning change → approval).
+- **Implementation requirements:**
+  - `WORD_SELECTION`: guesser does not receive `currentWord` (including a stale value);
+  - `PLAYING`: guesser does not receive `currentWord`; may receive `wordLength`;
+  - `ROUND_OVER`: word may be revealed;
+  - `GAME_OVER`: reveal according to the actual Result UI;
+  - correct guess: others receive only a neutral notice (keep current behaviour, ARCH §8.1); the guessed text is never broadcast;
+  - candidate words are sent only to the drawer (keep current behaviour; verify);
+  - mid-game joiners get the same per-role view.
+- **Acceptance criteria:** WebSocket frame inspection on a guesser client shows no answer and no candidate words during `WORD_SELECTION`/`PLAYING`, including after correct guesses, joins, ready toggles, and team switches.
+- **Test procedure:** DevTools/Playwright frame capture filtered for the word and for `currentWord`.
+- **Regression requirements:** Drawer still sees the word; P2.4 reveal; scoring.
+- **Commit requirement:** `fix(P3.1): prevent answer leakage`.
+
+### P3.2 — Drawer chat restriction (A6)
+
+- **Task ID:** P3.2
+- **Requirement IDs:** A6 (BUG-08)
+- **Goal:** The drawer cannot send chat during the round.
+- **Current problem:** Drawer messages are broadcast (`chatHandler.js:70-74`); chat input always enabled (`ChatBox.jsx`).
+- **Discovery requirements:** Which states are covered (`PLAYING` at minimum; decide `WORD_SELECTION`); `GAME_RULES.DRAWER_CAN_CHAT`.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Guessing/scoring logic.
+- **Implementation requirements:** Server rejects; client disables input (UX).
+- **Acceptance criteria:** Drawer cannot type in the UI, and a direct `send_chat` from the drawer is not delivered to anyone.
+- **Test procedure:** UI + direct emit + frame check on guesser.
+- **Regression requirements:** Guessers chat/guess normally; concealed chat for correct guessers.
+- **Commit requirement:** `fix(P3.2): block drawer chat`.
+
+---
+
+## Phase 4 — Session / reconnect
+
+### P4.1 — Refresh / reconnect (B4)
+
+- **Task ID:** P4.1
+- **Requirement IDs:** B4 (BUG-13)
+- **Goal:** Refreshing during a game reconnects the player to the same room/player slot within the grace period.
+- **Current problem:** **No reconnect/session implementation exists** — player removed on disconnect; client keeps room only in React state (ARCH §14).
+- **Discovery requirements:** Identity model (username-based today, ARCH §3.3); where a grace timer would live; drawer/host disconnect behaviour; shared files with B5 (`services/socket.js`).
+- **Allowed files:** TBD after read-only discovery. Likely > 3 files → approval required.
+- **Forbidden changes:** New session framework if the existing structure can be extended; changing visibility rules.
+- **Implementation requirements:** Use `GAME_RULES.RECONNECT_GRACE_MS`; client persists only what is needed (HANDOFF suggests room id + name in `sessionStorage`); reconnect state uses the **same server-side visibility rules as P3.1**.
+- **Acceptance criteria:**
+  - refresh mid-game → same room, same score, within grace;
+  - after grace expiry the player is removed as today;
+  - reconnected guesser does not receive `currentWord` in `WORD_SELECTION`/`PLAYING`;
+  - no generic/full snapshot request returns the answer to a guesser;
+  - drawer receives drawer-only data; non-drawers do not.
+- **Test procedure:** Refresh guesser and drawer mid-round; frame capture after reconnect.
+- **Regression requirements:** P3.1; leave/host transfer; P1.4.
+- **Commit requirement:** `feat(B4): restore reconnect session`.
+
+---
+
+## Phase 5 — Mobile / network
+
+### P5.1 — Touch drawing without page scroll (B1)
+
+- **Task ID:** P5.1
+- **Requirement IDs:** B1 (BUG-12)
+- **Goal:** Drawing with a finger/stylus does not scroll or zoom the page.
+- **Current problem:** Mouse/touch handlers, no `preventDefault`, no live `touch-action` (ARCH §12).
+- **Discovery requirements:** `Canvas.jsx` input handlers; coordinate scaling (`getCanvasCoords`); DONT_LIFT_PEN interaction.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Canvas redesign; eraser work (P7.3).
+- **Implementation requirements:** Pointer Events; `touch-action: none` on the live canvas; coordinates map correctly at any displayed size.
+- **Acceptance criteria:** On a real phone and iPad, drawing does not scroll/zoom and strokes appear under the finger; remote clients see the same strokes.
+- **Test procedure:** Real devices (`MANUAL`); desktop mouse regression.
+- **Regression requirements:** Geometric shapes, ghost preview, DONT_LIFT_PEN, Solo AI pixel capture.
+- **Commit requirement:** `fix(B1): pointer events touch drawing`.
+
+### P5.2 — Responsive layout (B2)
+
+- **Task ID:** P5.2
+- **Requirement IDs:** B2 (BUG-06)
+- **Goal:** All live screens usable at ~375 px and on iPad with no overflow (HANDOFF: canvas on top, chat below).
+- **Current problem:** `UNCERTAIN` — QA UI-01 PASS is hardcoded.
+- **Discovery requirements:** Measure each live screen at 375 px / iPad widths.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Visual redesign beyond overflow/layout fixes.
+- **Implementation requirements:** Layout-only changes.
+- **Acceptance criteria:** No horizontal overflow or clipped controls on Home, Lobby, Arena (all modes), Result modal at 375 px and iPad.
+- **Test procedure:** Screenshots at listed widths + real device check (`MANUAL`).
+- **Regression requirements:** Desktop 1366/1920.
+- **Commit requirement:** `fix(B2): mobile layout`.
+
+### P5.3 — PIN entry (B3)
+
+- **Task ID:** P5.3
+- **Requirement IDs:** B3 (BUG-14)
+- **Goal:** A normal PIN entry needs no manual clicking between boxes.
+- **Current problem:** Five independent inputs, no auto-advance, no `inputmode`, no paste handling (`client/src/App.jsx:457-497`).
+- **Discovery requirements:** Whether `ROOM_PIN_LENGTH` is available on the client (depends on P1.2).
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Join protocol/payload.
+- **Implementation requirements (deterministic):**
+  - each box: `inputmode="numeric"`; accepts digits `0-9` only, other characters are ignored;
+  - typing a valid digit fills the box and moves focus to the next box (last box keeps focus);
+  - Backspace on a non-empty box clears it; Backspace on an empty box moves focus to the previous box and clears it;
+  - pasting into any box: strip non-digits, fill boxes from the first box in order, ignore digits beyond the PIN length, focus the next empty box (or the last box);
+  - box count comes from the shared `ROOM_PIN_LENGTH`, not a hardcoded 5.
+- **Acceptance criteria:** Typing 5 digits continuously fills all boxes; pasting "83921" fills all boxes; Backspace behaves as above; on mobile the numeric keypad appears.
+- **Test procedure:** Desktop keyboard + paste; real phone (`MANUAL`).
+- **Regression requirements:** Join success/failure messages; RoomList join.
+- **Commit requirement:** `fix(B3): pin auto-advance and paste`.
+
+### P5.4 — LAN connection without localhost assumption (B5)
+
+- **Task ID:** P5.4
+- **Requirement IDs:** B5
+- **Goal:** Other devices on the LAN connect without code edits.
+- **Current problem:** `UNCERTAIN` — `services/socket.js` uses `localhost:4000` only when hostname is `localhost`, otherwise same origin via Vite proxy (ARCH §15). May already work.
+- **Discovery requirements:** Verify on a second device with `npm run dev -- --host`; confirm interaction with P4.1 changes.
+- **Allowed files:** TBD after read-only discovery (possibly none).
+- **Forbidden changes:** Changes before P4.1 is merged and verified (shared connection code).
+- **Implementation requirements:** Fix only if verification fails.
+- **Acceptance criteria:** ≥ 2 other devices (phone, iPad) join a room and play over LAN.
+- **Test procedure:** Real devices (`MANUAL`), photos of each device as HANDOFF requires.
+- **Regression requirements:** Localhost dev; P4.1 reconnect.
+- **Commit requirement:** `fix(B5): lan socket url` (or verification note only).
+
+---
+
+## Phase 6 — Word bank + small fixes
+
+### P6.1 — Default player name (C1)
+
+- **Task ID:** P6.1
+- **Requirement IDs:** C1 (BUG-10)
+- **Goal:** No "กกก" default name.
+- **Current problem:** `useState(localStorage.getItem('game_username') || 'กกก')` — `client/src/App.jsx:13`.
+- **Discovery requirements:** Any other `กกก` occurrence on the live path.
+- **Allowed files:** TBD after read-only discovery (candidate: `client/src/App.jsx`).
+- **Forbidden changes:** Login flow redesign.
+- **Implementation requirements:** Empty default (the input is already `required`).
+- **Acceptance criteria:** Fresh browser (cleared storage) shows an empty name field; saved names still prefill.
+- **Test procedure:** Clear `localStorage`, reload.
+- **Regression requirements:** Login, empty-name rejection.
+- **Commit requirement:** `fix(C1): remove default placeholder name`.
+
+### P6.2 — README run instructions (C2)
+
+- **Task ID:** P6.2
+- **Requirement IDs:** C2 (QA_REPORT BUG-05)
+- **Goal:** README run instructions match the live project.
+- **Current problem:** `README.md` documents the legacy game and `npm run migrate` / `create-admin`, which do not exist in `server/package.json` (ARCH §2.3, §17).
+- **Discovery requirements:** Decide with the human whether to correct only the commands or rewrite the README to describe the live game (scope decision).
+- **Allowed files:** TBD after read-only discovery (candidate: `README.md`).
+- **Forbidden changes:** Adding scripts to `package.json` to match the old README; deleting legacy code.
+- **Implementation requirements:** Documentation only.
+- **Acceptance criteria:** Every command in README runs on a fresh clone.
+- **Test procedure:** Follow the README on a clean checkout.
+- **Regression requirements:** —
+- **Commit requirement:** `docs(C2): fix run instructions`.
+
+### P6.3 — Port-in-use error (C3)
+
+- **Task ID:** P6.3
+- **Requirement IDs:** C3 (QA_REPORT BUG-06)
+- **Goal:** Clear message when the port is already in use.
+- **Current problem:** No `server.on('error')` in `server/src/server.js`.
+- **Discovery requirements:** Confirm behaviour with port 4000 occupied.
+- **Allowed files:** TBD after read-only discovery (candidate: `server/src/server.js`).
+- **Forbidden changes:** Changing the default port.
+- **Implementation requirements:** Readable error message and non-zero exit.
+- **Acceptance criteria:** With the port occupied, server prints a clear message naming the port.
+- **Test procedure:** Occupy port, start server.
+- **Regression requirements:** Normal start.
+- **Commit requirement:** `fix(C3): handle port in use`.
+
+### P6.4 — Missing avatars (C4)
+
+- **Task ID:** P6.4
+- **Requirement IDs:** C4 (QA_REPORT BUG-07)
+- **Goal:** All 8 `AVATARS` are selectable.
+- **Current problem:** `AVATARS.slice(0, 6)` in `client/src/App.jsx` (login and lobby).
+- **Discovery requirements:** Layout impact at 375 px.
+- **Allowed files:** TBD after read-only discovery (candidate: `client/src/App.jsx`).
+- **Forbidden changes:** Editing `AVATARS` in `shared/`.
+- **Implementation requirements:** Render all avatars without overflow.
+- **Acceptance criteria:** 👾 and 🚀 selectable on both screens; no overflow at 375 px.
+- **Test procedure:** Visual check at desktop and 375 px.
+- **Regression requirements:** P5.2.
+- **Commit requirement:** `fix(C4): show all avatars`.
+
+### P6.5 — Word difficulty (D1)
+
+- **Task ID:** P6.5
+- **Requirement IDs:** D1 (BUG-09)
+- **Goal:** Words grouped Easy/Medium/Hard, selectable in Host Settings; Solo AI uses only AI-supported words.
+- **Current problem:** `difficulty` field exists but is unused; bank includes `Astronaut` (not an AI class); casing differs from `WORD_DIFFICULTY` (ARCH §9).
+- **Discovery requirements:** Where the bank should live (HANDOFF suggests `shared/gameConfig.js`; current bank is `server/src/config/database.js`); an equivalent of `{text, difficulty, aiSupported}` — reuse existing structure if adequate; settings payload impact.
+- **Allowed files:** TBD after read-only discovery. Likely touches `shared/` and settings payload → approval.
+- **Forbidden changes:** Removing existing words without approval.
+- **Implementation requirements:** Server selects words by room difficulty; Solo AI selects only AI-supported words.
+- **Acceptance criteria:** Host picks a difficulty; word choices come only from it; Solo AI never offers an unsupported word.
+- **Test procedure:** Multiple rounds per difficulty; Solo AI many rounds.
+- **Regression requirements:** Word selection timeout auto-pick; P3.1.
+- **Commit requirement:** `feat(D1): word difficulty`.
+
+---
+
+## Phase 7 — Remaining features
+
+### P7.1 — Solo AI code path repair (A8)
+
+- **Task ID:** P7.1
+- **Requirement IDs:** A8 (BUG-03 — mapping NEEDS HUMAN CONFIRMATION)
+- **Goal:** Solo AI uses the real DoodleNet model end-to-end with one consistent target word and the documented contract.
+- **Current problem (ARCH §13):** `heuristicFallback()` uses `Math.random` and can return `isCorrect`; client sends `{pixels}` only; client and server target words differ; result fields differ from `contract.js`; client adds score locally; thresholds/words hardcoded; no `isValidPredictRequest` or rate limit.
+- **Discovery requirements:** Decide the single owner of the target word (server); compare live payload with `contract.js` and choose the contract (any change → approval); behaviour while the model is loading.
+- **Allowed files:** TBD after read-only discovery. Likely > 3 files → approval.
+- **Forbidden changes:** Replacing DoodleNet; fake/random/heuristic guessing; Vision/other API.
+- **Implementation requirements:** Remove/disable the random fallback (model not ready → report "not ready", never correct); validate requests; server-side rate limit; server owns target word and score; one shared word list/thresholds.
+- **Acceptance criteria:** F12 shows the agreed request fields in `solo_ai_predict` and the agreed result fields; drawing Sun/House/Clock/Rainbow simply is recognized; drawing a different word scores nothing; no `Math.random` in the prediction path.
+- **Test procedure:** Manual drawing per HANDOFF A8 + frame capture + code search for `Math.random` in `aiPredictor.js`.
+- **Regression requirements:** Multiplayer modes unaffected; Solo AI excluded from leaderboard.
+- **Commit requirement:** `fix(A8): solo ai real model path`.
+
+### P7.2 — Low-confidence display (A9)
+
+- **Task ID:** P7.2
+- **Requirement IDs:** A9 (BUG-03 — mapping NEEDS HUMAN CONFIRMATION)
+- **Goal:** UI shows "Not sure yet..." when raw probability < `MIN_RAW_PROB`.
+- **Current problem:** UI always shows the top game word (ARCH §13).
+- **Discovery requirements:** Which result field carries raw probability after P7.1.
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Thresholds hardcoded in a second place.
+- **Implementation requirements:** Use the shared threshold.
+- **Acceptance criteria:** Random scribbles never display a word name nor score.
+- **Test procedure:** Manual scribble test + frame capture.
+- **Regression requirements:** P7.1 acceptance.
+- **Commit requirement:** `fix(A9): low confidence display`.
+
+### P7.3 — Partial eraser (D2)
+
+- **Task ID:** P7.3
+- **Requirement IDs:** D2
+- **Goal:** Real eraser that removes stroke pixels (not white paint), synchronized to all clients.
+- **Current problem:** Eraser paints `#ffffff` (ARCH §12); QA E-01…E-06 are N/A.
+- **Discovery requirements:** Canvas layering, fill behaviour, `drawingHistory` replay, Solo AI pixel capture (reads the first `<canvas>`).
+- **Allowed files:** TBD after read-only discovery.
+- **Forbidden changes:** Full canvas redesign; payload changes without approval.
+- **Implementation requirements:** Erase only strokes (e.g. separate stroke layer with `destination-out` per HANDOFF D2); sync via socket; replay via `draw_sync`.
+- **Acceptance criteria:** QA E-01…E-06 pass with new runtime evidence.
+- **Test procedure:** QA E cases, 2 clients.
+- **Regression requirements:** Drawing, fill, clear, challenges, Solo AI prediction.
+- **Commit requirement:** `feat(D2): partial eraser`.
+
+### P7.4 — Challenge popup (D3)
+
+- **Task ID:** P7.4
+- **Requirement IDs:** D3 (BUG-05)
+- **Goal:** Players are told the round's challenge and its rule before drawing begins.
+- **Current problem:** Inline banner only; DONT_LIFT_PEN uses a blocking `alert()` on violation (ARCH §10).
+- **Discovery requirements:** **STOP for team decision first** — HANDOFF D3 says the team must agree between adding a popup or replacing the board-covering element with a small bar. Confirm when `currentChallenge` is available to clients (currently in `room_data` from `WORD_SELECTION`).
+- **Allowed files:** TBD after read-only discovery and team decision.
+- **Forbidden changes:** Revealing any secret (word, candidates) in the popup; unrelated UI changes.
+- **Implementation requirements (deterministic, pending the team decision above):**
+  - when a turn's challenge is not `NONE`, every client shows a popup during `WORD_SELECTION` (before `PLAYING`), containing the challenge name and description from shared `CHALLENGE_DETAILS`;
+  - for `DONT_LIFT_PEN` the popup states explicitly that the pen must not be lifted while drawing;
+  - the popup closes when the player dismisses it or when the state becomes `PLAYING`; the existing inline banner remains during `PLAYING`;
+  - no popup when the challenge is `NONE`;
+  - the DONT_LIFT_PEN violation notice must not use a blocking `alert()`.
+- **Acceptance criteria:** Each challenge type shows the correct popup once per turn before drawing; no popup for `NONE`; no secrets in popup content or payload.
+- **Test procedure:** Force each challenge via host settings (enable one at a time); screenshots on drawer and guesser.
+- **Regression requirements:** Challenge enforcement (C-01…C-08, re-verified), P5.2 layout.
+- **Commit requirement:** `feat(D3): challenge popup`.
+
+---
+
+## Unassigned findings (need human decision before becoming tasks)
+
+Found during discovery; not part of A–D. Do not fix as side effects.
+
+| ID | Finding | Evidence | Possible home |
+|---|---|---|---|
+| U1 | Identity is username-based; same-name join takes over a player/host slot | ARCH §3.3 | P4.1 discovery |
+| U2 | `select_word` accepts any word, not only `wordOptions` | `gameHandler.js:135` | P3.1 or new task |
+| U3 | `start_game` has no `status` guard (restart mid-game) | `gameHandler.js:116-127` | P2.1 |
+| U4 | No payload validation / rate limit in live handlers | ARCH §3.2 | new security task |
+| U5 | DONT_LIFT_PEN / GEOMETRIC_ONLY enforced only on client | ARCH §3.2, §10 | new task |
+| U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |
+| U7 | Dead/legacy code tree (ARCH §2.3) | ARCH §2.3 | cleanup task, only with explicit approval |
