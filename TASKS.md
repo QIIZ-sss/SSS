@@ -27,7 +27,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P3.1 | A1 | 3 | Done (automated); MANUAL F12 check pending |
 | P3.2 | A6 | 3 | Done (automated); MANUAL pending |
 | P4.1 | B4 | 4 | Done (automated); MANUAL browser refresh pending |
-| P5.1 | B1 | 5 | Not started |
+| P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
 | P5.2 | B2 | 5 | Not started |
 | P5.3 | B3 | 5 | Not started |
 | P5.4 | B5 | 5 | Not started — after P4.1 (see sequencing) |
@@ -440,6 +440,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Real devices (`MANUAL`); desktop mouse regression.
 - **Regression requirements:** Geometric shapes, ghost preview, DONT_LIFT_PEN, Solo AI pixel capture.
 - **Commit requirement:** `fix(B1): pointer events touch drawing`.
+- **Status:** Implemented; touch behaviour on real phone/iPad NOT TESTED (MANUAL).
+  - File: `client/src/components/Canvas.jsx`.
+  - Mouse + touch handlers replaced by Pointer Events (`onPointerDown/Move/Up/Leave/Cancel`, primary pointer only, `preventDefault` on down); `touch-action: none` on the canvas container and drawing canvas. `pointerleave` still ends the stroke (keeps the existing DONT_LIFT_PEN "leaving the canvas counts as lifting" behaviour).
+  - `getCanvasCoords` now scales client coordinates to the fixed 640×480 canvas space, so strokes land under the finger/cursor at any displayed size and remote clients receive the same coordinate space (previously CSS pixels).
+  - Checks: render test 3/3 PASS (`touch-action:none` on container + drawing canvas, 640×480 kept); no mouse/touch handlers left; client build PASS. Pointer behaviour itself is not testable without a browser — MANUAL.
 
 ### P5.2 — Responsive layout (B2)
 

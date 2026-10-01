@@ -140,19 +140,21 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     ctx.stroke();
   };
 
+  // Map pointer position to the fixed 640x480 canvas space, whatever size the canvas is displayed at
   const getCanvasCoords = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const scaleX = rect.width ? canvas.width / rect.width : 1;
+    const scaleY = rect.height ? canvas.height / rect.height : 1;
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     };
   };
 
   const startDrawing = (e) => {
-    if (!isDrawer) return;
+    if (!isDrawer || !e.isPrimary) return;
+    e.preventDefault();
 
     if (challenge === MINI_CHALLENGES.DONT_LIFT_PEN && penLiftedRef.current) {
       alert("Don't Lift Pen Rule Violation! Drawing locked for this turn.");
@@ -198,7 +200,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
   };
 
   const draw = (e) => {
-    if (!isDrawer || !isDrawingRef.current) return;
+    if (!isDrawer || !isDrawingRef.current || !e.isPrimary) return;
     const coords = getCanvasCoords(e);
 
     if (['pen', 'eraser'].includes(tool)) {
@@ -239,7 +241,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
   };
 
   const stopDrawing = (e) => {
-    if (!isDrawer || !isDrawingRef.current) return;
+    if (!isDrawer || !isDrawingRef.current || (e && !e.isPrimary)) return;
     isDrawingRef.current = false;
 
     if (challenge === MINI_CHALLENGES.DONT_LIFT_PEN) {
@@ -278,7 +280,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
 
   return (
     <div className="flex flex-col items-center w-full gap-space-md">
-      <div className="relative w-full max-w-[640px] aspect-[4/3] bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_0px_#18181B] overflow-hidden">
+      <div style={{ touchAction: 'none' }} className="relative w-full max-w-[640px] aspect-[4/3] bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_0px_#18181B] overflow-hidden">
         <canvas
           ref={canvasRef}
           width={640}
@@ -289,14 +291,13 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
           ref={ghostCanvasRef}
           width={640}
           height={480}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-          className="absolute top-0 left-0 w-full h-full pointer-events-auto"
+          onPointerDown={startDrawing}
+          onPointerMove={draw}
+          onPointerUp={stopDrawing}
+          onPointerLeave={stopDrawing}
+          onPointerCancel={stopDrawing}
+          style={{ touchAction: 'none' }}
+          className="absolute top-0 left-0 w-full h-full pointer-events-auto select-none"
         />
 
         {/* Real-time Dimension Indicator Badge (SRS 2.1) */}
