@@ -245,8 +245,8 @@ export default function App() {
               <span className="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">
                 SELECT AVATAR CHARACTER:
               </span>
-              <div className="flex items-center justify-between gap-space-xs pt-1">
-                {AVATARS.slice(0, 6).map((av) => (
+              <div className="flex flex-wrap items-center justify-center gap-space-xs pt-1">
+                {AVATARS.map((av) => (
                   <button
                     key={av.id}
                     type="button"
@@ -436,8 +436,8 @@ export default function App() {
 
                         <div className="flex flex-col gap-space-xs">
                           <span className="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-wider">SELECT AVATAR:</span>
-                          <div className="flex items-center justify-between gap-space-xs pt-1">
-                            {AVATARS.slice(0, 6).map((av) => (
+                          <div className="flex flex-wrap items-center justify-center gap-space-xs pt-1">
+                            {AVATARS.map((av) => (
                               <button
                                 key={av.id}
                                 className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 border-border-dark transition-all flex items-center justify-center ${

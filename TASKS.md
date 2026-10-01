@@ -34,7 +34,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P6.1 | C1 | 6 | Done |
 | P6.2 | C2 | 6 | Done (run section only); full README rewrite needs human decision |
 | P6.3 | C3 | 6 | Done |
-| P6.4 | C4 | 6 | Not started |
+| P6.4 | C4 | 6 | Done; 375 px visual check MANUAL pending |
 | P6.5 | D1 | 6 | Not started |
 | P7.1 | A8 | 7 | Not started |
 | P7.2 | A9 | 7 | Not started |
@@ -579,6 +579,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Visual check at desktop and 375 px.
 - **Regression requirements:** P5.2.
 - **Commit requirement:** `fix(C4): show all avatars`.
+- **Status:** Done; visual check at 375 px NOT TESTED (MANUAL). `client/src/App.jsx`: both pickers (login and create-room) render all `AVATARS` (was `slice(0, 6)`), row changed to `flex-wrap justify-center` so 8 buttons wrap instead of overflowing at 375 px. `shared/` unchanged. Checks: render test 3/3 PASS (all 8 emoji incl. 👾 🚀 on both screens, wrapping row); build PASS.
 
 ### P6.5 — Word difficulty (D1)
 
