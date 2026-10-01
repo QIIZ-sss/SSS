@@ -33,5 +33,14 @@ const offered = (...ps) => ps.flatMap((p) => p.events.filter((e) => e.ev === 'wo
     L.check(`D1 ${level}: difficulty kept after the game returns to LOBBY`, await L.waitFor(() => L.last(A).status === 'LOBBY', 15000) && L.last(A).wordDifficulty === level);
     L.closeAll(A, B);
   }
+  { // fallback: a difficulty with fewer than 3 words falls back to Mixed (checked on this process's copy of the bank)
+    const saved = db.words;
+    const counts = Object.values(WORD_DIFFICULTY).map((d) => `${d}=${bank(d).length}`).join(' ');
+    L.check('D1 every difficulty has at least 3 words in the current bank (no fallback needed today)', Object.values(WORD_DIFFICULTY).every((d) => bank(d).length >= 3), counts);
+    db.words = saved.filter((w) => w.difficulty !== WORD_DIFFICULTY.HARD).concat(saved.filter((w) => w.difficulty === WORD_DIFFICULTY.HARD).slice(0, 2));
+    const picked = db.getRandomWords(3, { difficulty: WORD_DIFFICULTY.HARD });
+    L.check('D1 small pool (2 HARD words) falls back to Mixed and still returns 3 words', picked.length === 3, picked.map((w) => w.word).join(','));
+    db.words = saved;
+  }
   L.finish();
 })();
