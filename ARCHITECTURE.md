@@ -86,8 +86,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 
 ### 3.2 NOT enforced on the server (CURRENT FACT → GAP)
 
-- All-ready check and minimum players (FFA/Team) on `start_game` — `gameHandler.js:116-127` (A4, A5).
-- `start_game` does not check `room.status`; host can restart mid-game — `gameHandler.js:116-127`.
+- Minimum players (FFA/Team) on `start_game` (A5). **Updated in P2.1:** all-ready and `status === LOBBY` are now enforced by `getStartBlockReason()` in `gameHandler.js`.
 - Drawer chat is broadcast to all — `chatHandler.js:70-74` (A6).
 - `select_word` does not validate `word` against `room.wordOptions` — `gameHandler.js:135`.
 - `DONT_LIFT_PEN` and `GEOMETRIC_ONLY` enforced only in the client — `client/src/components/Canvas.jsx:157-165`.
@@ -140,7 +139,7 @@ Resolution: **P1.2** (done) made `contract.js` loadable by both runtimes; later 
 
 ```text
 LOBBY
-  │ start_game (host only; no ready/min-player/status check)      gameHandler.js start_game handler
+  │ start_game (host only; LOBBY only; all non-host ready — P2.1) gameHandler.js start_game handler
   ▼
 WORD_SELECTION  (10 s timer; auto-pick wordChoices[0])            RoundManager.startTurnSelection
   │ select_word (drawer) or timeout
@@ -174,7 +173,7 @@ Current (`CURRENT FACT`, after P1.3):
 - `endGameMatch` keeps scores and schedules `returnToLobby()` after `GAME_RULES.GAME_OVER_DELAY_MS` — `RoundManager.js`, `shared/contract.js`.
 - `returnToLobby()` resets `currentRound`, `drawerIndex`, drawer, word, word options, correct guessers, challenge, forced colour, drawing history, player scores, `isReady`, team scores; emits `room_data` and `room_list_updated`.
 - Result modal: button `LEAVE ROOM` calls the existing `handleLeaveRoom` (`leave_room` → Home); the modal closes automatically when `room_data.status === 'LOBBY'` — `client/src/App.jsx`.
-- Still open (not P1.3): `start_game` resets scores/round but not `isReady` and has no status guard (`gameHandler.js:116-127`, P2.1); players leaving mid-game do not adjust `drawerIndex` (`gameHandler.js:206`, P2.3).
+- `start_game` is accepted only from `LOBBY` with all non-host players ready (P2.1). Still open: players leaving mid-game do not adjust `drawerIndex` (`gameHandler.js:206`, P2.3).
 
 ### 6.2 Timer
 
@@ -322,7 +321,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 - One shared `room_data` payload for all roles → any new field is a potential leak.
 - Username-based identity → slot/host takeover by name collision.
-- Unguarded `start_game` (no status check). The uncancellable 4 s `setTimeout` was replaced in P1.3 by `TimerManager.scheduleTransition` (cleared on every new transition).
+- Overlapping round loops: mitigated — `start_game` is LOBBY-only since P2.1 and the 4 s transition is cancellable since P1.3.
 - Player leave does not adjust `drawerIndex`; drawer leaving mid-round is not handled.
 - Duplicate constants across `shared/` files and hardcoded values in live code.
 - Large dead/legacy tree → agents may edit the wrong file.

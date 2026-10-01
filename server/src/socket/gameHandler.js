@@ -1,6 +1,7 @@
 // Game Event Handler
 const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES } = require('../../../shared/gameConfig');
+const { GAME_STATUS, GAME_RULES } = require('../../../shared/contract');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
 
@@ -117,6 +118,12 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.host !== socket.data.username) return;
 
+    const blockReason = getStartBlockReason(room);
+    if (blockReason) {
+      socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: 'System', text: blockReason, isSystem: true });
+      return;
+    }
+
     room.currentRound = 1;
     room.drawerIndex = 0;
     room.players.forEach(p => { p.score = 0; });
@@ -155,6 +162,18 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   socket.on('disconnect', () => {
     handlePlayerLeave(io, socket, timerManager);
   });
+}
+
+// Server-authoritative START validation. Returns a reason string, or null when the game may start.
+function getStartBlockReason(room) {
+  if (room.status !== GAME_STATUS.LOBBY) return 'The game can only be started from the lobby.';
+
+  if (GAME_RULES.REQUIRE_ALL_READY) {
+    const notReady = room.players.filter(p => p.username !== room.host && !p.isReady);
+    if (notReady.length > 0) return `Waiting for players to be ready: ${notReady.map(p => p.username).join(', ')}`;
+  }
+
+  return null;
 }
 
 function joinPlayerToRoom(io, socket, room, username, avatar, timerManager) {

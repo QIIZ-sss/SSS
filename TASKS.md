@@ -18,8 +18,8 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P1.1 | A2 (discovery) | 1 | Done — findings below |
 | P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Done |
 | P1.3 | A2 | 1 | Done (automated checks PASS; MANUAL 2-tab test pending) |
-| P1.4 | A2 regression | 1 | Done (automated) — 1 criterion blocked by P2.1; MANUAL 2-tab test pending |
-| P2.1 | A4 | 2 | Not started |
+| P1.4 | A2 regression | 1 | Done (automated, incl. "new game requires Ready" after P2.1); MANUAL 2-tab test pending |
+| P2.1 | A4 | 2 | Done (automated); MANUAL pending |
 | P2.2 | A5 | 2 | Not started |
 | P2.3 | between-round transition | 2 | Not started |
 | P2.4 | A3 | 2 | Not started |
@@ -225,7 +225,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   | Ready state resets on LOBBY | PASS (harness only) | harness S1 true→false; e2e cannot show it because START does not require Ready yet (A4) |
   | Scores available during GAME_OVER | PASS | e2e R1: `room_data` + `game_over.finalScores` non-zero |
   | Scores cleared only on LOBBY / new game | PASS | e2e frames: scores unchanged until the LOBBY frame |
-  | New game requires Ready again | **NOT MET — blocked by P2.1 (A4)** | server still starts without Ready |
+  | New game requires Ready again | PASS (after P2.1) | e2e R1: `start_game` after LOBBY rejected until the guest is Ready again |
   | New game begins at Round 1 | PASS | e2e R1: first WORD_SELECTION after LOBBY has round 1, scores 0 |
   | Regression: leave during GAME_OVER / host transfer | PASS | e2e R3: host leaves, remaining player becomes host, LOBBY at 10.0 s |
   | Regression: everyone leaves during GAME_OVER | PASS | e2e R4: room removed, no late callback, server responsive |
@@ -249,6 +249,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** UI test + direct socket emit from a script; capture result.
 - **Regression requirements:** Normal start with all ready; P1.4 "new game requires Ready".
 - **Commit requirement:** `fix(P2.1): enforce ready validation`.
+- **Status:** Done (automated); MANUAL NOT TESTED.
+  - Files: `server/src/socket/gameHandler.js`, `client/src/components/RoomLobby.jsx`.
+  - Server: `getStartBlockReason()` rejects `start_game` unless `room.status === GAME_STATUS.LOBBY` (also closes U3) and, when `GAME_RULES.REQUIRE_ALL_READY`, every non-host player is ready. Rejection is reported to the host only, via the existing `chat_message` system-message shape (no contract change).
+  - Client: START disabled with a "Waiting for: …" hint using the same `GAME_RULES` (UX only).
+  - Checks: e2e 8/8 PASS (not-ready reject + reason, ready start, START during PLAYING ignored, non-host ignored, host need not be ready, Solo AI alone starts); A2 e2e 14/14 PASS; harness 20/20; build PASS; server startup PASS.
 
 ### P2.2 — Minimum-player validation (A5)
 
@@ -602,7 +607,7 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 |---|---|---|---|
 | U1 | Identity is username-based; same-name join takes over a player/host slot | ARCH §3.3 | P4.1 discovery |
 | U2 | `select_word` accepts any word, not only `wordOptions` | `gameHandler.js:135` | P3.1 or new task |
-| U3 | `start_game` has no `status` guard (restart mid-game) | `gameHandler.js:116-127` | P2.1 |
+| U3 | `start_game` has no `status` guard (restart mid-game) — **resolved in P2.1** | `gameHandler.js:116-127` | P2.1 |
 | U4 | No payload validation / rate limit in live handlers | ARCH §3.2 | new security task |
 | U5 | DONT_LIFT_PEN / GEOMETRIC_ONLY enforced only on client | ARCH §3.2, §10 | new task |
 | U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |

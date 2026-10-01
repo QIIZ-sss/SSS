@@ -2,12 +2,21 @@ import React, { useState } from 'react';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
 import { CHALLENGE_DETAILS, GAME_MODES } from '../../../shared/gameConfig';
+import { GAME_RULES } from '../../../shared/contract';
 
 export default function RoomLobby({ roomData, username }) {
   const [activeTab, setActiveTab] = useState('CHALLENGES');
   const [copied, setCopied] = useState(false);
 
   const isHost = roomData.host === username;
+
+  // UX only — the server enforces the same shared rules (GAME_RULES) on start_game
+  const notReadyPlayers = GAME_RULES.REQUIRE_ALL_READY
+    ? roomData.players.filter((p) => p.username !== roomData.host && !p.isReady)
+    : [];
+  const startBlockReason = notReadyPlayers.length > 0
+    ? `Waiting for: ${notReadyPlayers.map((p) => p.username).join(', ')}`
+    : null;
   const enabledChallenges = roomData.enabledChallenges || Object.keys(CHALLENGE_DETAILS);
 
   const handleCopyCode = () => {
@@ -22,6 +31,7 @@ export default function RoomLobby({ roomData, username }) {
   };
 
   const handleStartGame = () => {
+    if (startBlockReason) return;
     socket.emit(SOCKET_EVENTS.START_GAME);
   };
 
@@ -362,13 +372,17 @@ export default function RoomLobby({ roomData, username }) {
               </button>
               {isHost && (
                 <button
-                  className="w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0"
                   onClick={handleStartGame}
+                  disabled={!!startBlockReason}
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[24px]">play_arrow</span>
                   START GAME
                 </button>
+              )}
+              {isHost && startBlockReason && (
+                <p className="font-body-sm text-body-sm text-on-surface-variant text-center">{startBlockReason}</p>
               )}
             </div>
           </div>
