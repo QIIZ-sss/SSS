@@ -22,7 +22,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P2.1 | A4 | 2 | Done (automated); MANUAL pending |
 | P2.2 | A5 | 2 | Done (automated); MANUAL pending |
 | P2.3 | between-round transition | 2 | Done (automated); MANUAL pending |
-| P2.4 | A3 | 2 | Not started |
+| P2.4 | A3 | 2 | Done (automated); MANUAL pending |
 | P2.5 | A7 | 2 | Not started |
 | P3.1 | A1 | 3 | Not started |
 | P3.2 | A6 | 3 | Not started |
@@ -312,6 +312,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** 2 clients, wait for timeout, screenshot both + frames.
 - **Regression requirements:** All-guessed early end still reveals; P3.1 leak checks.
 - **Commit requirement:** `fix(P2.4): reveal answer on timeout`.
+- **Status:** Done (automated); MANUAL NOT TESTED.
+  - Files: `client/src/gameModes/MultiplayerGame.jsx`, `client/src/gameModes/TeamGame.jsx`. No server or contract change: the server already sends the word in `round_end` and in `room_data` during ROUND_OVER.
+  - UI shows the answer to everyone only when `status` is in `GAME_RULES.REVEAL_WORD_STATUSES` (badge "THE ANSWER WAS" + "The word was …" banner in ROUND_OVER). Drawer badge no longer shows a stale `chosenWord` during WORD_SELECTION.
+  - Checks: server e2e 4/4 PASS (timeout with no guesses: reason "Time is up!", guesser gets the word in `round_end` and ROUND_OVER `room_data`, drawer 0 pts); component render test 8/8 PASS (FFA + Team: guesser sees answer in ROUND_OVER, blanks in PLAYING; drawer sees word in PLAYING and "SELECTING WORD" in WORD_SELECTION); all earlier suites PASS; build PASS.
+  - Render tests bundle the real components with esbuild (already in `client/node_modules`) and `react-dom/server`, with the socket module stubbed; they are not a browser test.
 
 ### P2.5 — Timer verification / fix (A7)
 

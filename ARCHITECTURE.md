@@ -228,7 +228,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | GAME_OVER | last word | same | `RoundManager.js:161` |
 | Mid-game join | full `room_data` incl. `currentWord`; full `drawingHistory` via `draw_sync` | same → leak | `gameHandler.js:188`, `drawHandler.js:83-88` |
 
-Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `MultiplayerGame.jsx:25-27`), but this is UI-only. The UI never displays the answer to guessers, even in `ROUND_OVER` (no `round_end` listener).
+Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `MultiplayerGame.jsx:25-27`), but this is UI-only. **Updated in P2.4:** `MultiplayerGame.jsx`/`TeamGame.jsx` show the answer to everyone when `status` is in `GAME_RULES.REVEAL_WORD_STATUSES` (from `room_data.currentWord`; still no `round_end` listener).
 
 ### 8.1 Correct-guess chat (current)
 
@@ -311,7 +311,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 | 2 | `HANDOFF.md` C2/C3/C4 cite "BUG-05/06/07" | Those numbers are `QA_REPORT.md` numbering and collide with the team's 14-bug list |
 | 3 | `README.md` describes the "วาดต่อ" game and file map | Live code is `server.js` + `gameLogic/` + `socket/` (§2) |
 | 4 | QA NW-07 PASS (reconnect keeps score) | No reconnect; player removed on disconnect (§14) |
-| 5 | QA T-04 PASS (timeout reveals answer) | Payload contains word; UI never shows it to guessers (§8) |
+| 5 | QA T-04 PASS (timeout reveals answer) | Payload contained the word but the UI did not show it; fixed in P2.4 (§8) |
 | 6 | QA T-02 PASS (timer) | Evidence shows identical values, not a countdown (§6.2) |
 | 7 | `HANDOFF.md`: eraser does not exist | White-paint "eraser" exists; not a real eraser (§12) |
 | 8 | A8/README_AI: `{targetWord, pixels}`, `predict()` | `{pixels}` only; `predictUserDrawing()`; `Math.random` fallback (§13) |

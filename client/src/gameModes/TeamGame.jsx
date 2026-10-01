@@ -7,6 +7,7 @@ import RoomLobby from '../components/RoomLobby';
 import useGameTimer from '../hooks/useGameTimer';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
+import { GAME_STATUS, GAME_RULES } from '../../../shared/contract';
 
 export default function TeamGame({ roomData, username, wordOptions }) {
   const isDrawer = roomData.currentDrawer === username;
@@ -22,9 +23,13 @@ export default function TeamGame({ roomData, username, wordOptions }) {
     return <RoomLobby roomData={roomData} username={username} />;
   }
 
-  const currentSecretWord = isDrawer
-    ? (chosenWord || roomData.currentWord || 'SELECTING WORD...')
-    : '_ '.repeat(roomData.wordLength || 4);
+  // Answer is shown to everyone only in reveal states (server decides what it sends)
+  const revealedWord = GAME_RULES.REVEAL_WORD_STATUSES.includes(roomData.status) ? roomData.currentWord : '';
+  const currentSecretWord = revealedWord
+    ? revealedWord
+    : isDrawer
+      ? (roomData.status === GAME_STATUS.WORD_SELECTION ? 'SELECTING WORD...' : (roomData.currentWord || chosenWord || 'SELECTING WORD...'))
+      : '_ '.repeat(roomData.wordLength || 4);
 
   const redPlayers = roomData.players.filter((p) => p.team === 'Red');
   const bluePlayers = roomData.players.filter((p) => p.team === 'Blue');
@@ -54,7 +59,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
             <span className="material-symbols-outlined text-border-dark text-[20px]">lightbulb</span>
             <div className="flex flex-col">
               <span className="font-label-sm text-label-sm text-on-tertiary-fixed uppercase font-bold">
-                {isDrawer ? '🎯 YOUR SECRET WORD' : 'TEAM GUESS WORD'}
+                {revealedWord ? '✅ THE ANSWER WAS' : isDrawer ? '🎯 YOUR SECRET WORD' : 'TEAM GUESS WORD'}
               </span>
               <span className="font-headline-md text-headline-md text-border-dark tracking-wider font-black uppercase">
                 {currentSecretWord}
@@ -141,6 +146,12 @@ export default function TeamGame({ roomData, username, wordOptions }) {
           {roomData.status === 'WORD_SELECTION' && !isDrawer && (
             <div className="w-full max-w-[640px] bg-tertiary-fixed p-space-md rounded-xl border-3 border-border-dark shadow-md text-center font-headline-sm text-headline-sm uppercase text-on-tertiary-fixed mb-space-md">
               ⌛ Waiting for <strong>{roomData.currentDrawer}</strong> to choose a word...
+            </div>
+          )}
+
+          {roomData.status === GAME_STATUS.ROUND_OVER && revealedWord && (
+            <div className="w-full max-w-[640px] bg-primary-fixed p-space-md rounded-xl border-3 border-border-dark shadow-md text-center font-headline-sm text-headline-sm uppercase text-on-primary-fixed mb-space-md">
+              The word was <strong>{revealedWord}</strong>
             </div>
           )}
 
