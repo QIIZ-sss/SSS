@@ -3,6 +3,7 @@ const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES } = require('../../../shared/gameConfig');
 const { calculateGuesserScore, normalizeGuess } = require('../../../shared/utils');
 const roomManager = require('../gameLogic/RoomManager');
+const { GAME_STATUS, GAME_RULES } = require('../../../shared/contract');
 
 function setupChatHandlers(io, socket, timerManager, roundManager) {
   socket.on(SOCKET_EVENTS.SEND_CHAT, ({ text }) => {
@@ -15,6 +16,13 @@ function setupChatHandlers(io, socket, timerManager, roundManager) {
     const isDrawer = room.currentDrawer === username;
     const hasGuessed = room.correctGuessers ? room.correctGuessers.includes(username) : false;
     const isPlaying = room.status === 'PLAYING';
+
+    // A6: the drawer may not chat while the word is secret (server-enforced; client input is UX only)
+    const isSecretTurn = room.status === GAME_STATUS.WORD_SELECTION || room.status === GAME_STATUS.PLAYING;
+    if (isDrawer && isSecretTurn && !GAME_RULES.DRAWER_CAN_CHAT) {
+      socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: 'System', text: 'The drawer cannot chat during the turn.', isSystem: true });
+      return;
+    }
 
     if (isPlaying && !isDrawer && !hasGuessed && room.currentWord) {
       const cleanGuess = normalizeGuess(text);

@@ -87,7 +87,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 ### 3.2 NOT enforced on the server (CURRENT FACT → GAP)
 
 - **Updated in P2.1/P2.2:** `start_game` is validated by `getStartBlockReason()` in `gameHandler.js` — LOBBY only, all non-host ready, FFA ≥ `MIN_PLAYERS_FFA`, TEAM ≥ `MIN_PLAYERS_TEAM_TOTAL` with ≥ `MIN_PLAYERS_PER_TEAM` per team (Solo AI exempt). Switching a lobby to TEAM alternates players Red/Blue (no team-switch UI exists).
-- Drawer chat is broadcast to all — `chatHandler.js:70-74` (A6).
+- ~~Drawer chat is broadcast to all — `chatHandler.js:70-74` (A6).~~ **Fixed in P3.2:** drawer messages are dropped during WORD_SELECTION/PLAYING (`GAME_RULES.DRAWER_CAN_CHAT`); `ChatBox.jsx` disables input.
 - `select_word` does not validate `word` against `room.wordOptions` — `gameHandler.js:135`.
 - `DONT_LIFT_PEN` and `GEOMETRIC_ONLY` enforced only in the client — `client/src/components/Canvas.jsx:157-165`.
 - No payload validation or rate limiting in any live handler (`server/src/socket/*.js`).
@@ -236,7 +236,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 ### 8.1 Correct-guess chat (current)
 
-`CURRENT FACT` — `chatHandler.js:19-54`: a correct guess is **not** echoed; the room gets a neutral system message `🎉 คุณ X ทายถูกแล้ว! (+N คะแนน)` with `isCorrectNotice`, the guesser gets `correct_guess {points}`. Later messages from correct guessers go only to the drawer and other correct guessers (`isConcealedChat`, `:57-69`); the client masks them (`ChatBox.jsx:63-70`). Drawer messages and all non-PLAYING messages are broadcast to everyone (`:70-74`).
+`CURRENT FACT` — `chatHandler.js:19-54`: a correct guess is **not** echoed; the room gets a neutral system message `🎉 คุณ X ทายถูกแล้ว! (+N คะแนน)` with `isCorrectNotice`, the guesser gets `correct_guess {points}`. Later messages from correct guessers go only to the drawer and other correct guessers (`isConcealedChat`, `:57-69`); the client masks them (`ChatBox.jsx:63-70`). Non-PLAYING messages are broadcast to everyone (`:70-74`). Drawer messages during WORD_SELECTION/PLAYING are rejected since P3.2.
 
 ## 9. Word management
 

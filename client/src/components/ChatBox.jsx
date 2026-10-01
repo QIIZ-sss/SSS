@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
+import { GAME_STATUS, GAME_RULES } from '../../../shared/contract';
 
 export default function ChatBox({ username, isDrawer, roomStatus }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
+  // UX only — the server enforces the same rule
+  const chatLocked = isDrawer && !GAME_RULES.DRAWER_CAN_CHAT &&
+    (roomStatus === GAME_STATUS.WORD_SELECTION || roomStatus === GAME_STATUS.PLAYING);
 
   useEffect(() => {
     const handleChatMessage = (msg) => {
@@ -25,7 +29,7 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || chatLocked) return;
 
     socket.emit(SOCKET_EVENTS.SEND_CHAT, { text: input });
     setInput('');
@@ -88,9 +92,10 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          disabled={chatLocked}
           placeholder={
-            isDrawer
-              ? 'You are drawing! Chat with guessers...'
+            chatLocked
+              ? 'You are drawing — chat is disabled this turn'
               : roomStatus === 'PLAYING'
               ? 'TYPE YOUR GUESS HERE...'
               : 'TYPE A MESSAGE...'
@@ -99,7 +104,8 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
         />
         <button
           type="submit"
-          className="w-full shrink-0 sm:w-auto px-space-md py-space-xs rounded-xl bg-primary-container text-on-primary font-headline-sm text-headline-sm uppercase border-2 border-border-dark shadow-[2px_2px_0px_#18181B] hover:opacity-90 transition-all"
+          disabled={chatLocked}
+          className="w-full shrink-0 sm:w-auto px-space-md py-space-xs rounded-xl bg-primary-container text-on-primary font-headline-sm text-headline-sm uppercase border-2 border-border-dark shadow-[2px_2px_0px_#18181B] hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
           SEND
         </button>

@@ -25,7 +25,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P2.4 | A3 | 2 | Done (automated); MANUAL pending |
 | P2.5 | A7 | 2 | Done — server timer verified (no code change); client display MANUAL pending |
 | P3.1 | A1 | 3 | Done (automated); MANUAL F12 check pending |
-| P3.2 | A6 | 3 | Not started |
+| P3.2 | A6 | 3 | Done (automated); MANUAL pending |
 | P4.1 | B4 | 4 | Not started |
 | P5.1 | B1 | 5 | Not started |
 | P5.2 | B2 | 5 | Not started |
@@ -383,6 +383,10 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** UI + direct emit + frame check on guesser.
 - **Regression requirements:** Guessers chat/guess normally; concealed chat for correct guessers.
 - **Commit requirement:** `fix(P3.2): block drawer chat`.
+- **Status:** Done (automated); MANUAL NOT TESTED.
+  - States covered: WORD_SELECTION and PLAYING (WORD_SELECTION included so the drawer cannot post the candidate words). Drawer may chat in LOBBY / ROUND_OVER / GAME_OVER.
+  - Files: `server/src/socket/chatHandler.js` (drops the message, replies to the drawer with a system notice via the existing `chat_message` shape; `GAME_RULES.DRAWER_CAN_CHAT`), `client/src/components/ChatBox.jsx` (input + SEND disabled, placeholder explains; UX only).
+  - Checks: e2e 5/5 PASS (drawer chat in WORD_SELECTION and the answer in PLAYING not delivered; notice to drawer; guesser chat still delivered; drawer chat works in ROUND_OVER); render 4/4 PASS; leak e2e 7/7; A2 14/14; harness; build; startup.
 
 ---
 
