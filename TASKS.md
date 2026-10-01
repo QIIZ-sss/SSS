@@ -26,20 +26,20 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P2.5 | A7 | 2 | Done — server timer verified (no code change); client display MANUAL pending |
 | P3.1 | A1 | 3 | Done (automated); MANUAL F12 check pending |
 | P3.2 | A6 | 3 | Done (automated); MANUAL pending |
-| P4.1 | B4 | 4 | Done (automated); MANUAL browser refresh pending |
+| P4.1 | B4 | 4 | Done (server e2e + client DOM test); MANUAL real refresh pending |
 | P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
 | P5.2 | B2 | 5 | Done (headless Chrome 375 / 820 px, 9 screens); real devices MANUAL pending |
-| P5.3 | B3 | 5 | Done (logic tested); mobile keypad MANUAL pending |
+| P5.3 | B3 | 5 | Done (logic + headless Chrome DOM test); mobile keypad MANUAL pending |
 | P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
 | P6.1 | C1 | 6 | Done |
 | P6.2 | C2 | 6 | Done (run section only); full README rewrite needs human decision |
 | P6.3 | C3 | 6 | Done |
 | P6.4 | C4 | 6 | Done; 375 px visual check MANUAL pending |
-| P6.5 | D1 | 6 | Not started |
-| P7.1 | A8 | 7 | Not started |
-| P7.2 | A9 | 7 | Not started |
+| P6.5 | D1 | 6 | **BLOCKED — needs approval of a socket payload change** |
+| P7.1 | A8 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
+| P7.2 | A9 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
-| P7.4 | D3 | 7 | Not started — needs team decision |
+| P7.4 | D3 | 7 | **BLOCKED — team decision (popup vs. small bar)** |
 
 ---
 
@@ -420,7 +420,8 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - Client: `App.jsx` stores `{ code, sessionId }` in `sessionStorage` (per tab, try/catch) on create/join, emits `rejoin_room` on every socket `connect` (page load and socket.io auto-reconnect), clears it on LEAVE / failed rejoin; `RoomList.jsx` passes the join ack up. `shared/events.js` adds `REJOIN_ROOM`.
   - Files: `server/src/socket/gameHandler.js`, `shared/events.js`, `client/src/App.jsx`, `client/src/components/RoomList.jsx`.
   - Checks: e2e 20/20 PASS — sessionId issued; guesser refresh mid-PLAYING returns to the same room/state, score kept, no answer in any event after rejoin, `wordLength` kept, can still guess; drawer refresh in WORD_SELECTION gets its candidates again (guesser never does), keeps host, sees the word in PLAYING; unknown / malformed / post-leave sessions rejected; disconnected drawer kept during grace, removed at 30.0 s with the turn ended and host passed on; same-name join invalidates the old session. All earlier suites PASS.
-  - Not covered by automation: the browser flow (`sessionStorage` + reload) — MANUAL. W1 "score preserved" was checked at score 0 only; the rejoined player scoring afterwards was checked.
+  - Client flow (headless Chrome, real `App`, stubbed socket with acks): 6/6 PASS — stored session → `rejoin_room {code, sessionId}` on load and the game screen returns; LEAVE clears the session and emits `leave_room`; a failed rejoin clears the session and stays on Home; `create_room` ack stores `{code, sessionId}`; a socket `connect` (auto-reconnect) re-emits `rejoin_room`.
+  - Not covered by automation: a real browser reload against the real server (end to end) — MANUAL. W1 "score preserved" was checked at score 0 only; the rejoined player scoring afterwards was checked.
   - Known limits: identity is still username-based for `join_room` (U1); while a player is disconnected they still count as a guesser / can still be the drawer until the grace expires.
 
 ---
@@ -493,6 +494,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - Rules implemented as pure exported functions (`pinAfterInput`, `pinAfterBackspace`, `pinAfterPaste`) exactly as specified above, plus: typing into a filled box replaces its digit; a full-length autofill into any box fills from the first box.
   - Placeholder changed from the per-box digits of the seeded room code (`8 3 9 2 1`, a hardcoded copy of the server's seed room) to `•`.
   - Checks: logic test 12/12 PASS (continuous typing fills 5 boxes with focus 1→2→3→4; non-digit ignored; Backspace filled/empty/first box; paste full / noisy / partial; autofill); `inputMode:"numeric"` present in the production bundle; client build PASS; join flows unchanged on the server (e2e suites use `join_room` by code).
+  - **Added evidence (headless Chrome, real `App` in a DOM, input/keydown/paste events):** 9/9 PASS — 5 boxes with `inputmode="numeric"`; typing 8,3,9,2,1 into whichever box has focus fills `83921` and ends focused on the last box; non-digit ignored; Backspace clears / moves back; paste of a noisy string fills `54321`; submit emits `join_room` with that code. On-screen keyboard behaviour on real phones remains MANUAL.
 
 ### P5.4 — LAN connection without localhost assumption (B5)
 
@@ -598,6 +600,8 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Multiple rounds per difficulty; Solo AI many rounds.
 - **Regression requirements:** Word selection timeout auto-pick; P3.1.
 - **Commit requirement:** `feat(D1): word difficulty`.
+- **Status:** BLOCKED. A host difficulty setting needs a new field in the `update_room_settings` payload and in `room_data` (so all clients show the choice) — a socket payload change that is not pre-approved (AGENTS.md §2 / §4). Nothing implemented.
+  - Proposal for approval: `update_room_settings` accepts `wordDifficulty: 'EASY' | 'MEDIUM' | 'HARD' | null` (values from `WORD_DIFFICULTY`, `null` = all); `room_data` gains `wordDifficulty`; server filters `Word.getRandomWords` by difficulty (bank values normalised to `WORD_DIFFICULTY`, currently lowercase). The Solo AI part ("only AI-supported words", e.g. drop `Astronaut`) overlaps A8 and stays blocked with it.
 
 ---
 
@@ -617,6 +621,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Manual drawing per HANDOFF A8 + frame capture + code search for `Math.random` in `aiPredictor.js`.
 - **Regression requirements:** Multiplayer modes unaffected; Solo AI excluded from leaderboard.
 - **Commit requirement:** `fix(A8): solo ai real model path`.
+- **Status:** BLOCKED by the human (BUG-03 → A8/A9 mapping unresolved). Nothing implemented. Known defects remain as listed in ARCH §13 (`heuristicFallback()` with `Math.random`, client/server target mismatch, payload differs from contract, `Astronaut` in the bank).
 
 ### P7.2 — Low-confidence display (A9)
 
@@ -632,6 +637,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Manual scribble test + frame capture.
 - **Regression requirements:** P7.1 acceptance.
 - **Commit requirement:** `fix(A9): low confidence display`.
+- **Status:** BLOCKED together with A8 (BUG-03 decision). Nothing implemented.
 
 ### P7.3 — Partial eraser (D2)
 
@@ -672,6 +678,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Force each challenge via host settings (enable one at a time); screenshots on drawer and guesser.
 - **Regression requirements:** Challenge enforcement (C-01…C-08, re-verified), P5.2 layout.
 - **Commit requirement:** `feat(D3): challenge popup`.
+- **Status:** BLOCKED — this task's discovery requirement says to STOP for the team decision (HANDOFF D3: add a popup, or replace the board-covering element with a small bar). Nothing implemented. The behaviour specified above can be implemented client-only (no contract change: `currentChallenge` is already in `room_data` from WORD_SELECTION) once the team confirms.
 
 ---
 
