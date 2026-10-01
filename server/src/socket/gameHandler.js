@@ -90,7 +90,12 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     if (!room || room.host !== socket.data.username || room.status !== 'LOBBY') return;
 
     if (settings.gameMode && Object.values(GAME_MODES).includes(settings.gameMode)) {
+      const switchedToTeam = settings.gameMode === GAME_MODES.TEAM && room.gameMode !== GAME_MODES.TEAM;
       room.gameMode = settings.gameMode;
+      // Players who joined before the switch were not team-balanced; there is no team-switch UI
+      if (switchedToTeam) {
+        room.players.forEach((p, idx) => { p.team = idx % 2 === 0 ? 'Red' : 'Blue'; });
+      }
     }
     if (typeof settings.miniChallengeEnabled === 'boolean') {
       room.miniChallengeEnabled = settings.miniChallengeEnabled;
@@ -171,6 +176,18 @@ function getStartBlockReason(room) {
   if (GAME_RULES.REQUIRE_ALL_READY) {
     const notReady = room.players.filter(p => p.username !== room.host && !p.isReady);
     if (notReady.length > 0) return `Waiting for players to be ready: ${notReady.map(p => p.username).join(', ')}`;
+  }
+
+  if (room.gameMode === GAME_MODES.MULTIPLAYER_FFA && room.players.length < GAME_RULES.MIN_PLAYERS_FFA) {
+    return `At least ${GAME_RULES.MIN_PLAYERS_FFA} players are required.`;
+  }
+
+  if (room.gameMode === GAME_MODES.TEAM) {
+    const red = room.players.filter(p => p.team === 'Red').length;
+    const blue = room.players.filter(p => p.team === 'Blue').length;
+    if (room.players.length < GAME_RULES.MIN_PLAYERS_TEAM_TOTAL || red < GAME_RULES.MIN_PLAYERS_PER_TEAM || blue < GAME_RULES.MIN_PLAYERS_PER_TEAM) {
+      return `Team mode needs at least ${GAME_RULES.MIN_PLAYERS_PER_TEAM} player(s) on each team.`;
+    }
   }
 
   return null;

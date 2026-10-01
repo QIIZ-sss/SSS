@@ -86,7 +86,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 
 ### 3.2 NOT enforced on the server (CURRENT FACT → GAP)
 
-- Minimum players (FFA/Team) on `start_game` (A5). **Updated in P2.1:** all-ready and `status === LOBBY` are now enforced by `getStartBlockReason()` in `gameHandler.js`.
+- **Updated in P2.1/P2.2:** `start_game` is validated by `getStartBlockReason()` in `gameHandler.js` — LOBBY only, all non-host ready, FFA ≥ `MIN_PLAYERS_FFA`, TEAM ≥ `MIN_PLAYERS_TEAM_TOTAL` with ≥ `MIN_PLAYERS_PER_TEAM` per team (Solo AI exempt). Switching a lobby to TEAM alternates players Red/Blue (no team-switch UI exists).
 - Drawer chat is broadcast to all — `chatHandler.js:70-74` (A6).
 - `select_word` does not validate `word` against `room.wordOptions` — `gameHandler.js:135`.
 - `DONT_LIFT_PEN` and `GEOMETRIC_ONLY` enforced only in the client — `client/src/components/Canvas.jsx:157-165`.
@@ -139,7 +139,7 @@ Resolution: **P1.2** (done) made `contract.js` loadable by both runtimes; later 
 
 ```text
 LOBBY
-  │ start_game (host only; LOBBY only; all non-host ready — P2.1) gameHandler.js start_game handler
+  │ start_game (host; LOBBY; all non-host ready; min players — P2.1/P2.2)
   ▼
 WORD_SELECTION  (10 s timer; auto-pick wordChoices[0])            RoundManager.startTurnSelection
   │ select_word (drawer) or timeout

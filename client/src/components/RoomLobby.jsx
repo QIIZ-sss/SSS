@@ -14,9 +14,21 @@ export default function RoomLobby({ roomData, username }) {
   const notReadyPlayers = GAME_RULES.REQUIRE_ALL_READY
     ? roomData.players.filter((p) => p.username !== roomData.host && !p.isReady)
     : [];
-  const startBlockReason = notReadyPlayers.length > 0
-    ? `Waiting for: ${notReadyPlayers.map((p) => p.username).join(', ')}`
-    : null;
+  const redCount = roomData.players.filter((p) => p.team === 'Red').length;
+  const blueCount = roomData.players.filter((p) => p.team === 'Blue').length;
+  let startBlockReason = null;
+  if (roomData.gameMode === GAME_MODES.MULTIPLAYER_FFA && roomData.players.length < GAME_RULES.MIN_PLAYERS_FFA) {
+    startBlockReason = `At least ${GAME_RULES.MIN_PLAYERS_FFA} players are required`;
+  } else if (
+    roomData.gameMode === GAME_MODES.TEAM &&
+    (roomData.players.length < GAME_RULES.MIN_PLAYERS_TEAM_TOTAL ||
+      redCount < GAME_RULES.MIN_PLAYERS_PER_TEAM ||
+      blueCount < GAME_RULES.MIN_PLAYERS_PER_TEAM)
+  ) {
+    startBlockReason = `Each team needs at least ${GAME_RULES.MIN_PLAYERS_PER_TEAM} player(s)`;
+  } else if (notReadyPlayers.length > 0) {
+    startBlockReason = `Waiting for: ${notReadyPlayers.map((p) => p.username).join(', ')}`;
+  }
   const enabledChallenges = roomData.enabledChallenges || Object.keys(CHALLENGE_DETAILS);
 
   const handleCopyCode = () => {

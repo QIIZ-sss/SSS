@@ -20,7 +20,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P1.3 | A2 | 1 | Done (automated checks PASS; MANUAL 2-tab test pending) |
 | P1.4 | A2 regression | 1 | Done (automated, incl. "new game requires Ready" after P2.1); MANUAL 2-tab test pending |
 | P2.1 | A4 | 2 | Done (automated); MANUAL pending |
-| P2.2 | A5 | 2 | Not started |
+| P2.2 | A5 | 2 | Done (automated); MANUAL pending |
 | P2.3 | between-round transition | 2 | Not started |
 | P2.4 | A3 | 2 | Not started |
 | P2.5 | A7 | 2 | Not started |
@@ -269,6 +269,12 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** UI + direct emit.
 - **Regression requirements:** Valid starts in all three modes.
 - **Commit requirement:** `fix(P2.2): enforce minimum players`.
+- **Status:** Done (automated); MANUAL NOT TESTED.
+  - Files: `server/src/socket/gameHandler.js`, `client/src/components/RoomLobby.jsx`.
+  - Server `getStartBlockReason()`: FFA needs `GAME_RULES.MIN_PLAYERS_FFA`; TEAM needs `MIN_PLAYERS_TEAM_TOTAL` and `MIN_PLAYERS_PER_TEAM` on both Red and Blue; Solo AI exempt. Client START hint uses the same shared values.
+  - Deadlock fix inside scope: there is no team-switch UI, so when the host switches an existing room to TEAM in the lobby the server now alternates players Red/Blue (`update_room_settings`). Joins into a TEAM room were already balanced.
+  - Checks: e2e 9/9 PASS (FFA alone rejected + reason, TEAM empty team rejected, join balances, 1v1 starts, both-on-Red rejected by direct emit, FFA→TEAM rebalance then start, FFA 2 ready starts); P2.1 8/8; A2 14/14; harness 20/20; build; startup.
+  - Known gap: no client UI for `switch_team`; if a player leaves and empties a team in the lobby, the room cannot start until someone joins (U9).
 
 ### P2.3 — Between-round transition
 
@@ -612,4 +618,5 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 | U5 | DONT_LIFT_PEN / GEOMETRIC_ONLY enforced only on client | ARCH §3.2, §10 | new task |
 | U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |
 | U7 | Dead/legacy code tree (ARCH §2.3) | ARCH §2.3 | cleanup task, only with explicit approval |
+| U9 | No client UI for the existing `switch_team` event; a team emptied by a leave in LOBBY blocks START until someone joins | `client/src` (no `SWITCH_TEAM` usage) | new UI task |
 | U8 | Header logo click clears `currentRoomId` without emitting `leave_room` → player stays in the room server-side | `client/src/App.jsx` header logo `onClick` | P2.3 or new task |
