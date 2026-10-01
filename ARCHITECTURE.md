@@ -130,7 +130,7 @@ Resolution: **P1.2** (done) made `contract.js` loadable by both runtimes; later 
 - Seeded permanent public room `'83921'` (`:19-23`); never removed (`:63-67`, `gameHandler.js:210`).
 - Room object fields: `players[{socketId, username, avatar, score, isReady, team}]`, `teams.{Red,Blue}.score`, `status`, `currentRound`, `drawerIndex`, `currentDrawer`, `currentWord`, `wordOptions`, `correctGuessers`, `currentChallenge`, `forcedColor`, `drawingHistory` (`:27-53`).
 - `sanitizeRoom()` builds one payload for **every** client including `currentWord` and `wordLength` (`:86-116`).
-- Leave/disconnect: player removed immediately; empty non-seed room deleted; host passes to `players[0]` (`gameHandler.js:196-229`).
+- Leave/disconnect: player removed immediately; empty non-seed room deleted; host passes to `players[0]` (`gameHandler.js:196-229`). **Updated in P2.3:** turn order is adjusted via `RoundManager.handlePlayerRemoved()`; an emptied seed room is reset with `returnToLobby()`.
 - Team assignment balances Red/Blue at join (`gameHandler.js:166-171`).
 
 ## 6. Game state handling (current state machine)
@@ -173,7 +173,8 @@ Current (`CURRENT FACT`, after P1.3):
 - `endGameMatch` keeps scores and schedules `returnToLobby()` after `GAME_RULES.GAME_OVER_DELAY_MS` — `RoundManager.js`, `shared/contract.js`.
 - `returnToLobby()` resets `currentRound`, `drawerIndex`, drawer, word, word options, correct guessers, challenge, forced colour, drawing history, player scores, `isReady`, team scores; emits `room_data` and `room_list_updated`.
 - Result modal: button `LEAVE ROOM` calls the existing `handleLeaveRoom` (`leave_room` → Home); the modal closes automatically when `room_data.status === 'LOBBY'` — `client/src/App.jsx`.
-- `start_game` is accepted only from `LOBBY` with all non-host players ready (P2.1). Still open: players leaving mid-game do not adjust `drawerIndex` (`gameHandler.js:206`, P2.3).
+- `start_game` is accepted only from `LOBBY` with all non-host players ready (P2.1).
+- **P2.3:** leaves adjust `drawerIndex`; drawer leaving ends the turn; a round whose remaining drawers left is closed in `startTurnSelection()`; `currentWord` is cleared at WORD_SELECTION.
 
 ### 6.2 Timer
 
@@ -322,7 +323,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 - One shared `room_data` payload for all roles → any new field is a potential leak.
 - Username-based identity → slot/host takeover by name collision.
 - Overlapping round loops: mitigated — `start_game` is LOBBY-only since P2.1 and the 4 s transition is cancellable since P1.3.
-- Player leave does not adjust `drawerIndex`; drawer leaving mid-round is not handled.
+- Mid-game joins still extend the current round (new player is appended to the rotation).
 - Duplicate constants across `shared/` files and hardcoded values in live code.
 - Large dead/legacy tree → agents may edit the wrong file.
 

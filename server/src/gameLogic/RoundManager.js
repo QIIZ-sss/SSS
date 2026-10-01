@@ -15,9 +15,20 @@ class RoundManager {
   startTurnSelection(io, room) {
     this.timerManager.stopTimer(room.id);
 
+    // Players may have left during ROUND_OVER: if everyone in this round has drawn, close the round here
+    if (room.players.length > 0 && room.drawerIndex >= room.players.length) {
+      room.drawerIndex = 0;
+      if (room.currentRound >= room.totalRounds) {
+        this.endGameMatch(io, room);
+        return;
+      }
+      room.currentRound++;
+    }
+
     room.status = 'WORD_SELECTION';
     room.correctGuessers = [];
     room.drawingHistory = [];
+    room.currentWord = '';
 
     if (room.players.length === 0) return;
 
@@ -137,6 +148,30 @@ class RoundManager {
         this.startTurnSelection(io, room);
       }
     });
+  }
+
+  // Keep turn order consistent after a player left (called after the player was removed from room.players)
+  handlePlayerRemoved(io, room, removedIndex, removedUsername) {
+    const inTurn = room.status === 'WORD_SELECTION' || room.status === 'PLAYING';
+    const wasDrawer = inTurn && removedUsername === room.currentDrawer;
+
+    // drawerIndex points at the current drawer during a turn and at the next drawer during ROUND_OVER
+    if (removedIndex < room.drawerIndex || wasDrawer) {
+      room.drawerIndex--;
+    }
+
+    if (wasDrawer) {
+      this.endRound(io, room, 'The drawer left the room.');
+      return;
+    }
+
+    if (room.status === 'PLAYING') {
+      const totalGuessers = room.players.length - 1;
+      const correctPresent = room.correctGuessers.filter(u => room.players.some(p => p.username === u)).length;
+      if (totalGuessers > 0 && correctPresent >= totalGuessers) {
+        this.endRound(io, room, 'Everyone guessed correctly! 🎯');
+      }
+    }
   }
 
   endGameMatch(io, room) {

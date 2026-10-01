@@ -26,7 +26,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       roomConfig
     );
 
-    joinPlayerToRoom(io, socket, newRoom, username, avatar, timerManager);
+    joinPlayerToRoom(io, socket, newRoom, username, avatar, timerManager, roundManager);
 
     if (callback) callback({ success: true, roomId: newRoom.id, code: newRoom.code });
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
@@ -50,14 +50,14 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       return;
     }
 
-    joinPlayerToRoom(io, socket, room, socket.data.username, socket.data.avatar, timerManager);
+    joinPlayerToRoom(io, socket, room, socket.data.username, socket.data.avatar, timerManager, roundManager);
     if (callback) callback({ success: true, roomId: room.id, code: room.code });
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
   });
 
   // Leave Room
   socket.on(SOCKET_EVENTS.LEAVE_ROOM, () => {
-    handlePlayerLeave(io, socket, timerManager);
+    handlePlayerLeave(io, socket, timerManager, roundManager);
   });
 
   // Switch Team
@@ -165,7 +165,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
 
   // Disconnect
   socket.on('disconnect', () => {
-    handlePlayerLeave(io, socket, timerManager);
+    handlePlayerLeave(io, socket, timerManager, roundManager);
   });
 }
 
@@ -193,8 +193,8 @@ function getStartBlockReason(room) {
   return null;
 }
 
-function joinPlayerToRoom(io, socket, room, username, avatar, timerManager) {
-  handlePlayerLeave(io, socket, timerManager);
+function joinPlayerToRoom(io, socket, room, username, avatar, timerManager, roundManager) {
+  handlePlayerLeave(io, socket, timerManager, roundManager);
 
   socket.join(room.id);
   socket.data.roomId = room.id;
@@ -229,7 +229,7 @@ function joinPlayerToRoom(io, socket, room, username, avatar, timerManager) {
   });
 }
 
-function handlePlayerLeave(io, socket, timerManager) {
+function handlePlayerLeave(io, socket, timerManager, roundManager) {
   const roomId = socket.data.roomId;
   if (!roomId) return;
 
@@ -239,6 +239,7 @@ function handlePlayerLeave(io, socket, timerManager) {
   socket.leave(roomId);
   socket.data.roomId = null;
 
+  const removedIndex = room.players.findIndex(p => p.socketId === socket.id);
   room.players = room.players.filter(p => p.socketId !== socket.id);
 
   if (room.players.length === 0) {
@@ -246,12 +247,14 @@ function handlePlayerLeave(io, socket, timerManager) {
     if (room.code !== '83921') {
       roomManager.removeRoom(room.code);
     } else {
-      room.status = 'LOBBY';
-      room.drawingHistory = [];
+      roundManager.returnToLobby(io, room);
     }
   } else {
     if (room.host === socket.data.username && room.players.length > 0) {
       room.host = room.players[0].username;
+    }
+    if (removedIndex >= 0) {
+      roundManager.handlePlayerRemoved(io, room, removedIndex, socket.data.username);
     }
     io.to(roomId).emit(SOCKET_EVENTS.ROOM_DATA, roomManager.sanitizeRoom(room, timerManager.getRemainingTime(roomId)));
     io.to(roomId).emit(SOCKET_EVENTS.CHAT_MESSAGE, {

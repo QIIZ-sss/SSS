@@ -21,7 +21,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P1.4 | A2 regression | 1 | Done (automated, incl. "new game requires Ready" after P2.1); MANUAL 2-tab test pending |
 | P2.1 | A4 | 2 | Done (automated); MANUAL pending |
 | P2.2 | A5 | 2 | Done (automated); MANUAL pending |
-| P2.3 | between-round transition | 2 | Not started |
+| P2.3 | between-round transition | 2 | Done (automated); MANUAL pending |
 | P2.4 | A3 | 2 | Not started |
 | P2.5 | A7 | 2 | Not started |
 | P3.1 | A1 | 3 | Not started |
@@ -290,6 +290,13 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Multi-client run with logged `round_change`/`room_data`.
 - **Regression requirements:** P1.4.
 - **Commit requirement:** `fix(P2.3): fix between-round transition`.
+- **Status:** Done (automated); MANUAL NOT TESTED.
+  - Files: `server/src/gameLogic/RoundManager.js`, `server/src/socket/gameHandler.js`.
+  - `RoundManager.handlePlayerRemoved()` (called from `handlePlayerLeave` after removal): shifts `drawerIndex` when an earlier player leaves; if the drawer leaves during WORD_SELECTION/PLAYING the turn ends ("The drawer left the room.") and the next player draws; if the remaining guessers have all guessed, the round ends.
+  - `startTurnSelection()`: if `drawerIndex >= players.length` (next drawer left during ROUND_OVER) the round is closed there (next round, or GAME_OVER at `totalRounds`); clears `currentWord` at WORD_SELECTION (stale word no longer carried).
+  - Empty seed room `83921` now resets via `returnToLobby()` (full round/score reset) instead of status only.
+  - Checks: e2e 11/11 PASS (3 players × 2 rounds order A,B,C,A,B,C / rounds 1,1,1,2,2,2; WORD_SELECTION resets guessers + word; PLAYING timer restarts at 60 each turn; drawer leaves → next player; earlier player leaves in ROUND_OVER → order kept; next drawer leaves in ROUND_OVER → round 2 starts; last guesser leaves → round ends); P2.2 9/9; P2.1 8/8; A2 14/14; harness 20/20; build; startup.
+  - Not covered: client keeps a stale `chosenWord` for a returning drawer during WORD_SELECTION (`MultiplayerGame.jsx`/`TeamGame.jsx`, display only) — left for P3.1 client changes; U8 ghost player (header logo) unchanged.
 
 ### P2.4 — Timeout reveal (A3)
 
