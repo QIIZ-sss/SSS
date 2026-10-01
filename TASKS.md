@@ -29,7 +29,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P4.1 | B4 | 4 | Done (automated); MANUAL browser refresh pending |
 | P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
 | P5.2 | B2 | 5 | Partial — known overflow fixed; full 375 px / iPad check MANUAL pending |
-| P5.3 | B3 | 5 | Not started |
+| P5.3 | B3 | 5 | Done (logic tested); mobile keypad MANUAL pending |
 | P5.4 | B5 | 5 | Not started — after P4.1 (see sequencing) |
 | P6.1 | C1 | 6 | Not started |
 | P6.2 | C2 | 6 | Not started |
@@ -485,6 +485,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Desktop keyboard + paste; real phone (`MANUAL`).
 - **Regression requirements:** Join success/failure messages; RoomList join.
 - **Commit requirement:** `fix(B3): pin auto-advance and paste`.
+- **Status:** Done; on-device keypad / focus behaviour NOT TESTED (MANUAL).
+  - File: `client/src/App.jsx`. Five separate `pin1..pin5` states replaced by one `pinDigits` array sized by `GAME_RULES.ROOM_PIN_LENGTH`; boxes rendered from it with `inputMode="numeric"`, `pattern="[0-9]*"`, `autoComplete="one-time-code"`, `aria-label`; label and length check use the shared constant.
+  - Rules implemented as pure exported functions (`pinAfterInput`, `pinAfterBackspace`, `pinAfterPaste`) exactly as specified above, plus: typing into a filled box replaces its digit; a full-length autofill into any box fills from the first box.
+  - Placeholder changed from the per-box digits of the seeded room code (`8 3 9 2 1`, a hardcoded copy of the server's seed room) to `•`.
+  - Checks: logic test 12/12 PASS (continuous typing fills 5 boxes with focus 1→2→3→4; non-digit ignored; Backspace filled/empty/first box; paste full / noisy / partial; autofill); `inputMode:"numeric"` present in the production bundle; client build PASS; join flows unchanged on the server (e2e suites use `join_room` by code).
 
 ### P5.4 — LAN connection without localhost assumption (B5)
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import RoomList from './components/RoomList';
 import Leaderboard from './components/Leaderboard';
 import MultiplayerGame from './gameModes/MultiplayerGame';
@@ -7,7 +7,7 @@ import SoloAIGame from './gameModes/SoloAIGame';
 import { socket, connectSocket } from './services/socket';
 import { SOCKET_EVENTS } from '../../shared/events';
 import { GAME_MODES, AVATARS } from '../../shared/gameConfig';
-import { GAME_STATUS } from '../../shared/contract';
+import { GAME_STATUS, GAME_RULES } from '../../shared/contract';
 import './index.css';
 
 // B4: per-tab session for refresh/reconnect (sessionStorage may be unavailable, e.g. private mode)
@@ -24,17 +24,66 @@ const clearSession = () => {
   try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
 };
 
+// B3 PIN entry rules (pure, so they can be tested without a browser). Each returns the new digits
+// array and the index to focus (or null).
+const pinFocusAfterFill = (digits) => {
+  const firstEmpty = digits.findIndex((d) => !d);
+  return firstEmpty === -1 ? digits.length - 1 : firstEmpty;
+};
+export const pinAfterPaste = (digits, text, startIdx = 0) => {
+  const incoming = (text || '').replace(/\D/g, '');
+  if (!incoming) return { digits, focus: null };
+  const next = [...digits];
+  let i = startIdx;
+  for (const d of incoming) {
+    if (i >= next.length) break;
+    next[i++] = d;
+  }
+  return { digits: next, focus: pinFocusAfterFill(next) };
+};
+export const pinAfterInput = (digits, idx, value) => {
+  const incoming = (value || '').replace(/\D/g, '');
+  if (value === '') {
+    const next = [...digits];
+    next[idx] = '';
+    return { digits: next, focus: null };
+  }
+  if (!incoming) return { digits, focus: null }; // non-digit input ignored
+  if (incoming.length === 2 && digits[idx]) {
+    // typed into a box that already had a digit: keep the new digit
+    const typed = incoming[0] === digits[idx] ? incoming[1] : incoming[0];
+    return pinAfterInput(digits, idx, typed);
+  }
+  if (incoming.length > 1) {
+    // autofill / multi-character input: a full code starts at the first box
+    return pinAfterPaste(digits, incoming, incoming.length >= digits.length ? 0 : idx);
+  }
+  const next = [...digits];
+  next[idx] = incoming;
+  return { digits: next, focus: idx < digits.length - 1 ? idx + 1 : null };
+};
+export const pinAfterBackspace = (digits, idx) => {
+  const next = [...digits];
+  if (next[idx]) {
+    next[idx] = '';
+    return { digits: next, focus: null };
+  }
+  if (idx > 0) {
+    next[idx - 1] = '';
+    return { digits: next, focus: idx - 1 };
+  }
+  return { digits: next, focus: null };
+};
+
 export default function App() {
   const [username, setUsername] = useState(localStorage.getItem('game_username') || 'กกก');
   const [avatar, setAvatar] = useState(localStorage.getItem('game_avatar') || '🐼');
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('game_username'));
 
   const [modeTab, setModeTab] = useState('create'); // 'create' | 'join'
-  const [pin1, setPin1] = useState('');
-  const [pin2, setPin2] = useState('');
-  const [pin3, setPin3] = useState('');
-  const [pin4, setPin4] = useState('');
-  const [pin5, setPin5] = useState('');
+  const PIN_LENGTH = GAME_RULES.ROOM_PIN_LENGTH;
+  const [pinDigits, setPinDigits] = useState(() => Array(PIN_LENGTH).fill(''));
+  const pinRefs = useRef([]);
 
   const [currentRoomId, setCurrentRoomId] = useState(null);
   const [roomData, setRoomData] = useState(null);
@@ -109,11 +158,17 @@ export default function App() {
     });
   };
 
+  // B3: PIN boxes — digits only, auto-advance, Backspace goes back, paste fills from the first box
+  const applyPin = ({ digits, focus }) => {
+    setPinDigits(digits);
+    if (focus !== null && pinRefs.current[focus]) pinRefs.current[focus].focus();
+  };
+
   const handleJoinByPin = (e) => {
     e.preventDefault();
-    const fullPin = `${pin1}${pin2}${pin3}${pin4}${pin5}`.trim();
-    if (fullPin.length < 5) {
-      alert('Please enter a 5-digit room code!');
+    const fullPin = pinDigits.join('');
+    if (fullPin.length < PIN_LENGTH) {
+      alert(`Please enter a ${PIN_LENGTH}-digit room code!`);
       return;
     }
 
@@ -487,51 +542,36 @@ export default function App() {
                         /* Interactive Panel: JOIN PIN MODE */
                         <form onSubmit={handleJoinByPin} className="flex flex-col gap-space-md">
                           <div className="flex items-center justify-between">
-                            <span className="font-label-lg text-label-lg uppercase tracking-wider text-on-surface font-bold">2. ENTER 5-DIGIT ROOM CODE</span>
+                            <span className="font-label-lg text-label-lg uppercase tracking-wider text-on-surface font-bold">2. ENTER {PIN_LENGTH}-DIGIT ROOM CODE</span>
                             <span className="font-label-sm text-label-sm text-accent-blue font-bold">INVITE ONLY</span>
                           </div>
 
                           <div className="flex justify-between gap-space-xs sm:gap-space-sm">
-                            <input
-                              className="pin-box w-12 h-14 sm:w-14 sm:h-16 text-center text-headline-xl font-headline-xl uppercase bg-surface-card text-on-surface rounded-xl border-3 border-border-dark shadow-md focus:bg-canvas-paper focus:ring-2 focus:ring-secondary-container outline-none"
-                              maxLength="1"
-                              type="text"
-                              value={pin1}
-                              onChange={(e) => setPin1(e.target.value.toUpperCase())}
-                              placeholder="8"
-                            />
-                            <input
-                              className="pin-box w-12 h-14 sm:w-14 sm:h-16 text-center text-headline-xl font-headline-xl uppercase bg-surface-card text-on-surface rounded-xl border-3 border-border-dark shadow-md focus:bg-canvas-paper focus:ring-2 focus:ring-secondary-container outline-none"
-                              maxLength="1"
-                              type="text"
-                              value={pin2}
-                              onChange={(e) => setPin2(e.target.value.toUpperCase())}
-                              placeholder="3"
-                            />
-                            <input
-                              className="pin-box w-12 h-14 sm:w-14 sm:h-16 text-center text-headline-xl font-headline-xl uppercase bg-surface-card text-on-surface rounded-xl border-3 border-border-dark shadow-md focus:bg-canvas-paper focus:ring-2 focus:ring-secondary-container outline-none"
-                              maxLength="1"
-                              type="text"
-                              value={pin3}
-                              onChange={(e) => setPin3(e.target.value.toUpperCase())}
-                              placeholder="9"
-                            />
-                            <input
-                              className="pin-box w-12 h-14 sm:w-14 sm:h-16 text-center text-headline-xl font-headline-xl uppercase bg-surface-card text-on-surface rounded-xl border-3 border-border-dark shadow-md focus:bg-canvas-paper focus:ring-2 focus:ring-secondary-container outline-none"
-                              maxLength="1"
-                              type="text"
-                              value={pin4}
-                              onChange={(e) => setPin4(e.target.value.toUpperCase())}
-                              placeholder="2"
-                            />
-                            <input
-                              className="pin-box w-12 h-14 sm:w-14 sm:h-16 text-center text-headline-xl font-headline-xl uppercase bg-surface-card text-on-surface rounded-xl border-3 border-border-dark shadow-md focus:bg-canvas-paper focus:ring-2 focus:ring-secondary-container outline-none"
-                              maxLength="1"
-                              type="text"
-                              value={pin5}
-                              onChange={(e) => setPin5(e.target.value.toUpperCase())}
-                              placeholder="1"
-                            />
+                            {pinDigits.map((digit, idx) => (
+                              <input
+                                key={idx}
+                                ref={(el) => { pinRefs.current[idx] = el; }}
+                                className="pin-box w-12 h-14 sm:w-14 sm:h-16 text-center text-headline-xl font-headline-xl uppercase bg-surface-card text-on-surface rounded-xl border-3 border-border-dark shadow-md focus:bg-canvas-paper focus:ring-2 focus:ring-secondary-container outline-none"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                autoComplete="one-time-code"
+                                aria-label={`Room code digit ${idx + 1}`}
+                                value={digit}
+                                onChange={(e) => applyPin(pinAfterInput(pinDigits, idx, e.target.value))}
+                                onKeyDown={(e) => {
+                                  if (e.key !== 'Backspace') return;
+                                  e.preventDefault();
+                                  applyPin(pinAfterBackspace(pinDigits, idx));
+                                }}
+                                onPaste={(e) => {
+                                  e.preventDefault();
+                                  applyPin(pinAfterPaste(pinDigits, e.clipboardData.getData('text')));
+                                }}
+                                onFocus={(e) => e.target.select()}
+                                placeholder="•"
+                              />
+                            ))}
                           </div>
 
                           <button
