@@ -6,6 +6,7 @@ export const SOCKET_EVENTS = {
   ROOM_LIST_UPDATED: 'room_list_updated',
   CREATE_ROOM: 'create_room',
   JOIN_ROOM: 'join_room',
+  REJOIN_ROOM: 'rejoin_room', // B4: restore a player slot after refresh/reconnect
   LEAVE_ROOM: 'leave_room',
   ROOM_DATA: 'room_data',
   SWITCH_TEAM: 'switch_team',

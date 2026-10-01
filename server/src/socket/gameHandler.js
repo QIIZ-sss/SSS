@@ -4,6 +4,7 @@ const { GAME_MODES } = require('../../../shared/gameConfig');
 const { GAME_STATUS, GAME_RULES } = require('../../../shared/contract');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
+const crypto = require('crypto');
 
 function setupGameHandlers(io, socket, timerManager, roundManager) {
   // Get public room list
@@ -26,9 +27,9 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       roomConfig
     );
 
-    joinPlayerToRoom(io, socket, newRoom, username, avatar, timerManager, roundManager);
+    const sessionId = joinPlayerToRoom(io, socket, newRoom, username, avatar, timerManager, roundManager);
 
-    if (callback) callback({ success: true, roomId: newRoom.id, code: newRoom.code });
+    if (callback) callback({ success: true, roomId: newRoom.id, code: newRoom.code, sessionId });
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
   });
 
@@ -50,9 +51,59 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       return;
     }
 
-    joinPlayerToRoom(io, socket, room, socket.data.username, socket.data.avatar, timerManager, roundManager);
-    if (callback) callback({ success: true, roomId: room.id, code: room.code });
+    const sessionId = joinPlayerToRoom(io, socket, room, socket.data.username, socket.data.avatar, timerManager, roundManager);
+    if (callback) callback({ success: true, roomId: room.id, code: room.code, sessionId });
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
+  });
+
+  // Rejoin after refresh / reconnect (B4): restore the same player slot within RECONNECT_GRACE_MS
+  socket.on(SOCKET_EVENTS.REJOIN_ROOM, (payload, callback) => {
+    const { code, sessionId } = payload || {};
+    const room = typeof code === 'string' ? roomManager.getRoom(code) : null;
+    const player = room && typeof sessionId === 'string' && sessionId
+      ? room.players.find(p => p.sessionId === sessionId)
+      : null;
+
+    if (!player) {
+      if (callback) callback({ success: false, message: 'Session expired.' });
+      return;
+    }
+
+    if (socket.data.roomId && socket.data.roomId !== room.id) {
+      handlePlayerLeave(io, socket, timerManager, roundManager);
+    }
+
+    // Detach a previous socket still bound to this player (e.g. a duplicated tab)
+    if (player.socketId && player.socketId !== socket.id) {
+      const oldSocket = io.sockets.sockets.get(player.socketId);
+      if (oldSocket) {
+        oldSocket.leave(room.id);
+        oldSocket.data.roomId = null;
+      }
+    }
+    if (player.graceTimer) {
+      clearTimeout(player.graceTimer);
+      player.graceTimer = null;
+    }
+
+    player.socketId = socket.id;
+    socket.join(room.id);
+    socket.data.roomId = room.id;
+    socket.data.username = player.username;
+    socket.data.avatar = player.avatar;
+
+    // Same role-based view as normal broadcasts (P3.1); drawer-only data only to the drawer
+    roomManager.emitRoomData(io, room, timerManager.getRemainingTime(room.id));
+    if (room.status === GAME_STATUS.WORD_SELECTION && room.currentDrawer === player.username) {
+      socket.emit(SOCKET_EVENTS.WORD_SELECTION, { words: room.wordOptions });
+    }
+    io.to(room.id).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
+      sender: 'System',
+      text: `${player.username} reconnected.`,
+      isSystem: true
+    });
+
+    if (callback) callback({ success: true, roomId: room.id, code: room.code, username: player.username, avatar: player.avatar });
   });
 
   // Leave Room
@@ -165,7 +216,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
 
   // Disconnect
   socket.on('disconnect', () => {
-    handlePlayerLeave(io, socket, timerManager, roundManager);
+    handlePlayerDisconnect(io, socket, timerManager, roundManager);
   });
 }
 
@@ -206,13 +257,21 @@ function joinPlayerToRoom(io, socket, room, username, avatar, timerManager, roun
     team = redCount <= blueCount ? 'Red' : 'Blue';
   }
 
+  const sessionId = crypto.randomBytes(16).toString('hex');
   const existingIdx = room.players.findIndex(p => p.username === username);
   if (existingIdx >= 0) {
-    room.players[existingIdx].socketId = socket.id;
-    room.players[existingIdx].avatar = avatar || room.players[existingIdx].avatar;
+    const existing = room.players[existingIdx];
+    existing.socketId = socket.id;
+    existing.avatar = avatar || existing.avatar;
+    existing.sessionId = sessionId; // invalidates the previous session for this slot
+    if (existing.graceTimer) {
+      clearTimeout(existing.graceTimer);
+      existing.graceTimer = null;
+    }
   } else {
     room.players.push({
       socketId: socket.id,
+      sessionId: sessionId,
       username: username,
       avatar: avatar || '🐶',
       score: 0,
@@ -227,8 +286,39 @@ function joinPlayerToRoom(io, socket, room, username, avatar, timerManager, roun
     text: `${username} joined room ${room.code}!`,
     isSystem: true
   });
+
+  return sessionId;
 }
 
+// Disconnect (refresh, network loss): keep the slot for RECONNECT_GRACE_MS before removing it (B4)
+function handlePlayerDisconnect(io, socket, timerManager, roundManager) {
+  const roomId = socket.data.roomId;
+  if (!roomId) return;
+
+  const room = roomManager.getRoom(roomId);
+  if (!room) return;
+
+  const player = room.players.find(p => p.socketId === socket.id);
+  if (!player) return;
+
+  player.socketId = null;
+  if (player.graceTimer) clearTimeout(player.graceTimer);
+  player.graceTimer = setTimeout(() => {
+    player.graceTimer = null;
+    const currentRoom = roomManager.getRoom(roomId);
+    if (currentRoom && currentRoom.players.includes(player) && !player.socketId) {
+      removePlayer(io, currentRoom, player, timerManager, roundManager);
+    }
+  }, GAME_RULES.RECONNECT_GRACE_MS);
+
+  io.to(roomId).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
+    sender: 'System',
+    text: `${player.username} disconnected — waiting for them to reconnect.`,
+    isSystem: true
+  });
+}
+
+// Explicit leave (LEAVE ROOM button, joining another room): remove immediately
 function handlePlayerLeave(io, socket, timerManager, roundManager) {
   const roomId = socket.data.roomId;
   if (!roomId) return;
@@ -239,8 +329,21 @@ function handlePlayerLeave(io, socket, timerManager, roundManager) {
   socket.leave(roomId);
   socket.data.roomId = null;
 
-  const removedIndex = room.players.findIndex(p => p.socketId === socket.id);
-  room.players = room.players.filter(p => p.socketId !== socket.id);
+  const player = room.players.find(p => p.socketId === socket.id);
+  if (player) {
+    removePlayer(io, room, player, timerManager, roundManager);
+  }
+}
+
+function removePlayer(io, room, player, timerManager, roundManager) {
+  const roomId = room.id;
+  if (player.graceTimer) {
+    clearTimeout(player.graceTimer);
+    player.graceTimer = null;
+  }
+
+  const removedIndex = room.players.indexOf(player);
+  room.players = room.players.filter(p => p !== player);
 
   if (room.players.length === 0) {
     timerManager.stopTimer(roomId);
@@ -250,16 +353,16 @@ function handlePlayerLeave(io, socket, timerManager, roundManager) {
       roundManager.returnToLobby(io, room);
     }
   } else {
-    if (room.host === socket.data.username && room.players.length > 0) {
+    if (room.host === player.username && room.players.length > 0) {
       room.host = room.players[0].username;
     }
     if (removedIndex >= 0) {
-      roundManager.handlePlayerRemoved(io, room, removedIndex, socket.data.username);
+      roundManager.handlePlayerRemoved(io, room, removedIndex, player.username);
     }
     roomManager.emitRoomData(io, room, timerManager.getRemainingTime(roomId));
     io.to(roomId).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
       sender: 'System',
-      text: `${socket.data.username} left the room.`,
+      text: `${player.username} left the room.`,
       isSystem: true
     });
   }

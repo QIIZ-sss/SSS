@@ -193,6 +193,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | C→S | `get_rooms` | — | `gameHandler.js:9` |
 | C→S | `create_room` | `{name, username, avatar, gameMode, maxPlayers, roundTime, miniChallengeEnabled}` + ack `{success, roomId, code}` | `App.jsx:96-110`, `gameHandler.js:14-32` |
 | C→S | `join_room` | `{code \| roomId, username, avatar}` + ack | `App.jsx:85`, `RoomList.jsx:25`, `gameHandler.js:35-55` |
+| C→S | `rejoin_room` (**new in P4.1**) | `{code, sessionId}` + ack `{success, roomId, code, username, avatar}` | `App.jsx`, `gameHandler.js` |
 | C→S | `leave_room` | — | `App.jsx:114` |
 | C→S | `switch_team` | `{team}` | `gameHandler.js:63` |
 | C→S | `toggle_ready` | — | `RoomLobby.jsx:21` |
@@ -284,7 +285,9 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 ## 14. Session / reconnect
 
-`CURRENT FACT` — **no reconnect/session implementation exists.**
+**Updated in P4.1 (pre-approved contract change):** reconnect exists. `create_room`/`join_room` acks return a random `sessionId`; `disconnect` keeps the player slot for `GAME_RULES.RECONNECT_GRACE_MS` (30 s); new event `rejoin_room` `{ code, sessionId }` rebinds the socket and re-sends role-based `room_data` (and `word_selection` to the drawer only). Client keeps `{ code, sessionId }` in `sessionStorage` and rejoins on every socket `connect` (`client/src/App.jsx`). Baseline description below kept for history.
+
+Baseline `CURRENT FACT` — **no reconnect/session implementation existed.**
 
 - `disconnect` → `handlePlayerLeave` removes the player immediately (`gameHandler.js:155-157,196-229`). `RECONNECT_GRACE_MS` is not used.
 - Client keeps the room only in React state `currentRoomId` (`App.jsx:24`); only `game_username`/`game_avatar` are persisted in `localStorage` (`App.jsx:13-15,66-67`). A refresh returns to Home.
@@ -314,7 +317,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 | 1 | `contract.js` is the single source of truth (`HANDOFF.md` §1) | Loadable by both runtimes since P1.2; values adopted task by task (§4) |
 | 2 | `HANDOFF.md` C2/C3/C4 cite "BUG-05/06/07" | Those numbers are `QA_REPORT.md` numbering and collide with the team's 14-bug list |
 | 3 | `README.md` describes the "วาดต่อ" game and file map | Live code is `server.js` + `gameLogic/` + `socket/` (§2) |
-| 4 | QA NW-07 PASS (reconnect keeps score) | No reconnect; player removed on disconnect (§14) |
+| 4 | QA NW-07 PASS (reconnect keeps score) | Was false at baseline; reconnect implemented in P4.1 (§14) |
 | 5 | QA T-04 PASS (timeout reveals answer) | Payload contained the word but the UI did not show it; fixed in P2.4 (§8) |
 | 6 | QA T-02 PASS (timer) | Evidence shows identical values, not a countdown (§6.2) |
 | 7 | `HANDOFF.md`: eraser does not exist | White-paint "eraser" exists; not a real eraser (§12) |

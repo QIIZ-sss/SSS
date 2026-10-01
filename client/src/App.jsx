@@ -10,6 +10,20 @@ import { GAME_MODES, AVATARS } from '../../shared/gameConfig';
 import { GAME_STATUS } from '../../shared/contract';
 import './index.css';
 
+// B4: per-tab session for refresh/reconnect (sessionStorage may be unavailable, e.g. private mode)
+const SESSION_KEY = 'jdi_room_session';
+const loadSession = () => {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; }
+};
+const saveSession = (res) => {
+  try {
+    if (res && res.sessionId) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ code: res.code, sessionId: res.sessionId }));
+  } catch (e) { /* ignore */ }
+};
+const clearSession = () => {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
+};
+
 export default function App() {
   const [username, setUsername] = useState(localStorage.getItem('game_username') || 'กกก');
   const [avatar, setAvatar] = useState(localStorage.getItem('game_avatar') || '🐼');
@@ -54,11 +68,27 @@ export default function App() {
       setGameOverModal(data);
     };
 
+    // Rejoin the previous room after a refresh or a socket reconnect
+    const tryRejoin = () => {
+      const session = loadSession();
+      if (!session) return;
+      socket.emit(SOCKET_EVENTS.REJOIN_ROOM, session, (res) => {
+        if (res && res.success) {
+          setCurrentRoomId(res.roomId);
+        } else {
+          clearSession();
+        }
+      });
+    };
+
     socket.on(SOCKET_EVENTS.ROOM_DATA, handleRoomData);
     socket.on(SOCKET_EVENTS.WORD_SELECTION, handleWordSelection);
     socket.on(SOCKET_EVENTS.GAME_OVER, handleGameOver);
+    socket.on('connect', tryRejoin);
+    if (socket.connected) tryRejoin();
 
     return () => {
+      socket.off('connect', tryRejoin);
       socket.off(SOCKET_EVENTS.ROOM_DATA, handleRoomData);
       socket.off(SOCKET_EVENTS.WORD_SELECTION, handleWordSelection);
       socket.off(SOCKET_EVENTS.GAME_OVER, handleGameOver);
@@ -89,6 +119,7 @@ export default function App() {
 
     socket.emit(SOCKET_EVENTS.JOIN_ROOM, { code: fullPin, username, avatar }, (res) => {
       if (res && res.success) {
+        saveSession(res);
         setCurrentRoomId(res.roomId);
       } else {
         alert(res?.message || 'Failed to join room!');
@@ -110,12 +141,14 @@ export default function App() {
 
     socket.emit(SOCKET_EVENTS.CREATE_ROOM, config, (res) => {
       if (res && res.success) {
+        saveSession(res);
         setCurrentRoomId(res.roomId);
       }
     });
   };
 
   const handleLeaveRoom = () => {
+    clearSession();
     socket.emit(SOCKET_EVENTS.LEAVE_ROOM);
     setCurrentRoomId(null);
     setRoomData(null);
@@ -515,7 +548,7 @@ export default function App() {
 
                   {/* RIGHT PANEL: Public Room Browser (7 Cols) */}
                   <div className="lg:col-span-7 flex flex-col gap-space-lg">
-                    <RoomList username={username} avatar={avatar} onJoinRoom={(id) => setCurrentRoomId(id)} />
+                    <RoomList username={username} avatar={avatar} onJoinRoom={(id, res) => { saveSession(res); setCurrentRoomId(id); }} />
                   </div>
                 </div>
               </div>

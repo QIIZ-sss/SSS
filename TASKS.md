@@ -26,7 +26,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P2.5 | A7 | 2 | Done — server timer verified (no code change); client display MANUAL pending |
 | P3.1 | A1 | 3 | Done (automated); MANUAL F12 check pending |
 | P3.2 | A6 | 3 | Done (automated); MANUAL pending |
-| P4.1 | B4 | 4 | Not started |
+| P4.1 | B4 | 4 | Done (automated); MANUAL browser refresh pending |
 | P5.1 | B1 | 5 | Not started |
 | P5.2 | B2 | 5 | Not started |
 | P5.3 | B3 | 5 | Not started |
@@ -411,6 +411,16 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Refresh guesser and drawer mid-round; frame capture after reconnect.
 - **Regression requirements:** P3.1; leave/host transfer; P1.4.
 - **Commit requirement:** `feat(B4): restore reconnect session`.
+- **Status:** Done (automated); MANUAL browser refresh NOT TESTED.
+  - **Contract changes (pre-approved, minimal, required for reconnect):**
+    - New event `rejoin_room` (`SOCKET_EVENTS.REJOIN_ROOM`, C→S) payload `{ code, sessionId }`, ack `{ success, roomId, code, username, avatar }` or `{ success: false, message }`.
+    - New ack field `sessionId` on the existing `create_room` and `join_room` acks.
+  - Server (`gameHandler.js`): each player gets a random `sessionId` (crypto, 128-bit); `disconnect` no longer removes the player — the slot is kept for `GAME_RULES.RECONNECT_GRACE_MS` (30 s), then removed through the same path as a leave (turn order / drawer-left handling from P2.3). Explicit `leave_room` still removes immediately. `rejoin_room` rebinds the socket, re-sends `room_data` through `emitRoomData` (same role-based rules as P3.1) and re-sends `word_selection` only to the drawer during WORD_SELECTION. A same-name `join_room` rotates the `sessionId` (old session stops working).
+  - Client: `App.jsx` stores `{ code, sessionId }` in `sessionStorage` (per tab, try/catch) on create/join, emits `rejoin_room` on every socket `connect` (page load and socket.io auto-reconnect), clears it on LEAVE / failed rejoin; `RoomList.jsx` passes the join ack up. `shared/events.js` adds `REJOIN_ROOM`.
+  - Files: `server/src/socket/gameHandler.js`, `shared/events.js`, `client/src/App.jsx`, `client/src/components/RoomList.jsx`.
+  - Checks: e2e 20/20 PASS — sessionId issued; guesser refresh mid-PLAYING returns to the same room/state, score kept, no answer in any event after rejoin, `wordLength` kept, can still guess; drawer refresh in WORD_SELECTION gets its candidates again (guesser never does), keeps host, sees the word in PLAYING; unknown / malformed / post-leave sessions rejected; disconnected drawer kept during grace, removed at 30.0 s with the turn ended and host passed on; same-name join invalidates the old session. All earlier suites PASS.
+  - Not covered by automation: the browser flow (`sessionStorage` + reload) — MANUAL. W1 "score preserved" was checked at score 0 only; the rejoined player scoring afterwards was checked.
+  - Known limits: identity is still username-based for `join_room` (U1); while a player is disconnected they still count as a guesser / can still be the drawer until the grace expires.
 
 ---
 

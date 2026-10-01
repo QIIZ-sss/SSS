@@ -24,7 +24,7 @@ export default function RoomList({ username, avatar, onJoinRoom }) {
   const handleJoin = (roomId) => {
     socket.emit(SOCKET_EVENTS.JOIN_ROOM, { roomId, username, avatar }, (response) => {
       if (response && response.success) {
-        onJoinRoom(roomId);
+        onJoinRoom(roomId, response);
       } else {
         alert(response?.message || 'Could not join room');
       }
