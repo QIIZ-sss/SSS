@@ -22,7 +22,7 @@ plus an installed Google Chrome for the browser tests.
 tests/check_all.sh
 ```
 
-Takes about 10 minutes on the reference Mac (e2e use real timers, e.g. the reconnect test waits for the 30 s grace period; the Tailwind layout test loads the CDN). Use `E2E=...` to run a subset. Exit code 0 only if nothing failed.
+Takes about 12–13 minutes on the reference Mac (e2e use real timers, e.g. the reconnect test waits for the 30 s grace period; the Tailwind layout test loads the CDN). Use `E2E=...` to run a subset. Exit code 0 only if nothing failed.
 
 Useful variables:
 
@@ -45,11 +45,12 @@ Single files can also be run directly, e.g. `node tests/lib/render.js tests/rend
 | harness | `harness/state-machine.harness.js` | Node | state machine with a fake clock: no Round 4/3, GAME_OVER → LOBBY after 10 s, stale timeouts cleared |
 | client build | `vite build` into `TEST_TMP` | Node | client compiles |
 | render | `render/*.test.jsx` via `lib/render.js` | Node | component markup and pure logic (answer reveal, chat lock, canvas markup, mobile order, PIN rules, default name, avatars) |
-| browser | `browser/*.browser.jsx` via `lib/browser.js` | **Chrome** | real DOM / canvas: eraser + pointer scaling (D2, B1), PIN typing / paste (B3), reconnect client flow (B4) |
+| browser | `browser/*.browser.jsx` via `lib/browser.js` | **Chrome** | real DOM / canvas: eraser + pointer scaling (D2, B1), PIN typing / paste (B3), reconnect client flow (B4), difficulty setting (D1), challenge popup (D3), Solo AI client (A8/A9) |
 | browser layout | `browser/b2-layout-overflow.browser.jsx` | **Chrome + network** (Tailwind CDN) | no horizontal overflow on 9 screens at 375 px and 820 px |
-| e2e | `e2e/*.e2e.js` against a real server on `TEST_PORT` | Node | A2, P2.1–P2.5, P3.1, P3.2, B4 with real socket.io clients |
+| e2e | `e2e/*.e2e.js` against a real server on `TEST_PORT` | Node | A2, P2.1–P2.5, P3.1, P3.2, B4, D1, A8/A9 with real socket.io clients; A8/A9 also loads the real DoodleNet model in-process |
 
 Render and browser tests replace `client/src/services/socket.js` with `lib/socket-stub.js`; they are not end-to-end.
+The A8/A9 "correct drawing scores +500" check only runs when a Solo turn's random target is Sun or Clock within 10 turns; otherwise the e2e prints `INFO … not exercised` and does not count it (the in-process model checks always run).
 None of this replaces the MANUAL checks in `TASKS.md` (real phones / iPad, real refresh, LAN with several devices).
 
 ## Negative controls
@@ -66,5 +67,6 @@ tests/
   render/                  react-dom/server tests
   browser/                 headless Chrome tests
   e2e/                     real server + socket.io client tests
+  fixtures/                deterministic 28×28 doodles for Solo AI tests
   negative-control/        expected-to-fail runs against old commits
 ```

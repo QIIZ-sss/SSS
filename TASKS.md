@@ -4,7 +4,7 @@ Task plan derived from `HANDOFF.md` §3 (requirements A1–A9, B1–B5, C1–C4,
 
 Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `ARCHITECTURE.md` (cited by section, e.g. `ARCH §6.1`).
 
-**Files allowed** — no task has completed its own task-level discovery yet, so every task says `TBD after read-only discovery`. "Candidate files" are hints from repo-level discovery only; they are **not** approved. After a task's discovery, replace TBD with the verified list and get approval if `AGENTS.md` §2 is triggered.
+**Files allowed** — task sections still show the original `TBD after read-only discovery` / candidate lists; the files actually changed are listed in each task's **Status** entry. For new work, list the verified files after discovery and get approval if `AGENTS.md` §2 is triggered.
 
 **QA evidence** — all existing `qa/QA_REPORT.md` results are DOCUMENTATION CLAIMS (many hardcoded `PASS`). A task is verified only by new runtime evidence produced for that task.
 

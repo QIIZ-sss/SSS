@@ -51,7 +51,7 @@ Do not write the justification and continue automatically.
 2. Reuse the existing shared value if one exists.
 3. Create a new constant only for a genuinely missing concept.
 
-Client may read shared values for UX (e.g. disabling START); the server enforces the same shared value and is authoritative. The client must never define a competing value. Note: `shared/contract.js` is **not yet imported at runtime** (see `ARCHITECTURE.md` §4) — do not assume it is in effect.
+Client may read shared values for UX (e.g. disabling START); the server enforces the same shared value and is authoritative. The client must never define a competing value. `shared/contract.js` is loaded by both server and client (since P1.2/P1.3), but not every value is adopted yet (see `ARCHITECTURE.md` §4) — check that a value is actually read from it before relying on it.
 
 ## 4. Socket contract
 
