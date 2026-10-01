@@ -41,7 +41,7 @@ const MIN_CSS = '.relative{position:relative}.absolute{position:absolute}.top-0{
   });
 
   const html = path.join(outDir, path.basename(entry) + '.html');
-  let head = `<meta name="viewport" content="width=device-width"><style>${MIN_CSS}</style>`;
+  let head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>${MIN_CSS}</style>`;
   let bodyAttr = '';
   if (process.env.REAL_HEAD) {
     const idx = fs.readFileSync(path.join(CLIENT, 'index.html'), 'utf8');
