@@ -28,7 +28,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P3.2 | A6 | 3 | Done (automated); MANUAL pending |
 | P4.1 | B4 | 4 | Done (automated); MANUAL browser refresh pending |
 | P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
-| P5.2 | B2 | 5 | Partial — known overflow fixed; full 375 px / iPad check MANUAL pending |
+| P5.2 | B2 | 5 | Done (headless Chrome 375 / 820 px, 9 screens); real devices MANUAL pending |
 | P5.3 | B3 | 5 | Done (logic tested); mobile keypad MANUAL pending |
 | P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
 | P6.1 | C1 | 6 | Done |
@@ -445,7 +445,8 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - File: `client/src/components/Canvas.jsx`.
   - Mouse + touch handlers replaced by Pointer Events (`onPointerDown/Move/Up/Leave/Cancel`, primary pointer only, `preventDefault` on down); `touch-action: none` on the canvas container and drawing canvas. `pointerleave` still ends the stroke (keeps the existing DONT_LIFT_PEN "leaving the canvas counts as lifting" behaviour).
   - `getCanvasCoords` now scales client coordinates to the fixed 640×480 canvas space, so strokes land under the finger/cursor at any displayed size and remote clients receive the same coordinate space (previously CSS pixels).
-  - Checks: render test 3/3 PASS (`touch-action:none` on container + drawing canvas, 640×480 kept); no mouse/touch handlers left; client build PASS. Pointer behaviour itself is not testable without a browser — MANUAL.
+  - Checks: render test 3/3 PASS (`touch-action:none` on container + drawing canvas, 640×480 kept); no mouse/touch handlers left; client build PASS.
+  - **Added evidence (headless Chrome, recorded with D2):** computed `touch-action: none`; synthetic touch-type PointerEvents on a canvas displayed at 320 px land at canvas (320,240) and are emitted in 640×480 space. Real finger/stylus scrolling and zoom on iOS/Android remain MANUAL.
 
 ### P5.2 — Responsive layout (B2)
 
@@ -466,6 +467,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - Files: `client/src/App.jsx` (header: logo text `hidden sm:inline` + `whitespace-nowrap`, `shrink-0` on logo / sound / LEAVE, username `truncate` on mobile, mobile gutters `px-gutter-mobile`, `py-margin-mobile` — existing theme tokens), `client/src/gameModes/MultiplayerGame.jsx`, `client/src/gameModes/TeamGame.jsx` (mobile order: canvas, then chat, then standings — HANDOFF B2 "canvas on top, chat below"; desktop `lg:` 3-column order unchanged).
   - Checks: render test 4/4 PASS (order classes, canvas column), client build PASS. Static scan found no fixed widths wider than 375 px on the live path (only `max-w-*`).
   - Not changed: Lobby, Home, Leaderboard, Solo AI screens (no evidence of overflow found by static scan).
+  - **Added evidence (headless Chrome 154, real Tailwind config from `client/index.html`, components rendered in a 375 px iframe and at 820 px):** 9 screens — Login, Home (create/join), Room lobby, FFA drawer, FFA guesser ROUND_OVER, FFA word selection, Team, Solo AI, Leaderboard — no horizontal overflow at 375 px (9/9) and 820 px (9/9). Negative control on the pre-B2 commit `32d371d`: Home header overflows to 379 px at 375 px (8/9), so the check detects the issue. Not covered: result modal, real touch devices, Safari.
 
 ### P5.3 — PIN entry (B3)
 
