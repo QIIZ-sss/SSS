@@ -3,6 +3,7 @@ import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
 import { MINI_CHALLENGES, DEFAULT_COLOR_PALETTE } from '../../../shared/gameConfig';
 import { calculateShapeDimensions, drawGhostPreview } from '../gameEngine/shapePreview';
+import { ChallengeModal } from './ChallengeOverlay';
 
 export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawing }) {
   const canvasRef = useRef(null);     // stroke layer (transparent); first <canvas> in the DOM — Solo AI reads it
@@ -16,6 +17,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
   const [brushSize, setBrushSize] = useState(5); // 1-50px slider
   const [isPenLocked, setIsPenLocked] = useState(false);
   const [liveDimensionLabel, setLiveDimensionLabel] = useState(null);
+  const [showLiftNotice, setShowLiftNotice] = useState(false); // D3: replaces alert()
 
   const activeColor = (challenge === MINI_CHALLENGES.COLOUR_FIX && forcedColor) ? forcedColor : color;
 
@@ -104,6 +106,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
 
   useEffect(() => {
     setIsPenLocked(false);
+    setShowLiftNotice(false);
     penLiftedRef.current = false;
   }, [challenge, isDrawer]);
 
@@ -175,7 +178,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     e.preventDefault();
 
     if (challenge === MINI_CHALLENGES.DONT_LIFT_PEN && penLiftedRef.current) {
-      alert("Don't Lift Pen Rule Violation! Drawing locked for this turn.");
+      setShowLiftNotice(true);
       setIsPenLocked(true);
       return;
     }
@@ -299,6 +302,12 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
 
   return (
     <div className="flex flex-col items-center w-full gap-space-md">
+      {/* Outside the isolated canvas box so the modal stacks above the page */}
+      {showLiftNotice && (
+        <ChallengeModal icon="✏️" title="DON'T LIFT PEN" onClose={() => setShowLiftNotice(false)} buttonLabel="OK">
+          <p className="font-bold text-timer-red">You lifted the pen. Drawing is locked for the rest of this turn.</p>
+        </ChallengeModal>
+      )}
       <div style={{ touchAction: 'none' }} className="relative isolate w-full max-w-[640px] aspect-[4/3] bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_0px_#18181B] overflow-hidden">
         <canvas
           ref={canvasRef}

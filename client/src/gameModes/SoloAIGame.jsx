@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Canvas from '../components/Canvas';
-import ChallengeOverlay from '../components/ChallengeOverlay';
+import ChallengeOverlay, { ChallengeTurnPopup } from '../components/ChallengeOverlay';
 import RoomLobby from '../components/RoomLobby';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
@@ -141,6 +141,7 @@ export default function SoloAIGame({ roomData, username }) {
         </div>
       </header>
 
+      <ChallengeTurnPopup roomData={roomData} />
       <ChallengeOverlay challenge={roomData?.currentChallenge} forcedColor={roomData?.forcedColor} />
 
       {/* Main Game Grid */}

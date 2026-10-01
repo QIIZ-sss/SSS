@@ -39,7 +39,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P7.1 | A8 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
 | P7.2 | A9 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
-| P7.4 | D3 | 7 | **BLOCKED — team decision (popup vs. small bar)** |
+| P7.4 | D3 | 7 | Done (headless Chrome test); MANUAL NOT TESTED |
 
 ### Regression suite (`tests/`)
 
@@ -705,7 +705,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Force each challenge via host settings (enable one at a time); screenshots on drawer and guesser.
 - **Regression requirements:** Challenge enforcement (C-01…C-08, re-verified), P5.2 layout.
 - **Commit requirement:** `feat(D3): challenge popup`.
-- **Status:** BLOCKED — this task's discovery requirement says to STOP for the team decision (HANDOFF D3: add a popup, or replace the board-covering element with a small bar). Nothing implemented. The behaviour specified above can be implemented client-only (no contract change: `currentChallenge` is already in `room_data` from WORD_SELECTION) once the team confirms.
+- **Status:** Done (human decision 2026-10-02: implement the documented BUG-05 popup); MANUAL NOT TESTED. No server or contract change (`currentChallenge` / `forcedColor` already in `room_data`).
+  - Files: `client/src/components/ChallengeOverlay.jsx` (new exports `ChallengeModal` — same look as the existing MATCH RESULTS modal — and `ChallengeTurnPopup`), `client/src/components/Canvas.jsx` (DONT_LIFT_PEN violation uses `ChallengeModal` instead of `alert()`), `MultiplayerGame.jsx`, `TeamGame.jsx`, `SoloAIGame.jsx` (render `ChallengeTurnPopup`). The inline banner stays.
+  - **Deviation from the spec above (documented):** the popup is shown once per turn (key = room + round + drawer) from the first WORD_SELECTION/PLAYING frame of that turn and closes on GOT IT or when the turn ends — it does **not** auto-close when PLAYING starts, because a drawer who picks a word quickly would make it flash for guessers, and Solo AI turns skip WORD_SELECTION (A8).
+  - Remaining `alert()` calls in the live client are join / PIN error messages (`App.jsx`, `RoomList.jsx`), not challenge notifications — unchanged.
+  - Checks: headless Chrome 13/13 PASS — popup at turn start for a guesser; DONT_LIFT_PEN text says the pen must not be lifted; GOT IT closes it and it stays closed when PLAYING starts; none after the turn; shown again next turn; auto-closes at turn end if not dismissed; none for NONE; drawer sees it before drawing with the COLOUR_FIX locked colour; no candidate words in the popup; lifting then drawing shows the DON'T LIFT PEN modal, `window.alert` never called, OK closes it and the board stays locked. Render / browser / build regression PASS.
 
 ---
 

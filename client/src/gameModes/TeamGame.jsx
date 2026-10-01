@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Canvas from '../components/Canvas';
 import ChatBox from '../components/ChatBox';
-import ChallengeOverlay from '../components/ChallengeOverlay';
+import ChallengeOverlay, { ChallengeTurnPopup } from '../components/ChallengeOverlay';
 import TimerBadge from '../components/TimerBadge';
 import RoomLobby from '../components/RoomLobby';
 import useGameTimer from '../hooks/useGameTimer';
@@ -80,6 +80,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
         </div>
       </div>
 
+      <ChallengeTurnPopup roomData={roomData} />
       <ChallengeOverlay
         challenge={roomData.currentChallenge}
         forcedColor={roomData.forcedColor}
