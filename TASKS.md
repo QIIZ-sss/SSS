@@ -32,7 +32,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P5.3 | B3 | 5 | Done (logic tested); mobile keypad MANUAL pending |
 | P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
 | P6.1 | C1 | 6 | Done |
-| P6.2 | C2 | 6 | Not started |
+| P6.2 | C2 | 6 | Done (run section only); full README rewrite needs human decision |
 | P6.3 | C3 | 6 | Not started |
 | P6.4 | C4 | 6 | Not started |
 | P6.5 | D1 | 6 | Not started |
@@ -544,6 +544,9 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Follow the README on a clean checkout.
 - **Regression requirements:** —
 - **Commit requirement:** `docs(C2): fix run instructions`.
+- **Status:** Done for the run instructions; whether to rewrite the rest of `README.md` (which documents the legacy "วาดต่อ" game) is still a human decision.
+  - `README.md` "เริ่มรัน" now lists only commands that exist for the live project (server `npm install` + `npm run dev` on port 4000; client `npm install` + `npm run dev`, with `-- --host` for LAN), drops the database / `.env` / `migrate` / `create-admin` / admin-page steps, and warns that the other README sections describe legacy code (link to `ARCHITECTURE.md`).
+  - Checks: every `npm run` in the section's code blocks exists in the matching `package.json` (3/3); `npm run dev` for server and client were executed during this session (server listening on 4000, Vite ready on 5173).
 
 ### P6.3 — Port-in-use error (C3)
 

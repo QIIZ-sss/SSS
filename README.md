@@ -29,47 +29,32 @@
 
 ## เริ่มรัน
 
-ต้องมี Node.js 20 ขึ้นไป
+ต้องมี Node.js 20 ขึ้นไป (ทดสอบแล้วบน Node.js 24)
 
-### 1. ยกฐานข้อมูลขึ้น
+> ⚠️ ส่วนอื่นของ README นี้ (แผนผังโค้ด หลังบ้าน ฐานข้อมูล ความปลอดภัย) อธิบายโค้ดชุดเก่า (legacy) ที่ไม่ได้ถูกรันแล้ว
+> โค้ดที่รันจริงคือ `server/src/server.js` และ `client/src/App.jsx` — ดู [ARCHITECTURE.md](ARCHITECTURE.md)
+> เกมปัจจุบันไม่ใช้ PostgreSQL, ไม่อ่าน `.env` และไม่มีคำสั่ง `npm run migrate` / `npm run create-admin`
 
-ถ้ามี Docker (แนะนำ — ง่ายที่สุด):
-
-```bash
-docker compose up -d
-```
-
-ถ้าไม่มี Docker ให้ติดตั้ง PostgreSQL 14+ เองแล้วสร้างฐานข้อมูลชื่อ `wadtor`
-
-> ข้ามขั้นนี้ได้ถ้าแค่อยากลองเล่น — เกมทำงานได้โดยไม่ต้องมีฐานข้อมูล แค่จะไม่บันทึกอะไร
-> และหน้าหลังบ้านจะใช้ไม่ได้
-
-### 2. เซิร์ฟเวอร์
+### 1. เซิร์ฟเวอร์ (พอร์ต 4000)
 
 ```bash
 cd server
-cp .env.example .env
-
-# สร้างความลับสองตัว แล้วเอาไปใส่ JWT_SECRET กับ ADMIN_JWT_SECRET ใน .env (ต้องคนละค่า)
-node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
-node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
-
 npm install
-npm run migrate         # สร้างตารางทั้งหมด
-npm run create-admin    # สร้างบัญชีผู้ดูแลคนแรก (ถามชื่อผู้ใช้กับรหัสผ่าน)
 npm run dev
 ```
 
-### 3. หน้าเว็บ
+ต้องเห็น `JUST DRAW IT Server listening on port 4000` และ `[AI] โหลด DoodleNet สำเร็จ`
+
+### 2. หน้าเว็บ (พอร์ต 5173)
 
 ```bash
 cd client
 npm install
-npm run dev
+npm run dev              # เปิดได้เฉพาะเครื่องนี้
+npm run dev -- --host    # ให้มือถือ/ไอแพดในวง Wi-Fi เดียวกันเข้าได้ที่ http://<IP ของเครื่อง>:5173
 ```
 
 - ตัวเกม: `http://localhost:5173`
-- หลังบ้าน: `http://localhost:5173/admin.html`
 
 ทดสอบหลายคนได้โดยเปิดหน้าต่างแบบไม่ระบุตัวตนเพิ่ม
 
