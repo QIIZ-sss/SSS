@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "formula": "300 * (2/3) = 200",
+  "drawerPoints": 200,
+  "note": "Formula calculateDrawerScore(2, 3) produces 200 pts (matches 300 * 2/3 = 200 exactly).",
+  "evidence": "S-01.txt"
+}

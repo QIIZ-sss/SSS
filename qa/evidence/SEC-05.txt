@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "XSS payload sent in chat (\"<img src=x onerror=alert(1)>\") is treated as plain string text and rendered safely via React JSX escaping without DOM execution.",
+  "evidence": "SEC-05.txt"
+}

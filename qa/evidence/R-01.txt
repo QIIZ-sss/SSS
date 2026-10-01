@@ -1,0 +1,7 @@
+{
+  "status": "FAIL",
+  "command": "npm run migrate / npm run create-admin",
+  "error": "npm error Missing script: \"migrate\"",
+  "note": "Root README.md instructs users to run 'npm run migrate' and 'npm run create-admin', but server/package.json only has 'start' and 'dev' scripts. Setup fails if strictly following root README instructions.",
+  "evidence": "R-01.txt"
+}

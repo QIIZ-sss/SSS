@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Server validated host identity. Non-host start_game event was ignored.",
+  "evidence": "SEC-02.txt"
+}

@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "When client reconnects and joins with existing username, server recognizes existing user in room.players and rebinds socketId, restoring player score and state.",
+  "evidence": "NW-07.txt"
+}

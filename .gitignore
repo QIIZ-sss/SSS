@@ -1,0 +1,25 @@
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Builds
+client/dist/
+client/build/
+
+# Environment and logs
+.env
+*.log
+npm-debug.log*
+
+# Environment (กัน .env.local, .env.production ด้วย แต่เก็บไฟล์ตัวอย่างไว้)
+.env.*
+!.env.example
+
+# โฟลเดอร์ชั่วคราวที่ใช้ส่งไฟล์ให้ Claude/agy
+_review/
+_ai_update/
+
+# ไฟล์ระบบ
+Thumbs.db
+.DS_Store

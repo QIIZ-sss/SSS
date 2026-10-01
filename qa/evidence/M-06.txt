@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "soloAiFoundInLeaderboard": false,
+  "note": "Solo AI game scores were excluded from global leaderboard (verified via /api/leaderboard).",
+  "evidence": "M-06.txt"
+}

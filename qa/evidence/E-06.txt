@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Eraser actions are stored as path events in drawingHistory; late joiner / reconnecting player receives full history in order.",
+  "evidence": "E-06.txt"
+}

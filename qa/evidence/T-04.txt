@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "timeoutRound": {
+    "word": "Airplane",
+    "reason": "Time is up!",
+    "drawerPoints": 0,
+    "correctGuessers": []
+  },
+  "note": "Timeout occurred with reason \"Time is up!\". Drawer points awarded: 0 (0 pts as expected).",
+  "evidence": "T-04.txt"
+}

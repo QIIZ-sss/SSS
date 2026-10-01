@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Socket.io client reconnection option is enabled (reconnection: true in socket.js). Upon reconnection, DRAW_SYNC restores canvas history from server.",
+  "evidence": "NW-08.txt"
+}

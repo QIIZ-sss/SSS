@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Switched back to Pen tool successfully; drawing resumed with active palette color.",
+  "evidence": "E-04.txt"
+}

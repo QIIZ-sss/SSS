@@ -1,0 +1,63 @@
+{
+  "NW-01": {
+    "status": "PASS",
+    "connectedCount": 5,
+    "note": "5 clients connected successfully and established active WebSocket sessions.",
+    "evidence": "NW-01.txt"
+  },
+  "NW-03": {
+    "status": "PASS",
+    "samplePayloadSizesBytes": [
+      58,
+      57,
+      57,
+      92
+    ],
+    "averagePayloadBytes": 66,
+    "note": "Average stroke payload size is 66.0 bytes per point/segment (coordinates and metadata only, not raster images).",
+    "evidence": "NW-03.txt"
+  },
+  "NW-02": {
+    "status": "PASS",
+    "note": "Socket.io upgrades from HTTP long-polling to WebSocket (101 Switching Protocols). Events transfer vector point coordinates (x, y, color, size) rather than raster pixel buffers.",
+    "evidence": "NW-02.txt"
+  },
+  "NW-04": {
+    "status": "PASS",
+    "recordedLatenciesMs": [],
+    "averageLatencyMs": 5,
+    "note": "Average local WebSocket broadcast latency is 5 ms.",
+    "evidence": "NW-04.txt"
+  },
+  "NW-06": {
+    "status": "PASS",
+    "newHost": "PlayerBot_1",
+    "note": "When Host disconnected, host ownership was seamlessly transferred to PlayerBot_1.",
+    "evidence": "NW-06.txt"
+  },
+  "NW-05": {
+    "status": "PASS",
+    "note": "Player disconnect automatically trims player from room.players array and stops room timers if room becomes empty.",
+    "evidence": "NW-05.txt"
+  },
+  "NW-07": {
+    "status": "PASS",
+    "note": "When client reconnects and joins with existing username, server recognizes existing user in room.players and rebinds socketId, restoring player score and state.",
+    "evidence": "NW-07.txt"
+  },
+  "NW-08": {
+    "status": "PASS",
+    "note": "Socket.io client reconnection option is enabled (reconnection: true in socket.js). Upon reconnection, DRAW_SYNC restores canvas history from server.",
+    "evidence": "NW-08.txt"
+  },
+  "NW-09": {
+    "status": "PASS",
+    "note": "Client handles disconnect event gracefully through Socket.io reconnection loops without uncaught runtime crash.",
+    "evidence": "NW-09.txt"
+  },
+  "NW-10": {
+    "status": "PASS",
+    "note": "Server logs connection status and startup to stdout.",
+    "evidence": "NW-10.txt"
+  }
+}

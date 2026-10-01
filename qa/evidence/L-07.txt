@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Messages and events in Room 1 did not leak to Room 2. Rooms are strictly isolated.",
+  "evidence": "L-07.txt"
+}

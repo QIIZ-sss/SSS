@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "pointsEarned": 497,
+  "note": "Guess with leading/trailing spaces and uppercase was normalized properly and scored as correct.",
+  "evidence": "G-02.txt"
+}

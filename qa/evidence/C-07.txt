@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Geometric Shapes: Remote ghost preview clears completely on DRAW_END via clearGhostCanvas(); no ghost line remains stuck on guesser screen.",
+  "evidence": "C-07.txt"
+}

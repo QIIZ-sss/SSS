@@ -1,0 +1,28 @@
+# ยกฐานข้อมูลขึ้นด้วยคำสั่งเดียว:  docker compose up -d
+# ปิด:                            docker compose down
+# ลบข้อมูลทั้งหมดด้วย:            docker compose down -v
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: wadtor-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wadtor
+      POSTGRES_PASSWORD: wadtor
+      POSTGRES_DB: wadtor
+      # ให้ตัวเปรียบเทียบข้อความรองรับภาษาไทยถูกต้อง
+      LANG: th_TH.utf8
+    ports:
+      # เปิดเฉพาะ localhost — ไม่เปิดออกอินเทอร์เน็ต
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - wadtor-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U wadtor -d wadtor']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  wadtor-pgdata:

@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "playerScore": 497,
+  "teamScore": 497,
+  "team": "Blue",
+  "note": "Player score (+497) was added to Team Blue total score (+497). Team score equals sum of member points.",
+  "evidence": "M-02.txt"
+}

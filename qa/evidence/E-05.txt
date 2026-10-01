@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Eraser operates consistently; under Colour Fix and Don't Lift Pen, lifting pen still locks board regardless of tool.",
+  "evidence": "E-05.txt"
+}

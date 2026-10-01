@@ -1,0 +1,51 @@
+{
+  "status": "PASS",
+  "g06Checks": [
+    {
+      "width": 1920,
+      "isInside": true,
+      "sendBox": {
+        "x": 1398.1875,
+        "y": 814,
+        "width": 83.8125,
+        "height": 36
+      },
+      "containerWidth": 258
+    },
+    {
+      "width": 1366,
+      "isInside": true,
+      "sendBox": {
+        "x": 1121.1875,
+        "y": 814,
+        "width": 83.8125,
+        "height": 36
+      },
+      "containerWidth": 258
+    },
+    {
+      "width": 768,
+      "isInside": true,
+      "sendBox": {
+        "x": 646.1875,
+        "y": 814,
+        "width": 83.8125,
+        "height": 36
+      },
+      "containerWidth": 728
+    },
+    {
+      "width": 375,
+      "isInside": true,
+      "sendBox": {
+        "x": 38,
+        "y": 814.25,
+        "width": 299,
+        "height": 36
+      },
+      "containerWidth": 335
+    }
+  ],
+  "note": "SEND button remained fully contained inside chat panel across all tested screen widths (1920, 1366, 768, 375 px).",
+  "evidence": "G-06_375px.png, G-06_1920px.png"
+}

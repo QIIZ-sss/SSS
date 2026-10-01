@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "formula": "calculateDrawerScore(0, 3) = 0",
+  "note": "When 0 guessers are correct, drawer score awarded is 0.",
+  "evidence": "S-02.txt"
+}

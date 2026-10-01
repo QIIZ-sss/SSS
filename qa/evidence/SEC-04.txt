@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Server does not accept client-dictated scores. Scores are exclusively computed server-side in chatHandler upon matching the secret word.",
+  "evidence": "SEC-04.txt"
+}

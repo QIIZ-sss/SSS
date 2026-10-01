@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Canvas internal resolution remains locked at 640x480 (aspect 4:3) with coordinate scaling; resizing window did not distort stroke coordinates.",
+  "evidence": "D-06.png"
+}

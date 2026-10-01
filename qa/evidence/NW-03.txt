@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "samplePayloadSizesBytes": [
+    58,
+    57,
+    57,
+    92
+  ],
+  "averagePayloadBytes": 66,
+  "note": "Average stroke payload size is 66.0 bytes per point/segment (coordinates and metadata only, not raster images).",
+  "evidence": "NW-03.txt"
+}

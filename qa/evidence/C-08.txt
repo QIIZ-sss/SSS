@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Challenges are re-rolled or reset per round; state (isPenLocked, forcedColor) is cleared on ROUND_CHANGE.",
+  "evidence": "C-08.txt"
+}

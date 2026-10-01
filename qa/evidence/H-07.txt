@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "roundsCount": 6,
+  "roundsObserved": [
+    "NONE",
+    "GEOMETRIC_ONLY",
+    "NONE",
+    "GEOMETRIC_ONLY",
+    "GEOMETRIC_ONLY",
+    "NONE"
+  ],
+  "disallowedFound": [],
+  "note": "Observed 6 rounds. Disabled challenges (COLOUR_FIX, DONT_LIFT_PEN) were NEVER picked. Only NONE, GEOMETRIC_ONLY were selected.",
+  "evidence": "H-07.txt"
+}

@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "maxDeltaMs": 2,
+  "syncChecks": 30,
+  "note": "Time difference between clients across 30 ticks was max 2ms (well within ~1s threshold)",
+  "evidence": "T-01.txt"
+}

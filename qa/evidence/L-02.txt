@@ -1,0 +1,7 @@
+{
+  "status": "FAIL",
+  "avatarCountShown": 6,
+  "totalConfiguredAvatars": 8,
+  "note": "BUG: Only 6 out of 8 configured avatars are displayed due to AVATARS.slice(0, 6) in App.jsx (👾 and 🚀 are missing).",
+  "evidence": "L-02.png"
+}

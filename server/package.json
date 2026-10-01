@@ -1,0 +1,16 @@
+{
+  "name": "drawing-guessing-game-server",
+  "version": "1.0.0",
+  "description": "Backend server for Multiplayer Drawing & Guessing Game",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

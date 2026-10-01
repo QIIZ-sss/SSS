@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Eraser tool selected and dragged across stroke. It erased/overwrote the targeted segment with white stroke without clearing entire canvas.",
+  "evidence": "E-01.png"
+}

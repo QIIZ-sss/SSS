@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "nameLengthAfterInput": 14,
+  "preventedEmptyName": true,
+  "note": "Empty/whitespace name submission is blocked. Long name is capped at maxLength=14 (actual value length: 14 chars).",
+  "evidence": "L-01.png"
+}

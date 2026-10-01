@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "When already-correct guesser chatted, answer was concealed (isConcealedChat = true) to prevent spoiling remaining guessers.",
+  "evidence": "G-03.txt"
+}

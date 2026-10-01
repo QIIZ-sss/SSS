@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Buttons incorporate transition-all, active:translate-x-[2px], and disabled:opacity-60 cursor-default states.",
+  "evidence": "UI-03.txt"
+}

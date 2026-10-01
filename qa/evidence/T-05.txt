@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "drawersOrder": [
+    "Player1",
+    "Player2",
+    "Player3"
+  ],
+  "note": "Drawer rotation order: Player1 -> Player2 -> Player3. All 3 players got a turn without duplicates in the first cycle.",
+  "evidence": "T-05.txt"
+}

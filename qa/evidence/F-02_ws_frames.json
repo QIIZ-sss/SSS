@@ -1,0 +1,163 @@
+{
+  "allFramesSent": [
+    {
+      "direction": "SENT",
+      "time": 1790833818826,
+      "payload": "2probe"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833818941,
+      "payload": "5"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833819068,
+      "payload": "42[\"get_rooms\"]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833819068,
+      "payload": "42[\"get_rooms\"]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833819834,
+      "payload": "420[\"create_room\",{\"name\":\"FHost's Room\",\"username\":\"FHost\",\"avatar\":\"🐼\",\"gameMode\":\"MULTIPLAYER_FFA\",\"maxPlayers\":8,\"roundTime\":60,\"miniChallengeEnabled\":true}]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833823863,
+      "payload": "42[\"start_game\"]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833823971,
+      "payload": "42[\"draw_sync\"]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833823972,
+      "payload": "42[\"draw_sync\"]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833834037,
+      "payload": "42[\"draw_sync\"]"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833843618,
+      "payload": "3"
+    },
+    {
+      "direction": "SENT",
+      "time": 1790833848478,
+      "payload": "{\"type\":\"ping\"}"
+    }
+  ],
+  "allFramesRecv": [
+    {
+      "direction": "RECV",
+      "time": 1790833842029,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":52}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833843043,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":51}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833843618,
+      "payload": "2"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833844053,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":50}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833845060,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":49}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833846066,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":48}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833847075,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":47}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833848089,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":46}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833849099,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":45}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833850110,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":44}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833851115,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":43}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833852133,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":42}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833853153,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":41}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833854160,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":40}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833855174,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":39}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833856187,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":38}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833857198,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":37}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833858207,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":36}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833859208,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":35}]"
+    },
+    {
+      "direction": "RECV",
+      "time": 1790833860223,
+      "payload": "42[\"timer_tick\",{\"timeRemaining\":34}]"
+    }
+  ],
+  "roundTextObserved": "ROUND 1 / 3",
+  "isInLobby": false
+}

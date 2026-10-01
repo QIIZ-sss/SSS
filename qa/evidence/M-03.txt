@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "scoreBefore": 497,
+  "scoreAfter": 497,
+  "note": "When TeamPlayer_1 disconnected, team score remained unchanged (497 pts) without corruption.",
+  "evidence": "M-03.txt"
+}

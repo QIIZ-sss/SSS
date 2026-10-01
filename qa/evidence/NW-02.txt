@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Socket.io upgrades from HTTP long-polling to WebSocket (101 Switching Protocols). Events transfer vector point coordinates (x, y, color, size) rather than raster pixel buffers.",
+  "evidence": "NW-02.txt"
+}

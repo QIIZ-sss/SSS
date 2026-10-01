@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Solo AI arena renders correctly with Neo-Arcade theme (drawing desk, target word badge, AI guesser card with psychology icon and live confidence bar).",
+  "evidence": "M-05.png"
+}

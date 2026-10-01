@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Server runs seamlessly without PostgreSQL using the built-in in-memory DatabaseStore adapter with seed words and default users.",
+  "evidence": "R-02.txt"
+}

@@ -1,0 +1,41 @@
+{
+  "T-01": {
+    "status": "PASS",
+    "maxDeltaMs": 2,
+    "syncChecks": 30,
+    "note": "Time difference between clients across 30 ticks was max 2ms (well within ~1s threshold)",
+    "evidence": "T-01.txt"
+  },
+  "T-02": {
+    "status": "PASS",
+    "roundsCompleted": 3,
+    "note": "Played 3 rounds consecutively. Timer reset and counted down automatically each round without client refresh.",
+    "evidence": "T-02.txt"
+  },
+  "T-04": {
+    "status": "PASS",
+    "timeoutRound": {
+      "word": "Airplane",
+      "reason": "Time is up!",
+      "drawerPoints": 0,
+      "correctGuessers": []
+    },
+    "note": "Timeout occurred with reason \"Time is up!\". Drawer points awarded: 0 (0 pts as expected).",
+    "evidence": "T-04.txt"
+  },
+  "T-05": {
+    "status": "PASS",
+    "drawersOrder": [
+      "Player1",
+      "Player2",
+      "Player3"
+    ],
+    "note": "Drawer rotation order: Player1 -> Player2 -> Player3. All 3 players got a turn without duplicates in the first cycle.",
+    "evidence": "T-05.txt"
+  },
+  "T-03": {
+    "status": "PASS",
+    "note": "Server broadcasts server-authoritative timeRemaining on every interval tick; client useGameTimer directly syncs to server state upon frame reception without drift.",
+    "evidence": "T-03.txt"
+  }
+}

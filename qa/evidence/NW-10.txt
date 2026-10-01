@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Server logs connection status and startup to stdout.",
+  "evidence": "NW-10.txt"
+}

@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Late joiner entered 5-digit PIN and joined ongoing room successfully mid-round, entering arena as guesser without crash.",
+  "evidence": "L-06.png"
+}

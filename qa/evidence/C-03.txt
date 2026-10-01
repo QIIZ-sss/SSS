@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Don't Lift Pen: Lifting mouse sets isPenLocked to true and displays warning banner \"⚠️ DON'T LIFT PEN RULE LOCKED\". Subsequent drawing is blocked.",
+  "evidence": "C-03.png"
+}

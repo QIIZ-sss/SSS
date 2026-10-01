@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "redCount": 3,
+  "blueCount": 2,
+  "note": "5 players joined in TEAM mode: Red has 3 players, Blue has 2 players (balanced).",
+  "evidence": "M-01.txt"
+}

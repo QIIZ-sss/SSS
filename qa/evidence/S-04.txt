@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Scores are stored on server room.players state and broadcast uniformly via room_data ROOM_DATA event; all clients receive identical scoreboard.",
+  "evidence": "S-04.txt"
+}

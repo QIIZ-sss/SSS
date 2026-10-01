@@ -1,0 +1,76 @@
+{
+  "L-03": {
+    "status": "PASS",
+    "roomCodes": [
+      "51954",
+      "51461",
+      "88147",
+      "43618",
+      "43931",
+      "91129",
+      "16206",
+      "10556",
+      "35580",
+      "52573"
+    ],
+    "is5Digit": true,
+    "isUnique": true,
+    "note": "Created 10 rooms. All codes are 5-digit numeric strings (51954, 51461, 88147, 43618, 43931, 91129, 16206, 10556, 35580, 52573), with 0 duplicates.",
+    "evidence": "L-03.txt"
+  },
+  "L-04": {
+    "status": "PASS",
+    "testResponses": [
+      {
+        "code": "99999",
+        "res": {
+          "success": false,
+          "message": "Room not found. Please check your 5-digit code!"
+        }
+      },
+      {
+        "code": "1234",
+        "res": {
+          "success": false,
+          "message": "Room not found. Please check your 5-digit code!"
+        }
+      },
+      {
+        "code": "ABCD",
+        "res": {
+          "success": false,
+          "message": "Room not found. Please check your 5-digit code!"
+        }
+      },
+      {
+        "code": "",
+        "res": {
+          "success": false,
+          "message": "Room not found. Please check your 5-digit code!"
+        }
+      }
+    ],
+    "note": "Invalid room codes (non-existent, 4-digit, letters, empty) were properly rejected with error messages.",
+    "evidence": "L-04.txt"
+  },
+  "L-05": {
+    "status": "PASS",
+    "response": {
+      "success": false,
+      "message": "Room is full!"
+    },
+    "note": "Joining a full room was rejected with message: \"Room is full!\".",
+    "evidence": "L-05.txt"
+  },
+  "L-07": {
+    "status": "PASS",
+    "note": "Messages and events in Room 1 did not leak to Room 2. Rooms are strictly isolated.",
+    "evidence": "L-07.txt"
+  },
+  "L-08": {
+    "status": "PASS",
+    "newHost": "GuestL8",
+    "note": "When original host left during lobby, host status was automatically transferred to GuestL8.",
+    "evidence": "L-08.txt"
+  }
+}

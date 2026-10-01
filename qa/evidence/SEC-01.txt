@@ -1,0 +1,7 @@
+{
+  "status": "FAIL",
+  "wordLeaked": true,
+  "leakedWord": "Elephant",
+  "note": "CRITICAL SECURITY BUG: Server broadcasts unmasked currentWord (\"Elephant\") to all guessers in the room_data payload during PLAYING phase!",
+  "evidence": "SEC-01.txt"
+}

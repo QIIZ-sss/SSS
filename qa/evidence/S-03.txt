@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "g1Points": 497,
+  "g2Points": 438,
+  "note": "Guesser 1 (faster) earned 497 pts, Guesser 2 (slower) earned 438 pts. Fast guesser earned higher or equal points within [100, 500] range.",
+  "evidence": "S-03.txt"
+}

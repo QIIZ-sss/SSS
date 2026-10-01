@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "newHost": "GuestL8",
+  "note": "When original host left during lobby, host status was automatically transferred to GuestL8.",
+  "evidence": "L-08.txt"
+}

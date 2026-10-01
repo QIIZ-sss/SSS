@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Client handles disconnect event gracefully through Socket.io reconnection loops without uncaught runtime crash.",
+  "evidence": "NW-09.txt"
+}

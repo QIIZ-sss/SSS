@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Guesser cannot draw on canvas; cursor shows cursor-not-allowed and mouse events are ignored because isDrawer is false.",
+  "evidence": "D-05.png"
+}

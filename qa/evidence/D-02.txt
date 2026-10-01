@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Server timer automatically selects wordChoices[0] and initiates round when drawer idles past 10s during WORD_SELECTION.",
+  "evidence": "D-02.txt"
+}

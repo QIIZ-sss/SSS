@@ -1,0 +1,38 @@
+[
+  {
+    "round": 1,
+    "selectedWord": "APPLE",
+    "hostTimer": "00:42",
+    "guestTimer": "00:42",
+    "timersMatch": true,
+    "screenshots": [
+      "T-02_round1_client1.png",
+      "T-02_round1_client2.png"
+    ],
+    "timestamp": "2026-10-01T06:16:51.620Z"
+  },
+  {
+    "round": 2,
+    "selectedWord": "CLOCK",
+    "hostTimer": "00:42",
+    "guestTimer": "00:42",
+    "timersMatch": true,
+    "screenshots": [
+      "T-02_round2_client1.png",
+      "T-02_round2_client2.png"
+    ],
+    "timestamp": "2026-10-01T06:17:01.818Z"
+  },
+  {
+    "round": 3,
+    "selectedWord": "APPLE",
+    "hostTimer": "00:42",
+    "guestTimer": "00:42",
+    "timersMatch": true,
+    "screenshots": [
+      "T-02_round3_client1.png",
+      "T-02_round3_client2.png"
+    ],
+    "timestamp": "2026-10-01T06:17:11.920Z"
+  }
+]

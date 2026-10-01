@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Player disconnect automatically trims player from room.players array and stops room timers if room becomes empty.",
+  "evidence": "NW-05.txt"
+}

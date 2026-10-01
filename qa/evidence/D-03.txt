@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Strokes drawn by drawer were broadcast in real-time and rendered identically on guesser canvas.",
+  "evidence": "D-03.png"
+}

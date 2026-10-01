@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "response": {
+    "success": false,
+    "message": "Room is full!"
+  },
+  "note": "Joining a full room was rejected with message: \"Room is full!\".",
+  "evidence": "L-05.txt"
+}

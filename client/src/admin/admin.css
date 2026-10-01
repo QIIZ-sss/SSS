@@ -1,0 +1,262 @@
+/* ---------------------------------------------------------------
+   หลังบ้านตั้งใจให้หน้าตา "ตรงข้าม" กับตัวเกม
+   เกมเป็นกระดาษกริดสีสด หลังบ้านเป็นพื้นเข้ม ตัวหนังสือเล็ก ความหนาแน่นสูง
+   เหตุผลไม่ใช่แค่ความสวย: คนที่เปิดสองหน้าพร้อมกันต้องแยกออกทันทีว่าอยู่หน้าไหน
+   การกดปุ่ม "ลบภาพ" ผิดหน้าต่างเป็นความผิดพลาดที่ย้อนกลับไม่ได้
+   --------------------------------------------------------------- */
+
+:root {
+  --bg: #14161a;
+  --panel: #1c1f25;
+  --panel-2: #23272f;
+  --line: #333941;
+  --text: #e6e9ee;
+  --dim: #98a1ad;
+  --accent: #ffc53d;
+  --danger: #ff5470;
+  --ok: #3ddc97;
+  --info: #4aa8ff;
+
+  --display: 'Mitr', system-ui, sans-serif;
+  --body: 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; }
+
+/* ---------- โครง ---------- */
+
+.admin { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar__brand { font-family: var(--display); font-size: 1.05rem; }
+.topbar__brand small {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--accent);
+  margin-left: 0.4rem;
+  letter-spacing: 0.12em;
+}
+
+.nav { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.nav button {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--dim);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+}
+.nav button:hover { color: var(--text); background: var(--panel-2); }
+.nav button[aria-current='true'] { color: var(--bg); background: var(--accent); font-weight: 600; }
+.nav button:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+
+.content { padding: 1.25rem; max-width: 1280px; width: 100%; margin-inline: auto; }
+
+.grow { flex: 1; }
+.row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.stack { display: grid; gap: 1rem; }
+.dim { color: var(--dim); }
+.mono { font-family: var(--mono); }
+
+/* ---------- แผง ---------- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.panel__title {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 0.75rem;
+}
+
+.stat-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.stat {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.8rem 0.9rem;
+}
+.stat__value { font-family: var(--mono); font-size: 1.7rem; line-height: 1.1; }
+.stat__label { color: var(--dim); font-size: 0.8rem; margin-top: 0.15rem; }
+.stat[data-alert='true'] .stat__value { color: var(--danger); }
+
+/* ---------- ปุ่ม ---------- */
+
+.btn {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+}
+.btn:hover:not(:disabled) { border-color: var(--dim); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.btn--primary { background: var(--accent); color: #14161a; border-color: var(--accent); font-weight: 600; }
+.btn--danger { background: var(--danger); color: #14161a; border-color: var(--danger); font-weight: 600; }
+.btn--sm { padding: 0.25rem 0.55rem; font-size: 0.82rem; }
+
+/* ---------- ฟอร์ม ---------- */
+
+.input, select, textarea {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 0.45rem 0.65rem;
+  font: inherit;
+  width: 100%;
+}
+.input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 1px;
+}
+.field { display: grid; gap: 0.3rem; }
+.field label { font-size: 0.8rem; color: var(--dim); }
+
+/* ---------- ตาราง ---------- */
+
+.table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--dim);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table tr:hover td { background: var(--panel-2); }
+.table--scroll { display: block; overflow-x: auto; white-space: nowrap; }
+
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.badge--open     { color: var(--accent);  border-color: var(--accent); }
+.badge--actioned { color: var(--danger);  border-color: var(--danger); }
+.badge--dismissed{ color: var(--dim); }
+.badge--ok       { color: var(--ok);      border-color: var(--ok); }
+
+/* ---------- คิวรายงาน ---------- */
+
+.report {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem;
+  background: var(--panel);
+}
+.report__art {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.report__art canvas { width: 100%; display: block; aspect-ratio: 4 / 3; }
+.report__meta { display: grid; gap: 0.5rem; align-content: start; }
+.report__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+.removed-art {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  font-size: 0.82rem;
+  background: var(--panel-2);
+}
+
+/* ---------- คลังผลงาน ---------- */
+
+.chain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+.chain-cell { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.chain-cell canvas { width: 100%; display: block; aspect-ratio: 4 / 3; background: #fff; }
+.chain-cell__foot { padding: 0.4rem 0.55rem; font-size: 0.76rem; display: grid; gap: 0.3rem; }
+
+/* ---------- เข้าสู่ระบบ ---------- */
+
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
+.login {
+  width: min(380px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.75rem;
+  display: grid;
+  gap: 1rem;
+}
+.login h1 { font-size: 1.3rem; }
+
+.alert {
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid;
+}
+.alert--error { color: var(--danger); border-color: var(--danger); background: rgba(255, 84, 112, 0.08); }
+.alert--info  { color: var(--info);   border-color: var(--info);   background: rgba(74, 168, 255, 0.08); }
+.alert--ok    { color: var(--ok);     border-color: var(--ok);     background: rgba(61, 220, 151, 0.08); }
+
+.empty { padding: 2.5rem 1rem; text-align: center; color: var(--dim); }
+
+@media (max-width: 760px) {
+  .report { grid-template-columns: 1fr; }
+  .content { padding: 0.9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ขั้นที่เป็นคำตอบ (ไม่ใช่ภาพ) ในคลังผลงาน */
+.chain-cell__guess {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 0.75rem;
+  background: var(--panel-2);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}

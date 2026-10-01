@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Colour Fix: Palette is restricted to single forcedColor; server overrides any color payload in drawHandler.",
+  "evidence": "C-01.txt"
+}

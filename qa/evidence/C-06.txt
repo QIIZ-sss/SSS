@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Geometric Shapes: Live ghost preview renders on ghostCanvas during drag and displays dimension indicator badge (e.g. 📐 120 x 80 px). Ghost clears on release.",
+  "evidence": "C-06.png"
+}

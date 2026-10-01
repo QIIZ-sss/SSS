@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "noticeText": "🎉 คุณ GuesserOne ทายถูกแล้ว! (+497 คะแนน)",
+  "note": "System broadcasted: \"🎉 คุณ GuesserOne ทายถูกแล้ว! (+497 คะแนน)\". The actual answer \"Guitar\" was hidden.",
+  "evidence": "G-01.txt"
+}

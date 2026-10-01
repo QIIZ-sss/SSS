@@ -1,0 +1,13 @@
+{
+  "name": "justdrawit-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QA automated and integration tests for Just Draw It",
+  "scripts": {
+    "test": "node test_runner.js"
+  },
+  "dependencies": {
+    "playwright": "^1.42.1",
+    "socket.io-client": "^4.7.5"
+  }
+}

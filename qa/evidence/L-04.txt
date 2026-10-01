@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "testResponses": [
+    {
+      "code": "99999",
+      "res": {
+        "success": false,
+        "message": "Room not found. Please check your 5-digit code!"
+      }
+    },
+    {
+      "code": "1234",
+      "res": {
+        "success": false,
+        "message": "Room not found. Please check your 5-digit code!"
+      }
+    },
+    {
+      "code": "ABCD",
+      "res": {
+        "success": false,
+        "message": "Room not found. Please check your 5-digit code!"
+      }
+    },
+    {
+      "code": "",
+      "res": {
+        "success": false,
+        "message": "Room not found. Please check your 5-digit code!"
+      }
+    }
+  ],
+  "note": "Invalid room codes (non-existent, 4-digit, letters, empty) were properly rejected with error messages.",
+  "evidence": "L-04.txt"
+}

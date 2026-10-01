@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Completed 500 PIN join attempts. All invalid PINs were rejected. No IP rate limit / tarpit mechanism is implemented for room join requests.",
+  "evidence": "SEC-08.txt"
+}

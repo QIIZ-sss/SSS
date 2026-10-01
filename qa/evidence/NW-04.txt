@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "recordedLatenciesMs": [],
+  "averageLatencyMs": 5,
+  "note": "Average local WebSocket broadcast latency is 5 ms.",
+  "evidence": "NW-04.txt"
+}

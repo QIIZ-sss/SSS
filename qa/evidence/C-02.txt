@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Colour Fix: In subsequent rounds without Colour Fix, full palette is unlocked.",
+  "evidence": "C-02.txt"
+}

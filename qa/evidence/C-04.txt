@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Don't Lift Pen: Moving mouse outside canvas triggers onMouseLeave which executes stopDrawing(), locking the pen cleanly without errors.",
+  "evidence": "C-04.txt"
+}

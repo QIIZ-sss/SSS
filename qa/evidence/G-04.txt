@@ -1,0 +1,6 @@
+{
+  "status": "FAIL",
+  "drawerSpoiledWord": true,
+  "note": "BUG: When drawer typed secret word \"Guitar\" in chat, server broadcasted it to all guessers without blocking!",
+  "evidence": "G-04.txt"
+}

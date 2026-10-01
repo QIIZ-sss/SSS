@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "connectedCount": 5,
+  "note": "5 clients connected successfully and established active WebSocket sessions.",
+  "evidence": "NW-01.txt"
+}

@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "note": "Server verified drawer identity; draw events from guesser were rejected and not broadcasted.",
+  "evidence": "SEC-03.txt"
+}

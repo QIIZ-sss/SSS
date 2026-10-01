@@ -1,0 +1,53 @@
+{
+  "SEC-02": {
+    "status": "PASS",
+    "note": "Server validated host identity. Non-host start_game event was ignored.",
+    "evidence": "SEC-02.txt"
+  },
+  "SEC-01": {
+    "status": "FAIL",
+    "wordLeaked": true,
+    "leakedWord": "Elephant",
+    "note": "CRITICAL SECURITY BUG: Server broadcasts unmasked currentWord (\"Elephant\") to all guessers in the room_data payload during PLAYING phase!",
+    "evidence": "SEC-01.txt"
+  },
+  "SEC-03": {
+    "status": "PASS",
+    "note": "Server verified drawer identity; draw events from guesser were rejected and not broadcasted.",
+    "evidence": "SEC-03.txt"
+  },
+  "SEC-04": {
+    "status": "PASS",
+    "note": "Server does not accept client-dictated scores. Scores are exclusively computed server-side in chatHandler upon matching the secret word.",
+    "evidence": "SEC-04.txt"
+  },
+  "SEC-05": {
+    "status": "PASS",
+    "note": "XSS payload sent in chat (\"<img src=x onerror=alert(1)>\") is treated as plain string text and rendered safely via React JSX escaping without DOM execution.",
+    "evidence": "SEC-05.txt"
+  },
+  "SEC-06": {
+    "status": "PASS",
+    "serverAlive": true,
+    "rateLimitEnforced": false,
+    "note": "Server survived 1,000 rapid chat messages without crashing. However, no rate-limiting was detected (all 1,000 messages processed without throttling).",
+    "evidence": "SEC-06.txt"
+  },
+  "SEC-07": {
+    "status": "PASS",
+    "note": "Server processed large stroke payload without crashing or dropping connection.",
+    "evidence": "SEC-07.txt"
+  },
+  "SEC-08": {
+    "status": "PASS",
+    "note": "Completed 500 PIN join attempts. All invalid PINs were rejected. No IP rate limit / tarpit mechanism is implemented for room join requests.",
+    "evidence": "SEC-08.txt"
+  },
+  "SEC-09": {
+    "status": "PASS",
+    "statusCode": 200,
+    "response": "{\"success\":true,\"user\":{\"username\":\"' OR 1=1 --\",\"totalScore\":0,\"gamesPlayed\":0,\"wins\":0,\"createdAt\":\"2026-10-01T05:55:22.927Z\"}}",
+    "note": "API handled SQL injection payload safely (In-memory DatabaseStore treats username as a literal Map key, SQL injection has no effect).",
+    "evidence": "SEC-09.txt"
+  }
+}

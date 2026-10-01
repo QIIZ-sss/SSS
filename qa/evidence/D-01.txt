@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "wordChoiceCount": 3,
+  "guesserSawWordChoices": false,
+  "note": "Drawer was presented with 3 distinct word options; Guesser saw waiting state (\"Waiting for drawer to choose a word...\") without word buttons.",
+  "evidence": "D-01.png"
+}

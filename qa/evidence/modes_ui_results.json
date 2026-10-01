@@ -1,0 +1,66 @@
+{
+  "M-01": {
+    "status": "PASS",
+    "redCount": 3,
+    "blueCount": 2,
+    "note": "5 players joined in TEAM mode: Red has 3 players, Blue has 2 players (balanced).",
+    "evidence": "M-01.txt"
+  },
+  "M-02": {
+    "status": "PASS",
+    "playerScore": 497,
+    "teamScore": 497,
+    "team": "Blue",
+    "note": "Player score (+497) was added to Team Blue total score (+497). Team score equals sum of member points.",
+    "evidence": "M-02.txt"
+  },
+  "M-03": {
+    "status": "PASS",
+    "scoreBefore": 497,
+    "scoreAfter": 497,
+    "note": "When TeamPlayer_1 disconnected, team score remained unchanged (497 pts) without corruption.",
+    "evidence": "M-03.txt"
+  },
+  "M-05": {
+    "status": "PASS",
+    "note": "Solo AI arena renders correctly with Neo-Arcade theme (drawing desk, target word badge, AI guesser card with psychology icon and live confidence bar).",
+    "evidence": "M-05.png"
+  },
+  "M-04": {
+    "status": "PASS",
+    "note": "Real-time AI evaluator responded to drawn strokes with predictions and confidence metrics without freezing.",
+    "evidence": "M-04.png"
+  },
+  "M-06": {
+    "status": "PASS",
+    "soloAiFoundInLeaderboard": false,
+    "note": "Solo AI game scores were excluded from global leaderboard (verified via /api/leaderboard).",
+    "evidence": "M-06.txt"
+  },
+  "UI-01": {
+    "status": "PASS",
+    "note": "Tested screens at 1920, 1366, 768, and 375 px. Bento grid breaks gracefully into single column on mobile without clipped content.",
+    "evidence": "UI-01_1920px.png, UI-01_375px.png"
+  },
+  "UI-02": {
+    "status": "PASS",
+    "note": "Applied Neo-Arcade theme (bold 2-4px dark borders #1E1E2F, solid drop shadows 3-6px #18181B, Space Grotesk / Rubik typography).",
+    "evidence": "UI-02.png"
+  },
+  "UI-03": {
+    "status": "PASS",
+    "note": "Buttons incorporate transition-all, active:translate-x-[2px], and disabled:opacity-60 cursor-default states.",
+    "evidence": "UI-03.txt"
+  },
+  "UI-04": {
+    "status": "PASS",
+    "errors": [],
+    "note": "Zero uncaught console errors recorded during UI tests.",
+    "evidence": "UI-04.txt"
+  },
+  "R-04": {
+    "status": "PASS",
+    "note": "Executed multiple full room lifecycles (multiplayer, team, solo AI) consecutively on the same server process without crashes or memory leak lockups.",
+    "evidence": "R-04.txt"
+  }
+}
