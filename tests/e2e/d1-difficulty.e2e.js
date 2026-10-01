@@ -1,0 +1,37 @@
+// D1 word difficulty: host setting, validation, and words drawn only from the chosen difficulty.
+const path = require('path');
+const L = require('../lib/e2e-lib');
+const db = require(path.join(__dirname, '..', '..', 'server', 'src', 'config', 'database.js')); // the server's word bank (source of truth)
+const { WORD_DIFFICULTY } = require(path.join(__dirname, '..', '..', 'shared', 'contract.js'));
+const bank = (d) => db.words.filter((w) => w.difficulty === d).map((w) => w.word);
+const offered = (...ps) => ps.flatMap((p) => p.events.filter((e) => e.ev === 'word_selection').flatMap((e) => e.data.words));
+
+(async () => {
+  { // settings: default Mixed, host can set, guest cannot, invalid ignored, Mixed again
+    const A = L.player(L.nextName('H'), { autoGuess: false }), B = L.player(L.nextName('G'), { autoGuess: false });
+    const { code } = await L.makeRoom(A); await L.join(B, code); await L.sleep(300);
+    L.check('D1 default difficulty is Mixed (null) in room_data', L.last(B).wordDifficulty === null);
+    A.s.emit('update_room_settings', { wordDifficulty: WORD_DIFFICULTY.EASY }); await L.sleep(300);
+    L.check('D1 host sets EASY → every client sees it', L.last(B).wordDifficulty === 'EASY');
+    B.s.emit('update_room_settings', { wordDifficulty: WORD_DIFFICULTY.HARD }); await L.sleep(300);
+    L.check('D1 non-host cannot change difficulty', L.last(A).wordDifficulty === 'EASY');
+    A.s.emit('update_room_settings', { wordDifficulty: 'SUPER_HARD' }); await L.sleep(300);
+    L.check('D1 invalid value ignored', L.last(A).wordDifficulty === 'EASY');
+    A.s.emit('update_room_settings', { wordDifficulty: null }); await L.sleep(300);
+    L.check('D1 host can switch back to Mixed', L.last(B).wordDifficulty === null);
+    L.closeAll(A, B);
+  }
+  for (const level of [WORD_DIFFICULTY.EASY, WORD_DIFFICULTY.MEDIUM, WORD_DIFFICULTY.HARD]) {
+    const A = L.player(L.nextName('H')), B = L.player(L.nextName('G'));
+    const { code } = await L.makeRoom(A); await L.join(B, code);
+    A.s.emit('update_room_settings', { wordDifficulty: level, totalRounds: 3 }); B.s.emit('toggle_ready'); await L.sleep(300);
+    A.s.emit('start_game');
+    await L.waitFor(() => A.frames.some((f) => f.status === 'GAME_OVER'), 90000);
+    const words = offered(A, B), allowed = bank(level);
+    L.check(`D1 ${level}: all offered words come from the ${level} list (6 turns × 3 words)`, words.length === 18 && words.every((w) => allowed.includes(w)),
+      `${words.length} offered; outside: ${words.filter((w) => !allowed.includes(w)).join(',') || 'none'}`);
+    L.check(`D1 ${level}: difficulty kept after the game returns to LOBBY`, await L.waitFor(() => L.last(A).status === 'LOBBY', 15000) && L.last(A).wordDifficulty === level);
+    L.closeAll(A, B);
+  }
+  L.finish();
+})();

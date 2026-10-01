@@ -1,7 +1,7 @@
 // Game Event Handler
 const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES } = require('../../../shared/gameConfig');
-const { GAME_STATUS, GAME_RULES } = require('../../../shared/contract');
+const { GAME_STATUS, GAME_RULES, WORD_DIFFICULTY } = require('../../../shared/contract');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
 const crypto = require('crypto');
@@ -160,6 +160,13 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     }
     if (settings.totalRounds && typeof settings.totalRounds === 'number') {
       room.totalRounds = Math.max(1, Math.min(10, settings.totalRounds));
+    }
+    // D1: word difficulty (null = Mixed); anything else is ignored
+    if (Object.prototype.hasOwnProperty.call(settings, 'wordDifficulty')) {
+      const d = settings.wordDifficulty;
+      if (d === null || Object.values(WORD_DIFFICULTY).includes(d)) {
+        room.wordDifficulty = d;
+      }
     }
     if (settings.maxPlayers && typeof settings.maxPlayers === 'number') {
       room.maxPlayers = Math.max(2, Math.min(16, settings.maxPlayers));

@@ -55,9 +55,10 @@ echo "=== [5] render tests (react-dom/server)"
 for t in "$TESTS"/render/*.test.jsx; do run_case "render/$(basename "$t")" node "$TESTS/lib/render.js" "$t"; done
 
 echo "=== [6] browser tests (headless Chrome)"
-run_case "browser/d2-eraser-b1-pointer" node "$TESTS/lib/browser.js" "$TESTS/browser/d2-eraser-b1-pointer.browser.jsx"
-run_case "browser/b3-pin-dom" env DEV=1 node "$TESTS/lib/browser.js" "$TESTS/browser/b3-pin-dom.browser.jsx"
-run_case "browser/b4-session-flow" env DEV=1 node "$TESTS/lib/browser.js" "$TESTS/browser/b4-session-flow.browser.jsx"
+for t in "$TESTS"/browser/*.browser.jsx; do
+  case "$t" in *b2-layout-overflow*) continue ;; esac   # needs the Tailwind CDN, run below
+  run_case "browser/$(basename "$t" .browser.jsx)" env DEV=1 node "$TESTS/lib/browser.js" "$t"
+done
 if curl -s -m 8 -o /dev/null https://cdn.tailwindcss.com/; then
   for w in 375 820; do
     run_case "browser/b2-layout-overflow@${w}px" \

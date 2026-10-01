@@ -48,7 +48,7 @@ class RoundManager {
       room.forcedColor = null;
     }
 
-    const wordChoices = Word.getRandomWords(3).map(w => w.word);
+    const wordChoices = Word.getRandomWords(3, { difficulty: room.wordDifficulty }).map(w => w.word);
     room.wordOptions = wordChoices;
 
     // Notify clients of Server-Authoritative turn change & state reset

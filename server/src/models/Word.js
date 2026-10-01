@@ -2,8 +2,8 @@
 const db = require('../config/database');
 
 class Word {
-  static getRandomWords(count = 3) {
-    return db.getRandomWords(count);
+  static getRandomWords(count = 3, filter = {}) {
+    return db.getRandomWords(count, filter);
   }
 }
 

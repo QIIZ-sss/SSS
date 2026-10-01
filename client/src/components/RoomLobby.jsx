@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
 import { CHALLENGE_DETAILS, GAME_MODES } from '../../../shared/gameConfig';
-import { GAME_RULES } from '../../../shared/contract';
+import { GAME_RULES, WORD_DIFFICULTY } from '../../../shared/contract';
 
 export default function RoomLobby({ roomData, username }) {
   const [activeTab, setActiveTab] = useState('CHALLENGES');
@@ -294,6 +294,29 @@ export default function RoomLobby({ roomData, username }) {
                         </button>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* Word Difficulty (D1) — null = Mixed */}
+                <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-wrap items-center justify-between gap-space-xs shadow-sm">
+                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">6. WORD DIFFICULTY:</span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {[null, WORD_DIFFICULTY.EASY, WORD_DIFFICULTY.MEDIUM, WORD_DIFFICULTY.HARD].map((level) => (
+                      <button
+                        key={level || 'MIXED'}
+                        disabled={!isHost}
+                        aria-pressed={(roomData.wordDifficulty || null) === level}
+                        className={`px-2.5 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all flex items-center justify-center ${
+                          (roomData.wordDifficulty || null) === level
+                            ? 'bg-primary-container text-on-primary font-black shadow-[2px_2px_0px_#18181B]'
+                            : 'bg-surface-card text-on-surface hover:bg-surface-container'
+                        } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
+                        onClick={() => handleUpdateSetting({ wordDifficulty: level })}
+                        type="button"
+                      >
+                        {level || 'MIXED'}
+                      </button>
+                    ))}
                   </div>
                 </div>
 

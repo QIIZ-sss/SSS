@@ -36,6 +36,7 @@ class RoomManager {
       totalRounds: options.totalRounds || 3,
       miniChallengeEnabled: options.miniChallengeEnabled !== undefined ? options.miniChallengeEnabled : true,
       enabledChallenges: options.enabledChallenges || [MINI_CHALLENGES.NONE, MINI_CHALLENGES.COLOUR_FIX, MINI_CHALLENGES.DONT_LIFT_PEN, MINI_CHALLENGES.GEOMETRIC_ONLY],
+      wordDifficulty: null, // D1: one of WORD_DIFFICULTY, or null = Mixed (all words)
       players: [], // { socketId, username, avatar, score: 0, isReady: false, team: 'Red' | 'Blue' }
       teams: {
         Red: { score: 0 },
@@ -100,6 +101,7 @@ class RoomManager {
       roundTime: room.roundTime,
       totalRounds: room.totalRounds,
       miniChallengeEnabled: room.miniChallengeEnabled,
+      wordDifficulty: room.wordDifficulty || null,
       enabledChallenges: room.enabledChallenges || [MINI_CHALLENGES.NONE, MINI_CHALLENGES.COLOUR_FIX, MINI_CHALLENGES.DONT_LIFT_PEN, MINI_CHALLENGES.GEOMETRIC_ONLY],
       players: room.players.map(p => ({
         username: p.username,

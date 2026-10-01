@@ -66,6 +66,10 @@ export const SOLO_AI = Object.freeze({
 
 // ---------- รูปแบบข้อมูลที่รับส่งผ่าน socket (ห้ามเปลี่ยนชื่อฟิลด์) ----------
 //
+// D1 ระดับความยากของคำ (host เลือกใน lobby)
+//   client -> server : SOCKET_EVENTS.UPDATE_ROOM_SETTINGS  { wordDifficulty: 'EASY' | 'MEDIUM' | 'HARD' | null }  (null = Mixed)
+//   server -> client : SOCKET_EVENTS.ROOM_DATA             { ..., wordDifficulty: 'EASY' | 'MEDIUM' | 'HARD' | null }
+//
 // client -> server  : SOCKET_EVENTS.SOLO_AI_PREDICT
 //   { targetWord: string, pixels: number[784] }
 //

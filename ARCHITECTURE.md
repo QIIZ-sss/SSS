@@ -197,7 +197,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | C→S | `leave_room` | — | `App.jsx:114` |
 | C→S | `switch_team` | `{team}` | `gameHandler.js:63` |
 | C→S | `toggle_ready` | — | `RoomLobby.jsx:21` |
-| C→S | `update_room_settings` | partial settings object | `RoomLobby.jsx:30` |
+| C→S | `update_room_settings` | partial settings object; **+ `wordDifficulty` since D1** | `RoomLobby.jsx` |
 | C→S | `start_game` | — | `RoomLobby.jsx:25` |
 | C→S | `select_word` | `{word}` | `MultiplayerGame.jsx:18` |
 | C→S | `draw_begin` / `draw_path` / `draw_end` / `draw_fill` / `shape_preview` | stroke data objects | `Canvas.jsx` |
@@ -241,7 +241,9 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 ## 9. Word management
 
-`CURRENT FACT` — `server/src/config/database.js:7-28`: 20 in-memory words with `category` and lowercase `difficulty` (`'easy'|'medium'|'hard'`). `Word.getRandomWords(3)` (`server/src/models/Word.js`, `database.js:113-116`) shuffles all words regardless of mode or difficulty. `difficulty` is never read. The bank includes `Astronaut`, which is not one of the DoodleNet game classes (`aiPredictor.js:16-36`). `WORD_DIFFICULTY` in `contract.js` uses uppercase values and is unused.
+**Updated in D1 (approved contract change):** the bank uses `WORD_DIFFICULTY` values; the host picks `wordDifficulty` (EASY / MEDIUM / HARD / null = Mixed) via `update_room_settings`, `room_data` carries it, and `RoundManager.startTurnSelection` draws word choices only from that difficulty. Baseline below.
+
+Baseline `CURRENT FACT` — `server/src/config/database.js:7-28`: 20 in-memory words with `category` and lowercase `difficulty` (`'easy'|'medium'|'hard'`). `Word.getRandomWords(3)` (`server/src/models/Word.js`, `database.js:113-116`) shuffles all words regardless of mode or difficulty. `difficulty` is never read. The bank includes `Astronaut`, which is not one of the DoodleNet game classes (`aiPredictor.js:16-36`). `WORD_DIFFICULTY` in `contract.js` uses uppercase values and is unused.
 
 ## 10. Challenges
 

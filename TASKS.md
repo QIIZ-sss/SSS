@@ -35,7 +35,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P6.2 | C2 | 6 | Done (run section only); full README rewrite needs human decision |
 | P6.3 | C3 | 6 | Done |
 | P6.4 | C4 | 6 | Done; 375 px visual check MANUAL pending |
-| P6.5 | D1 | 6 | **BLOCKED — needs approval of a socket payload change** |
+| P6.5 | D1 | 6 | Done (automated); MANUAL NOT TESTED |
 | P7.1 | A8 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
 | P7.2 | A9 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
@@ -623,8 +623,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Multiple rounds per difficulty; Solo AI many rounds.
 - **Regression requirements:** Word selection timeout auto-pick; P3.1.
 - **Commit requirement:** `feat(D1): word difficulty`.
-- **Status:** BLOCKED. A host difficulty setting needs a new field in the `update_room_settings` payload and in `room_data` (so all clients show the choice) — a socket payload change that is not pre-approved (AGENTS.md §2 / §4). Nothing implemented.
-  - Proposal for approval: `update_room_settings` accepts `wordDifficulty: 'EASY' | 'MEDIUM' | 'HARD' | null` (values from `WORD_DIFFICULTY`, `null` = all); `room_data` gains `wordDifficulty`; server filters `Word.getRandomWords` by difficulty (bank values normalised to `WORD_DIFFICULTY`, currently lowercase). The Solo AI part ("only AI-supported words", e.g. drop `Astronaut`) overlaps A8 and stays blocked with it.
+- **Status:** Done (approved by human 2026-10-02, implemented as proposed); MANUAL NOT TESTED.
+  - **Contract change (approved):** `update_room_settings` accepts `wordDifficulty: 'EASY' | 'MEDIUM' | 'HARD' | null` (null = Mixed; any other value ignored; host + LOBBY only, as for other settings); `room_data` carries `wordDifficulty`. Documented in `shared/contract.js`.
+  - Files: `server/src/config/database.js` (bank uses `WORD_DIFFICULTY` values; `getRandomWords(count, { difficulty })`), `server/src/models/Word.js`, `server/src/gameLogic/RoomManager.js` (`wordDifficulty: null` default, in `sanitizeRoom`), `server/src/gameLogic/RoundManager.js` (word choices filtered), `server/src/socket/gameHandler.js` (validation), `shared/contract.js` (doc), `client/src/components/RoomLobby.jsx` (MIXED / EASY / MEDIUM / HARD buttons in Settings, host-only). No scoring change. Difficulty survives the return to LOBBY.
+  - Checks: e2e 11/11 PASS (default Mixed; host sets EASY and all clients see it; guest change ignored; invalid value ignored; back to Mixed; EASY / MEDIUM / HARD games: all 18 offered words per game come from that list; setting kept after LOBBY); browser test 6/6 PASS (options shown, MIXED pressed for null, host click emits `{ wordDifficulty }`, MIXED emits null, guest sees choice with disabled buttons and sends nothing).
+  - Original proposal: `update_room_settings` accepts `wordDifficulty: 'EASY' | 'MEDIUM' | 'HARD' | null` (values from `WORD_DIFFICULTY`, `null` = all); `room_data` gains `wordDifficulty`; server filters `Word.getRandomWords` by difficulty (bank values normalised to `WORD_DIFFICULTY`, currently lowercase). The Solo AI part ("only AI-supported words", e.g. drop `Astronaut`) overlaps A8 and stays blocked with it.
 
 ---
 

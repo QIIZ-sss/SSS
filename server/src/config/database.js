@@ -1,30 +1,31 @@
 // Database Configuration & In-Memory Storage Adapter
+const { WORD_DIFFICULTY } = require('../../../shared/contract');
 
 class DatabaseStore {
   constructor() {
     this.users = new Map(); // username -> User
     this.scores = [];       // List of Score records
     this.words = [
-      { id: '1', word: 'Apple', category: 'Food', difficulty: 'easy' },
-      { id: '2', word: 'Cat', category: 'Animal', difficulty: 'easy' },
-      { id: '3', word: 'House', category: 'Object', difficulty: 'easy' },
-      { id: '4', word: 'Car', category: 'Vehicle', difficulty: 'easy' },
-      { id: '5', word: 'Tree', category: 'Nature', difficulty: 'easy' },
-      { id: '6', word: 'Sun', category: 'Space', difficulty: 'easy' },
-      { id: '7', word: 'Pizza', category: 'Food', difficulty: 'medium' },
-      { id: '8', word: 'Airplane', category: 'Vehicle', difficulty: 'medium' },
-      { id: '9', word: 'Elephant', category: 'Animal', difficulty: 'medium' },
-      { id: '10', word: 'Bicycle', category: 'Vehicle', difficulty: 'medium' },
-      { id: '11', word: 'Guitar', category: 'Instrument', difficulty: 'medium' },
-      { id: '12', word: 'Computer', category: 'Technology', difficulty: 'hard' },
-      { id: '13', word: 'Eiffel Tower', category: 'Landmark', difficulty: 'hard' },
-      { id: '14', word: 'Astronaut', category: 'Job', difficulty: 'hard' },
-      { id: '15', word: 'Helicopter', category: 'Vehicle', difficulty: 'hard' },
-      { id: '16', word: 'Submarine', category: 'Vehicle', difficulty: 'hard' },
-      { id: '17', word: 'Dragon', category: 'Fantasy', difficulty: 'medium' },
-      { id: '18', word: 'Rainbow', category: 'Nature', difficulty: 'easy' },
-      { id: '19', word: 'Clock', category: 'Object', difficulty: 'easy' },
-      { id: '20', word: 'Basketball', category: 'Sport', difficulty: 'easy' }
+      { id: '1', word: 'Apple', category: 'Food', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '2', word: 'Cat', category: 'Animal', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '3', word: 'House', category: 'Object', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '4', word: 'Car', category: 'Vehicle', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '5', word: 'Tree', category: 'Nature', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '6', word: 'Sun', category: 'Space', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '7', word: 'Pizza', category: 'Food', difficulty: WORD_DIFFICULTY.MEDIUM },
+      { id: '8', word: 'Airplane', category: 'Vehicle', difficulty: WORD_DIFFICULTY.MEDIUM },
+      { id: '9', word: 'Elephant', category: 'Animal', difficulty: WORD_DIFFICULTY.MEDIUM },
+      { id: '10', word: 'Bicycle', category: 'Vehicle', difficulty: WORD_DIFFICULTY.MEDIUM },
+      { id: '11', word: 'Guitar', category: 'Instrument', difficulty: WORD_DIFFICULTY.MEDIUM },
+      { id: '12', word: 'Computer', category: 'Technology', difficulty: WORD_DIFFICULTY.HARD },
+      { id: '13', word: 'Eiffel Tower', category: 'Landmark', difficulty: WORD_DIFFICULTY.HARD },
+      { id: '14', word: 'Astronaut', category: 'Job', difficulty: WORD_DIFFICULTY.HARD },
+      { id: '15', word: 'Helicopter', category: 'Vehicle', difficulty: WORD_DIFFICULTY.HARD },
+      { id: '16', word: 'Submarine', category: 'Vehicle', difficulty: WORD_DIFFICULTY.HARD },
+      { id: '17', word: 'Dragon', category: 'Fantasy', difficulty: WORD_DIFFICULTY.MEDIUM },
+      { id: '18', word: 'Rainbow', category: 'Nature', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '19', word: 'Clock', category: 'Object', difficulty: WORD_DIFFICULTY.EASY },
+      { id: '20', word: 'Basketball', category: 'Sport', difficulty: WORD_DIFFICULTY.EASY }
     ];
 
     // Initialize default seed users and sample leaderboard data
@@ -110,8 +111,10 @@ class DatabaseStore {
     return leaderboardList;
   }
 
-  getRandomWords(count = 3) {
-    const shuffled = [...this.words].sort(() => 0.5 - Math.random());
+  // filter.difficulty: one of WORD_DIFFICULTY, or null/undefined for all words (Mixed)
+  getRandomWords(count = 3, filter = {}) {
+    const pool = filter.difficulty ? this.words.filter(w => w.difficulty === filter.difficulty) : this.words;
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 }
