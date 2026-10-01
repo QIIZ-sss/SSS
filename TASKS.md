@@ -41,6 +41,14 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
 | P7.4 | D3 | 7 | **BLOCKED — team decision (popup vs. small bar)** |
 
+### Regression suite (`tests/`)
+
+- Status: **in repo**, run with `tests/check_all.sh` (see `tests/README.md`). Last run on branch `dev`: **27 passed, 0 failed, 0 skipped** (~10 min): syntax, contract, state-machine harness 20/20, client build, 7 render tests, 5 headless-Chrome runs (D2+B1 16/16, B3 9/9, B4 client 6/6, layout 375 px 9/9, 820 px 9/9), server on port 4100 + 9 e2e files (A2 14, B4 20, P2.1 8, P2.2 9, P2.3 11, P2.4 4, P2.5 5, P3.1 7, P3.2 5), server log clean.
+- Without Chrome (`CHROME_PATH` not found) browser tests are SKIP, not FAIL (verified: 14 passed, 5 skipped). The layout test also needs network access to the Tailwind CDN.
+- Negative controls (`node tests/negative-control/run.js`, not in `check_all.sh`): EXPECTED FAIL on old commits — harness @ `853c0be` 11/20, D2 @ `36c2e47` 9/16, B2 @ `32d371d` 8/9.
+- Not automated: B5 LAN check (needs `vite --host` + a non-loopback address; recorded in P5.4) and every MANUAL item below.
+- Every task that changes behaviour should add or update a test here and keep `tests/check_all.sh` green.
+
 ---
 
 ## 1. Requirement coverage

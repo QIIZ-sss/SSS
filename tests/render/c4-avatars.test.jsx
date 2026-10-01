@@ -1,0 +1,17 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import App from '../../client/src/App.jsx';
+import { AVATARS } from '../../shared/gameConfig.js';
+const store = {}; globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
+globalThis.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+const results = []; const check = (n, c, d='') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
+const login = renderToStaticMarkup(<App />);
+const missing = AVATARS.filter(a => !login.includes(a.emoji)).map(a => a.emoji);
+check(`login screen shows all ${AVATARS.length} avatars (incl. 👾 🚀)`, missing.length === 0, missing.join(' '));
+check('avatar row wraps on narrow screens', /flex flex-wrap items-center justify-center gap-space-xs pt-1/.test(login));
+store.game_username = 'Mali';
+const lobby = renderToStaticMarkup(<App />);
+const missing2 = AVATARS.filter(a => !lobby.includes(a.emoji)).map(a => a.emoji);
+check('create-room screen shows all avatars', missing2.length === 0, missing2.join(' '));
+console.log(results.join('\n')); console.log(`\n${results.filter(r=>r.startsWith('PASS')).length}/${results.length} PASS`);
+process.exit(results.some(r => r.startsWith('FAIL')) ? 1 : 0);

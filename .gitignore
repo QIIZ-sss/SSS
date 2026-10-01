@@ -23,3 +23,5 @@ _ai_update/
 # ไฟล์ระบบ
 Thumbs.db
 .DS_Store
+# ผลลัพธ์ที่สร้างระหว่างรัน tests/check_all.sh (log, bundle, Chrome profile, build)
+tests/.tmp/

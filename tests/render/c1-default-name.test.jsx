@@ -1,0 +1,14 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import App from '../../client/src/App.jsx';
+const store = {}; globalThis.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
+globalThis.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+const results = []; const check = (n, c, d='') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
+const fresh = renderToStaticMarkup(<App />);
+check('fresh visit: nickname field is empty (no "กกก")', /id="nickname"[^>]*value=""/.test(fresh) && !/กกก/.test(fresh), (fresh.match(/<input[^>]*id="nickname"[^>]*>/) || [''])[0].slice(0, 160));
+check('fresh visit: login screen shown', /CHOOSE YOUR NICKNAME/.test(fresh));
+store.game_username = 'Mali';
+const saved = renderToStaticMarkup(<App />);
+check('saved name is still prefilled / logged in', /Mali/.test(saved));
+console.log(results.join('\n')); console.log(`\n${results.filter(r=>r.startsWith('PASS')).length}/${results.length} PASS`);
+process.exit(results.some(r => r.startsWith('FAIL')) ? 1 : 0);

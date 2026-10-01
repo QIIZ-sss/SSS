@@ -1,0 +1,11 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import ChatBox from '../../client/src/components/ChatBox.jsx';
+const results = []; const check = (n, c, d='') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
+const h = (isDrawer, roomStatus) => renderToStaticMarkup(<ChatBox username="A" isDrawer={isDrawer} roomStatus={roomStatus} />);
+check('drawer input disabled in PLAYING', /<input[^>]*disabled=""/.test(h(true, 'PLAYING')) && /chat is disabled/.test(h(true, 'PLAYING')));
+check('drawer input disabled in WORD_SELECTION', /<input[^>]*disabled=""/.test(h(true, 'WORD_SELECTION')));
+check('drawer input enabled in ROUND_OVER', !/<input[^>]*disabled=""/.test(h(true, 'ROUND_OVER')));
+check('guesser input enabled in PLAYING', !/<input[^>]*disabled=""/.test(h(false, 'PLAYING')) && /TYPE YOUR GUESS/.test(h(false, 'PLAYING')));
+console.log(results.join('\n')); console.log(`\n${results.filter(r=>r.startsWith('PASS')).length}/${results.length} PASS`);
+process.exit(results.some(r => r.startsWith('FAIL')) ? 1 : 0);

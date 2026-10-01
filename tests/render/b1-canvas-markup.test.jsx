@@ -1,0 +1,10 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import Canvas from '../../client/src/components/Canvas.jsx';
+const results = []; const check = (n, c, d='') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
+const html = renderToStaticMarkup(<Canvas isDrawer={true} challenge="NONE" />);
+check('canvas container has touch-action:none', /<div style="touch-action:none"/.test(html));
+check('drawing (ghost) canvas has touch-action:none', /<canvas width="640" height="480" style="touch-action:none"/.test(html));
+check('all canvas layers keep the fixed 640x480 drawing space (stroke, background, ghost)', (html.match(/<canvas width="640" height="480"/g) || []).length === 3);
+console.log(results.join('\n')); console.log(`\n${results.filter(r=>r.startsWith('PASS')).length}/${results.length} PASS`);
+process.exit(results.some(r => r.startsWith('FAIL')) ? 1 : 0);
