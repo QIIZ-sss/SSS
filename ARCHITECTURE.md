@@ -180,7 +180,9 @@ Current (`CURRENT FACT`, after P1.3):
 
 `CURRENT FACT` — `server/src/gameLogic/TimerManager.js` keeps one `setInterval` per room, emits `timer_tick {timeRemaining}` every second to the room, stops at 0 and calls the expire callback. `startTimer` stops any previous timer first (`:16-17`). Client mirrors it via `client/src/hooks/useGameTimer.js` (sets 0 on `round_change`).
 
-`DOCUMENTATION CLAIM` — QA T-01/T-02/T-03 PASS. T-02 evidence shows identical `00:42` in every round, which does not prove countdown. `HANDOFF.md` A7 says the timer fix is unproven. Status: `UNCERTAIN`.
+`DOCUMENTATION CLAIM` — QA T-01/T-02/T-03 PASS. T-02 evidence shows identical `00:42` in every round, which does not prove countdown.
+
+**Updated in P2.5 (runtime evidence):** over 3 rounds × 2 players without refresh, every PLAYING turn ticked `roundTime..0` at 1000–1004 ms spacing, reached 0 on timeout, and two clients differed by ≤ 1 ms. Server timer: verified. On-screen display: MANUAL.
 
 ## 7. Socket events (current contract)
 

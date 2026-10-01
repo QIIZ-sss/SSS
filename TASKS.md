@@ -23,7 +23,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P2.2 | A5 | 2 | Done (automated); MANUAL pending |
 | P2.3 | between-round transition | 2 | Done (automated); MANUAL pending |
 | P2.4 | A3 | 2 | Done (automated); MANUAL pending |
-| P2.5 | A7 | 2 | Not started |
+| P2.5 | A7 | 2 | Done — server timer verified (no code change); client display MANUAL pending |
 | P3.1 | A1 | 3 | Not started |
 | P3.2 | A6 | 3 | Not started |
 | P4.1 | B4 | 4 | Not started |
@@ -332,6 +332,10 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Log `timer_tick` values with timestamps on 2 clients over 3 rounds.
 - **Regression requirements:** P1.4 (timer stops after `GAME_OVER`).
 - **Commit requirement:** `fix(P2.5): fix timer synchronization` (or `test(P2.5): ...` if verification only).
+- **Status:** Done — verification only, no defect found, no code change. MANUAL (on-screen timer) NOT TESTED.
+  - Tolerance used: ≤ 1 s between clients (QA plan T-01 criterion; no other project value exists).
+  - Evidence (real server, 2 sockets, 3 rounds × 2 players, `roundTime` 5, no refresh): every PLAYING turn ticked `5,4,3,2,1,0`; tick spacing 1000–1004 ms; 0 reached on timeout in all 6 turns; max client skew 1 ms. Sample (client A, value@ms): `5@0 4@1002 3@2002 2@3004 1@4006 0@5006`.
+  - The test created the room with `roundTime: 5` through `create_room`, which is not clamped (only `update_room_settings` clamps 15–180) — recorded as U10.
 
 ---
 
@@ -630,5 +634,6 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 | U5 | DONT_LIFT_PEN / GEOMETRIC_ONLY enforced only on client | ARCH §3.2, §10 | new task |
 | U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |
 | U7 | Dead/legacy code tree (ARCH §2.3) | ARCH §2.3 | cleanup task, only with explicit approval |
+| U10 | `create_room` accepts any `roundTime`/`totalRounds`/`maxPlayers` without the 15–180 / 1–10 / 2–16 clamps used by `update_room_settings` | `RoomManager.createRoom`, `gameHandler.js` create_room | validation task |
 | U9 | No client UI for the existing `switch_team` event; a team emptied by a leave in LOBBY blocks START until someone joins | `client/src` (no `SWITCH_TEAM` usage) | new UI task |
 | U8 | Header logo click clears `currentRoomId` without emitting `leave_room` → player stays in the room server-side | `client/src/App.jsx` header logo `onClick` | P2.3 or new task |
