@@ -28,7 +28,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P3.2 | A6 | 3 | Done (automated); MANUAL pending |
 | P4.1 | B4 | 4 | Done (automated); MANUAL browser refresh pending |
 | P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
-| P5.2 | B2 | 5 | Not started |
+| P5.2 | B2 | 5 | Partial — known overflow fixed; full 375 px / iPad check MANUAL pending |
 | P5.3 | B3 | 5 | Not started |
 | P5.4 | B5 | 5 | Not started — after P4.1 (see sequencing) |
 | P6.1 | C1 | 6 | Not started |
@@ -460,6 +460,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Screenshots at listed widths + real device check (`MANUAL`).
 - **Regression requirements:** Desktop 1366/1920.
 - **Commit requirement:** `fix(B2): mobile layout`.
+- **Status:** Partial. No browser is available to measure every screen, so only issues with evidence were fixed; acceptance ("no overflow on all screens at 375 px and iPad") is NOT TESTED — MANUAL.
+  - Evidence used: existing `qa/evidence/G-06_375px.png` shows the header logo wrapping to 3 lines inside the 80 px header and the LEAVE button clipped at the right edge.
+  - Files: `client/src/App.jsx` (header: logo text `hidden sm:inline` + `whitespace-nowrap`, `shrink-0` on logo / sound / LEAVE, username `truncate` on mobile, mobile gutters `px-gutter-mobile`, `py-margin-mobile` — existing theme tokens), `client/src/gameModes/MultiplayerGame.jsx`, `client/src/gameModes/TeamGame.jsx` (mobile order: canvas, then chat, then standings — HANDOFF B2 "canvas on top, chat below"; desktop `lg:` 3-column order unchanged).
+  - Checks: render test 4/4 PASS (order classes, canvas column), client build PASS. Static scan found no fixed widths wider than 375 px on the live path (only `max-w-*`).
+  - Not changed: Lobby, Home, Leaderboard, Solo AI screens (no evidence of overflow found by static scan).
 
 ### P5.3 — PIN entry (B3)
 

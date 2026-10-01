@@ -88,7 +88,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
       {/* MAIN ARENA GRID (Left: Teams Roster, Center: Canvas, Right: Chat Feed) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
         {/* LEFT SIDEBAR: Team Rosters (Cols 3) */}
-        <aside className="lg:col-span-3 flex flex-col gap-space-md">
+        <aside className="order-3 lg:order-none lg:col-span-3 flex flex-col gap-space-md">
           <div className="bg-canvas-paper rounded-xl p-space-md border-3 border-border-dark shadow-[4px_4px_0px_0px_#18181B] flex flex-col gap-space-md">
             <div className="flex items-center justify-between pb-space-xs border-b-2 border-border-dark">
               <h3 className="font-headline-sm text-headline-sm uppercase text-border-dark font-black">⚔️ TEAM ROSTERS</h3>
@@ -125,7 +125,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
         </aside>
 
         {/* CENTER COLUMN: Canvas Workstation (Cols 6) */}
-        <div className="lg:col-span-6 flex flex-col items-center">
+        <div className="order-1 lg:order-none lg:col-span-6 flex flex-col items-center min-w-0">
           {roomData.status === 'WORD_SELECTION' && isDrawer && (
             <div className="w-full max-w-[640px] bg-canvas-paper rounded-xl p-space-lg border-4 border-border-dark shadow-[6px_6px_0px_0px_#18181B] mb-space-md text-center flex flex-col gap-space-md">
               <h3 className="font-headline-md text-headline-md text-border-dark uppercase font-black">🎨 SELECT WORD FOR TEAMS TO GUESS:</h3>
@@ -163,7 +163,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
         </div>
 
         {/* RIGHT SIDEBAR: Chat & Guess Feed (Cols 3) */}
-        <div className="lg:col-span-3 flex flex-col h-full">
+        <div className="order-2 lg:order-none lg:col-span-3 flex flex-col h-full">
           <ChatBox
             username={username}
             isDrawer={isDrawer}

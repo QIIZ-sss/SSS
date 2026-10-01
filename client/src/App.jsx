@@ -223,15 +223,15 @@ export default function App() {
     <div className="bg-arcade-dots text-on-surface font-body-md min-h-screen flex flex-col">
       {/* Header Bar matching stitch_game_ui_design_system */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-canvas-paper border-b-2 border-border-dark shadow-[0_4px_0_0_#18181B]">
-        <div className="h-20 max-w-[1120px] mx-auto px-gutter flex items-center justify-between gap-space-md">
-          <div className="flex items-center gap-space-md">
+        <div className="h-20 max-w-[1120px] mx-auto px-gutter-mobile sm:px-gutter flex items-center justify-between gap-space-sm sm:gap-space-md">
+          <div className="flex items-center gap-space-md min-w-0">
             <a
-              className="flex items-center gap-space-sm bg-tertiary-fixed text-on-tertiary-fixed px-space-md py-space-xs rounded-xl border-2 border-border-dark shadow-[3px_3px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all"
+              className="shrink-0 flex items-center gap-space-sm bg-tertiary-fixed text-on-tertiary-fixed px-space-md py-space-xs rounded-xl border-2 border-border-dark shadow-[3px_3px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all"
               href="#"
               onClick={() => { setActiveNav('lobby'); setCurrentRoomId(null); }}
             >
               <span className="material-symbols-outlined text-border-dark text-[24px]">draw</span>
-              <span className="font-headline-sm text-headline-sm uppercase tracking-wide">JUST DRAW IT</span>
+              <span className="hidden sm:inline whitespace-nowrap font-headline-sm text-headline-sm uppercase tracking-wide">JUST DRAW IT</span>
             </a>
             <div className="hidden lg:flex items-center gap-space-xs bg-surface-card px-space-sm py-space-xs rounded-full border-2 border-border-dark shadow-[2px_2px_0px_#18181B]">
               <span className="w-2.5 h-2.5 rounded-full bg-primary-container animate-pulse"></span>
@@ -268,10 +268,10 @@ export default function App() {
             )}
           </nav>
 
-          <div className="flex items-center gap-space-sm">
+          <div className="flex items-center gap-space-xs sm:gap-space-sm min-w-0">
             <button
               aria-label="Toggle Audio Mute"
-              className="w-10 h-10 flex items-center justify-center bg-surface-card rounded-xl border-2 border-border-dark shadow-[3px_3px_0px_#18181B] hover:bg-surface-container-high active:translate-x-[2px] active:translate-y-[2px] transition-all"
+              className="shrink-0 w-10 h-10 flex items-center justify-center bg-surface-card rounded-xl border-2 border-border-dark shadow-[3px_3px_0px_#18181B] hover:bg-surface-container-high active:translate-x-[2px] active:translate-y-[2px] transition-all"
               onClick={() => setSoundMuted(!soundMuted)}
               type="button"
             >
@@ -279,13 +279,13 @@ export default function App() {
                 {soundMuted ? 'volume_off' : 'volume_up'}
               </span>
             </button>
-            <div className="flex items-center gap-2 bg-surface-card px-space-sm py-1 rounded-xl border-2 border-border-dark shadow-[2px_2px_0px_#18181B]">
-              <span className="text-xl">{avatar}</span>
-              <span className="font-headline-sm text-label-md text-border-dark font-bold">{username}</span>
+            <div className="min-w-0 flex items-center gap-2 bg-surface-card px-space-sm py-1 rounded-xl border-2 border-border-dark shadow-[2px_2px_0px_#18181B]">
+              <span className="text-xl shrink-0">{avatar}</span>
+              <span className="truncate max-w-[6rem] sm:max-w-none font-headline-sm text-label-md text-border-dark font-bold">{username}</span>
             </div>
             {currentRoomId && (
               <button
-                className="px-space-sm py-1 rounded-lg bg-timer-red text-on-error font-headline-sm text-label-sm border-2 border-border-dark shadow-[2px_2px_0px_#18181B] hover:opacity-90 transition-all"
+                className="shrink-0 px-space-sm py-1 rounded-lg bg-timer-red text-on-error font-headline-sm text-label-sm border-2 border-border-dark shadow-[2px_2px_0px_#18181B] hover:opacity-90 transition-all"
                 onClick={handleLeaveRoom}
               >
                 LEAVE
@@ -297,7 +297,7 @@ export default function App() {
 
       {/* Main Container */}
       <main className="w-full pt-20 flex-1">
-        <div className="max-w-[1120px] mx-auto px-gutter py-margin">
+        <div className="max-w-[1120px] mx-auto px-gutter-mobile sm:px-gutter py-margin-mobile sm:py-margin">
           {!currentRoomId ? (
             activeNav === 'lobby' ? (
               <div className="flex flex-col w-full">
