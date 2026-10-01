@@ -16,7 +16,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 |---|---|---|---|
 | DOC-0 | — | 0 | Done — commit `853c0be` |
 | P1.1 | A2 (discovery) | 1 | Done — findings below |
-| P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Not started — needs approval (`shared/`); server side already imports `contract.js` since P1.3 |
+| P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Done |
 | P1.3 | A2 | 1 | Done (automated checks PASS; MANUAL 2-tab test pending) |
 | P1.4 | A2 regression | 1 | Done (automated) — 1 criterion blocked by P2.1; MANUAL 2-tab test pending |
 | P2.1 | A4 | 2 | Not started |
@@ -162,6 +162,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Start server (`npm run dev` in `server/`), start client (`npm run dev` in `client/`), confirm no load errors in server log and browser console; play one round.
 - **Regression requirements:** Room create/join, start, draw, guess, round end still work.
 - **Commit requirement:** `refactor(P1.2): load shared contract on live path` — one commit.
+- **Status:** Done (approved by human).
+  - Allowed files used: `shared/contract.js`, `client/src/App.jsx`.
+  - Change: `contract.js` now uses the same dual pattern as `shared/events.js` — `export const` / `export function` plus a guarded `module.exports`. Server keeps `require()` (Node require(esm), as for the other shared files); client imports it as ESM. First client consumer: `GAME_STATUS.LOBBY` in `App.jsx` (replaces the literal added in P1.3). No value changed.
+  - Checks: CJS `require` from `server/src/gameLogic` PASS; ESM `import` PASS; client `vite build` PASS (contract bundled); server startup PASS; P1.4 e2e 13/13 PASS; harness 20/20 PASS.
+  - Note: like the other shared files, loading via `require()` depends on Node's require(esm) support (verified on Node v24.18.0).
 
 ### P1.3 — End-of-game transition (A2)
 

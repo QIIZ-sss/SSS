@@ -5,7 +5,7 @@
 // ============================================================
 
 // ---------- สถานะห้อง ----------
-const GAME_STATUS = Object.freeze({
+export const GAME_STATUS = Object.freeze({
   LOBBY: 'LOBBY',
   WORD_SELECTION: 'WORD_SELECTION',
   PLAYING: 'PLAYING',
@@ -14,7 +14,7 @@ const GAME_STATUS = Object.freeze({
 });
 
 // ---------- กติกาที่ server ต้องบังคับ (client ใช้แค่แสดงผล/ปิดปุ่ม) ----------
-const GAME_RULES = Object.freeze({
+export const GAME_RULES = Object.freeze({
   MIN_PLAYERS_FFA: 2,             // FFA ต้องมีอย่างน้อย 2 คน
   MIN_PLAYERS_PER_TEAM: 1,        // Team ต้องมีทีมละอย่างน้อย 1 คน
   MIN_PLAYERS_TEAM_TOTAL: 2,
@@ -28,14 +28,14 @@ const GAME_RULES = Object.freeze({
 });
 
 // ---------- ระดับความยากของคำ ----------
-const WORD_DIFFICULTY = Object.freeze({
+export const WORD_DIFFICULTY = Object.freeze({
   EASY: 'EASY',
   MEDIUM: 'MEDIUM',
   HARD: 'HARD',
 });
 
 // ---------- Solo vs AI ----------
-const SOLO_AI = Object.freeze({
+export const SOLO_AI = Object.freeze({
   // ภาพที่ส่งให้โมเดล
   IMAGE_SIZE: 28,
   PIXEL_COUNT: 784,               // 28 x 28, ค่า 0..1, พื้น = 0, เส้น = 1
@@ -79,7 +79,7 @@ const SOLO_AI = Object.freeze({
 //     isCorrect: boolean
 //   }
 
-function isValidPredictRequest(payload) {
+export function isValidPredictRequest(payload) {
   if (!payload || typeof payload !== 'object') return false;
   const { targetWord, pixels } = payload;
   if (typeof targetWord !== 'string' || !(targetWord in SOLO_AI.GAME_WORDS)) return false;
@@ -87,10 +87,13 @@ function isValidPredictRequest(payload) {
   return pixels.every((v) => typeof v === 'number' && v >= 0 && v <= 1);
 }
 
-module.exports = {
-  GAME_STATUS,
-  GAME_RULES,
-  WORD_DIFFICULTY,
-  SOLO_AI,
-  isValidPredictRequest,
-};
+// รองรับทั้ง ESM (client/Vite) และ CommonJS (server) แบบเดียวกับ shared/events.js
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    GAME_STATUS,
+    GAME_RULES,
+    WORD_DIFFICULTY,
+    SOLO_AI,
+    isValidPredictRequest,
+  };
+}

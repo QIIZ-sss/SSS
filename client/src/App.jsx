@@ -7,6 +7,7 @@ import SoloAIGame from './gameModes/SoloAIGame';
 import { socket, connectSocket } from './services/socket';
 import { SOCKET_EVENTS } from '../../shared/events';
 import { GAME_MODES, AVATARS } from '../../shared/gameConfig';
+import { GAME_STATUS } from '../../shared/contract';
 import './index.css';
 
 export default function App() {
@@ -40,7 +41,7 @@ export default function App() {
     const handleRoomData = (data) => {
       setRoomData(data);
       // Server returned the room to LOBBY after GAME_OVER: close the results modal
-      if (data && data.status === 'LOBBY') {
+      if (data && data.status === GAME_STATUS.LOBBY) {
         setGameOverModal(null);
       }
     };

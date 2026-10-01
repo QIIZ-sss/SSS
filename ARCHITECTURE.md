@@ -53,7 +53,7 @@ Shared files required by the live server: `shared/events.js`, `shared/gameConfig
 
 Live client files (reachable from `App.jsx`): `App.jsx`, `index.css`, `services/socket.js`, `gameModes/{MultiplayerGame,TeamGame,SoloAIGame}.jsx`, `components/{Canvas,ChatBox,ChallengeOverlay,RoomLobby,RoomList,Leaderboard,TimerBadge}.jsx`, `hooks/useGameTimer.js`, `utils/canvasToPixels.js`, `gameEngine/shapePreview.js`.
 
-Shared files imported by the live client: `shared/events.js`, `shared/gameConfig.js`.
+Shared files imported by the live client: `shared/events.js`, `shared/gameConfig.js`, and (since P1.2) `shared/contract.js`.
 
 ### 2.3 Dead / legacy code (NOT on the live path)
 
@@ -68,7 +68,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 | `client/src/main.jsx`, `client/src/styles.css`, `client/src/App.css` | `main.jsx` not loaded by `index.html`; `App.css` not imported anywhere |
 | `client/src/screens/`, `client/src/components/{DrawCanvas,bits}.jsx`, `client/src/lib/`, `client/src/net/socket.js` | Only used by the legacy `screens/` chain |
 | `shared/constants.js` | Only imported by dead `roomHandler.js` |
-| ~~`shared/contract.js`~~ | No longer dead: required by the live server since P1.3; still not imported by the client (see §4) |
+| ~~`shared/contract.js`~~ | No longer dead: required by the live server since P1.3 and imported by the client since P1.2 (see §4) |
 
 `README.md` documents the legacy game and file layout, not the live one (`DOCUMENTATION CLAIM` vs `CURRENT FACT` conflict, see §17).
 
@@ -107,11 +107,11 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 - `shared/utils.js` — `calculateGuesserScore`, `calculateDrawerScore`, `normalizeGuess`; re-declares its own `SCORING` (live).
 - `shared/constants.js` — duplicates `GAME_MODES`, `MINI_CHALLENGES`, `CHALLENGE_DETAILS`, `SCORING`, palette and an older `SOCKET_EVENTS` without `ROUND_CHANGE`/`SHAPE_PREVIEW` (dead).
 - `shared/events.js`, `gameConfig.js`, `utils.js`, `constants.js` mix `export const` with a guarded `module.exports`. The CommonJS server loads them via Node's require(esm) support (works on Node v24; `UNCERTAIN` on older Node).
-- `shared/contract.js` — `GAME_STATUS`, `GAME_RULES` (`MIN_PLAYERS_FFA`, `MIN_PLAYERS_PER_TEAM`, `MIN_PLAYERS_TEAM_TOTAL`, `REQUIRE_ALL_READY`, `DRAWER_CAN_CHAT`, `REVEAL_WORD_STATUSES`, `ROOM_PIN_LENGTH`, `RECONNECT_GRACE_MS`), `WORD_DIFFICULTY`, `SOLO_AI`, `isValidPredictRequest()`. CommonJS-only (`module.exports`, no `export`). At baseline no file imported it. **Updated in P1.3:** `server/src/gameLogic/RoundManager.js` requires it for `GAME_RULES.GAME_OVER_DELAY_MS` (10000); the client still does not import it.
+- `shared/contract.js` — `GAME_STATUS`, `GAME_RULES` (`MIN_PLAYERS_FFA`, `MIN_PLAYERS_PER_TEAM`, `MIN_PLAYERS_TEAM_TOTAL`, `REQUIRE_ALL_READY`, `DRAWER_CAN_CHAT`, `REVEAL_WORD_STATUSES`, `ROOM_PIN_LENGTH`, `RECONNECT_GRACE_MS`), `WORD_DIFFICULTY`, `SOLO_AI`, `isValidPredictRequest()`. At baseline it was CommonJS-only and imported by nothing. **Updated in P1.3:** `server/src/gameLogic/RoundManager.js` requires it (`GAME_RULES.GAME_OVER_DELAY_MS` = 10000). **Updated in P1.2:** same dual ESM/CJS pattern as `events.js` (`export` + guarded `module.exports`); the client imports it (`client/src/App.jsx`: `GAME_STATUS`).
 
 `DOCUMENTATION CLAIM` — `HANDOFF.md` §1: "all constants live in `shared/contract.js` in one place".
 
-`GAP (architectural)` — `shared/contract.js` is **not yet** the runtime source of truth (server uses one value; client none). Values it defines are hardcoded elsewhere, e.g.:
+`GAP (architectural)` — `shared/contract.js` is loadable by both runtimes (P1.2) but is **not yet** the full runtime source of truth: values are adopted task by task. Values it defines are hardcoded elsewhere, e.g.:
 
 | Concept | Hardcoded at |
 |---|---|
@@ -121,7 +121,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 | AI correct score 500 | `gameHandler.js:149`, `SoloAIGame.jsx:72` |
 | PIN length 5 | `RoomManager.js:14`, `client/src/App.jsx:18-22,80` |
 
-Planned resolution: **P1.2** (see `TASKS.md`) makes `contract.js` loadable by the client (the server already loads it) and starts using it for the values a task touches. This needs approval because it modifies `shared/`.
+Resolution: **P1.2** (done) made `contract.js` loadable by both runtimes; later tasks switch the values they touch to the contract.
 
 ## 5. Room management
 
@@ -307,7 +307,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 | # | Documentation claim | Current fact |
 |---|---|---|
-| 1 | `contract.js` is the single source of truth (`HANDOFF.md` §1) | Server imports one value since P1.3; client imports none (§4) |
+| 1 | `contract.js` is the single source of truth (`HANDOFF.md` §1) | Loadable by both runtimes since P1.2; values adopted task by task (§4) |
 | 2 | `HANDOFF.md` C2/C3/C4 cite "BUG-05/06/07" | Those numbers are `QA_REPORT.md` numbering and collide with the team's 14-bug list |
 | 3 | `README.md` describes the "วาดต่อ" game and file map | Live code is `server.js` + `gameLogic/` + `socket/` (§2) |
 | 4 | QA NW-07 PASS (reconnect keeps score) | No reconnect; player removed on disconnect (§14) |
