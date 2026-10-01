@@ -295,7 +295,7 @@ Baseline `CURRENT FACT` — **no reconnect/session implementation existed.**
 
 ## 15. Network / client connection
 
-`CURRENT FACT` — `client/src/services/socket.js:3-5` uses `http://localhost:4000` only when `hostname === 'localhost'`, otherwise `window.location.origin`. Vite proxies `/socket.io` and `/api` to `http://127.0.0.1:4000` and binds `127.0.0.1:5173` by default (`client/vite.config.js`). LAN access via `npm run dev -- --host` is a `DOCUMENTATION CLAIM` (`HANDOFF.md` §2, §4); `UNCERTAIN` until verified.
+`CURRENT FACT` — `client/src/services/socket.js:3-5` uses `http://localhost:4000` only when `hostname === 'localhost'`, otherwise `window.location.origin`. Vite proxies `/socket.io` and `/api` to `http://127.0.0.1:4000` and binds `127.0.0.1:5173` by default (`client/vite.config.js`). **Verified in P5.4:** the default dev server is not reachable from another address; with `--host`, a socket client on a non-loopback address connects through the Vite proxy and can create a room. Real-device LAN play: MANUAL.
 
 ## 16. Tests / QA
 

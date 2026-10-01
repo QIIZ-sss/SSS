@@ -30,7 +30,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P5.1 | B1 | 5 | Implemented; real-device test MANUAL pending |
 | P5.2 | B2 | 5 | Partial — known overflow fixed; full 375 px / iPad check MANUAL pending |
 | P5.3 | B3 | 5 | Done (logic tested); mobile keypad MANUAL pending |
-| P5.4 | B5 | 5 | Not started — after P4.1 (see sequencing) |
+| P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
 | P6.1 | C1 | 6 | Not started |
 | P6.2 | C2 | 6 | Not started |
 | P6.3 | C3 | 6 | Not started |
@@ -505,6 +505,10 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Real devices (`MANUAL`), photos of each device as HANDOFF requires.
 - **Regression requirements:** Localhost dev; P4.1 reconnect.
 - **Commit requirement:** `fix(B5): lan socket url` (or verification note only).
+- **Status:** Verified, no code change (done after P4.1 as sequenced). Real phone / iPad over Wi-Fi NOT TESTED (MANUAL).
+  - Finding: `client/src/services/socket.js` has no localhost assumption for other devices — it uses `http://localhost:4000` only when the page itself is on `localhost`, otherwise same origin, and Vite proxies `/socket.io` to the server.
+  - Evidence (this machine, non-loopback address 192.168.2.1): default `npm run dev` (config `host: 127.0.0.1`) is NOT reachable on that address (HTTP 000); `vite --host` is (HTTP 200); a socket.io client connected to `http://192.168.2.1:5199` (same origin, through the proxy) created a room successfully.
+  - Requirement for LAN play remains as documented in `HANDOFF.md`: run the client with `npm run dev -- --host`. Not changed in `vite.config.js` because exposing the dev server by default is a security/UX decision for the team.
 
 ---
 
