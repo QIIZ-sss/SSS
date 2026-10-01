@@ -18,7 +18,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P1.1 | A2 (discovery) | 1 | Done — findings below |
 | P1.2 | contract gap (supports A1–A6, B3, B4, D1, A8/A9) | 1 | Not started — needs approval (`shared/`); server side already imports `contract.js` since P1.3 |
 | P1.3 | A2 | 1 | Done (automated checks PASS; MANUAL 2-tab test pending) |
-| P1.4 | A2 regression | 1 | Not started |
+| P1.4 | A2 regression | 1 | Done (automated) — 1 criterion blocked by P2.1; MANUAL 2-tab test pending |
 | P2.1 | A4 | 2 | Not started |
 | P2.2 | A5 | 2 | Not started |
 | P2.3 | between-round transition | 2 | Not started |
@@ -206,6 +206,25 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Manual 2–3 client run plus WebSocket frame capture; mark any unautomated item `MANUAL`.
 - **Regression requirements:** Leave/rejoin (F-03/F-04), host transfer.
 - **Commit requirement:** Test-only commit if tests were added: `test(P1.4): A2 regression`.
+- **Status:** Done (automated), recorded at commit `4aa38b6` + this update. No test files were added to the repo (location for new tests needs approval); scripts ran from a scratch directory.
+  - Existing QA reuse: `qa/test_f_cases.js` targets the old "BACK TO LOBBY" text and F-04 is a hardcoded `PASS`; `qa/` dependencies are not installed. Not reusable without changes to `qa/` (not approved).
+  - Evidence: real server on :4000 + real `socket.io-client` sockets (e2e, 13/13 PASS) and a fake-clock harness over the live server modules (20/20 PASS).
+
+  | Criterion | Result | Evidence |
+  |---|---|---|
+  | No Round 4/3 | PASS | e2e R1 (total 1, max 1), R2 (total 2, max 2); harness S1 (total 3, max 3) |
+  | Final round ends correctly | PASS | e2e R2: 4 ROUND_OVER then GAME_OVER (2 players × 2 rounds) |
+  | Timer stops after GAME_OVER | PASS | e2e R1: 0 `timer_tick` during GAME_OVER |
+  | Room returns to LOBBY | PASS | e2e R1/R3: LOBBY 10.0 s after GAME_OVER |
+  | Round state resets on LOBBY | PASS | e2e R1 + harness S1 (round 0, drawer null, word '') |
+  | Ready state resets on LOBBY | PASS (harness only) | harness S1 true→false; e2e cannot show it because START does not require Ready yet (A4) |
+  | Scores available during GAME_OVER | PASS | e2e R1: `room_data` + `game_over.finalScores` non-zero |
+  | Scores cleared only on LOBBY / new game | PASS | e2e frames: scores unchanged until the LOBBY frame |
+  | New game requires Ready again | **NOT MET — blocked by P2.1 (A4)** | server still starts without Ready |
+  | New game begins at Round 1 | PASS | e2e R1: first WORD_SELECTION after LOBBY has round 1, scores 0 |
+  | Regression: leave during GAME_OVER / host transfer | PASS | e2e R3: host leaves, remaining player becomes host, LOBBY at 10.0 s |
+  | Regression: everyone leaves during GAME_OVER | PASS | e2e R4: room removed, no late callback, server responsive |
+  | MANUAL 2-browser test | NOT TESTED | see Phase 1 checklist in the phase report |
 
 ---
 
