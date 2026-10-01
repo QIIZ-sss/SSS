@@ -33,7 +33,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
 | P6.1 | C1 | 6 | Done |
 | P6.2 | C2 | 6 | Done (run section only); full README rewrite needs human decision |
-| P6.3 | C3 | 6 | Not started |
+| P6.3 | C3 | 6 | Done |
 | P6.4 | C4 | 6 | Not started |
 | P6.5 | D1 | 6 | Not started |
 | P7.1 | A8 | 7 | Not started |
@@ -562,6 +562,8 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Occupy port, start server.
 - **Regression requirements:** Normal start.
 - **Commit requirement:** `fix(C3): handle port in use`.
+- **Status:** Done. `server/src/server.js` adds `server.on('error')`: on `EADDRINUSE` it prints `[JUST DRAW IT] Port <PORT> is already in use. Stop the other server or run with a different PORT (e.g. PORT=4001 npm run dev).` and exits with code 1; other errors are re-thrown. Default port unchanged.
+  - Checks: with the port held by another process → message shown, exit code 1, 0 stack-trace lines; normal start → `/api/leaderboard` HTTP 200.
 
 ### P6.4 — Missing avatars (C4)
 

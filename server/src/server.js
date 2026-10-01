@@ -46,6 +46,16 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 4000;
+
+// C3: readable message instead of an unhandled EADDRINUSE stack trace
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[JUST DRAW IT] Port ${PORT} is already in use. Stop the other server or run with a different PORT (e.g. PORT=4001 npm run dev).`);
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(`🎨 JUST DRAW IT Server listening on port ${PORT}`);
