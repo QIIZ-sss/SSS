@@ -3,45 +3,23 @@ const tf = require('@tensorflow/tfjs');
 const fs = require('fs');
 const path = require('path');
 
-// ==============================================================================
-// Configuration & Decision Thresholds
-// ==============================================================================
-// ส่วนแบ่งในกลุ่ม 19 คำของเกม ต้องไม่ต่ำกว่า 50%
-const MIN_GAME_SHARE = 0.50;
+const { SOLO_AI } = require('../../../shared/contract');
 
-// ความน่าจะเป็นดิบจาก 345 หมวด ต้องไม่ต่ำกว่า 10% เพื่อกันวาดมั่วแล้วบังเอิญถูก
-const MIN_RAW_PROB = 0.10;
+// Decision thresholds and the game-word → DoodleNet class mapping come from the shared contract (single source of truth)
+const GAME_WORDS = Object.entries(SOLO_AI.GAME_WORDS).map(([word, className]) => ({ word, className }));
 
-// 19 Game Words mapped to DoodleNet 345 classes
-const GAME_WORDS = [
-  { word: 'Airplane', className: 'airplane' },
-  { word: 'Apple', className: 'apple' },
-  { word: 'Basketball', className: 'basketball' },
-  { word: 'Bicycle', className: 'bicycle' },
-  { word: 'Car', className: 'car' },
-  { word: 'Cat', className: 'cat' },
-  { word: 'Clock', className: 'clock' },
-  { word: 'Computer', className: 'computer' },
-  { word: 'Dragon', className: 'dragon' },
-  { word: 'Eiffel Tower', className: 'The_Eiffel_Tower' },
-  { word: 'Elephant', className: 'elephant' },
-  { word: 'Guitar', className: 'guitar' },
-  { word: 'Helicopter', className: 'helicopter' },
-  { word: 'House', className: 'house' },
-  { word: 'Pizza', className: 'pizza' },
-  { word: 'Rainbow', className: 'rainbow' },
-  { word: 'Submarine', className: 'submarine' },
-  { word: 'Sun', className: 'sun' },
-  { word: 'Tree', className: 'tree' }
-];
+// Result shape (see shared/contract.js, SOLO_AI_PREDICTION_RESULT)
+function emptyResult(targetWord, ready) {
+  return { targetWord, ready, guess: null, confidence: 0, isConfident: false, top3: [], modelSees: null, isCorrect: false };
+}
 
 class AIPredictor {
   constructor() {
-    this.MIN_GAME_SHARE = MIN_GAME_SHARE;
-    this.MIN_RAW_PROB = MIN_RAW_PROB;
+    this.MIN_GAME_SHARE = SOLO_AI.MIN_GAME_SHARE;
+    this.MIN_RAW_PROB = SOLO_AI.MIN_RAW_PROB;
     this.model = null;
     this.isLoaded = false;
-    this.modelDir = path.join(__dirname, '../ai_model');
+    this.modelDir = path.join(__dirname, '..', SOLO_AI.MODEL_DIR);
     this.classNames = [];
     this.gameWordMappings = [];
 
@@ -126,49 +104,34 @@ class AIPredictor {
   }
 
   /**
-   * Predict user drawing from 784 normalized pixel values (0.0 to 1.0)
-   * @param {string} targetWord Current target word
-   * @param {Array<number>} pixels Array of 784 numbers
+   * Predict user drawing from 784 normalized pixel values (0.0 to 1.0).
+   * Never guesses randomly: if the model is not ready (or prediction fails) the result has ready=false and isCorrect=false.
+   * @param {string} targetWord Current target word (server's room.currentWord)
+   * @param {Array<number>} pixels Array of SOLO_AI.PIXEL_COUNT numbers
    */
   async predictUserDrawing(targetWord, pixels) {
-    if (!pixels || !Array.isArray(pixels) || pixels.length !== 784) {
-      return {
-        guess: 'Waiting for strokes...',
-        confidence: 0,
-        rawConfidence: 0,
-        globalGuess: 'None',
-        globalConfidence: 0,
-        isCorrect: false,
-        topGuesses: []
-      };
-    }
-
-    // Check if drawing has any stroke activity
-    const activePixels = pixels.filter(p => p > 0.05).length;
-    if (activePixels < 5) {
-      return {
-        guess: 'Waiting for strokes...',
-        confidence: 0,
-        rawConfidence: 0,
-        globalGuess: 'Empty canvas',
-        globalConfidence: 0,
-        isCorrect: false,
-        topGuesses: []
-      };
-    }
-
     if (!this.isLoaded || !this.model) {
-      return this.heuristicFallback(targetWord, activePixels);
+      return emptyResult(targetWord, false);
+    }
+    if (!pixels || !Array.isArray(pixels) || pixels.length !== SOLO_AI.PIXEL_COUNT) {
+      return emptyResult(targetWord, true);
+    }
+
+    // Nothing drawn yet
+    const activePixels = pixels.filter(p => p > 0.05).length;
+    if (activePixels < SOLO_AI.MIN_INK) {
+      return emptyResult(targetWord, true);
     }
 
     try {
+      const size = SOLO_AI.IMAGE_SIZE;
       const probabilities = tf.tidy(() => {
-        const tensor = tf.tensor4d(pixels, [1, 28, 28, 1], 'float32');
+        const tensor = tf.tensor4d(pixels, [1, size, size, 1], 'float32');
         const output = this.model.predict(tensor);
         return Array.from(output.dataSync());
       });
 
-      // 1. Find global top prediction across all 345 categories
+      // Top prediction across all 345 categories (what the model "sees")
       let globalTopIndex = 0;
       let globalTopProb = 0;
       for (let i = 0; i < probabilities.length; i++) {
@@ -178,86 +141,32 @@ class AIPredictor {
         }
       }
       const rawGlobalName = this.classNames[globalTopIndex] || 'unknown';
-      const globalGuess = rawGlobalName.replace(/_/g, ' ');
-      const globalConfidence = Math.round(globalTopProb * 100);
 
-      // 2. Filter down to the 19 game words and calculate relative share
-      const gameRankings = this.gameWordMappings.map(gw => {
-        const rawProb = probabilities[gw.classIndex] || 0;
-        return {
-          word: gw.word,
-          className: gw.className,
-          rawProb: rawProb
-        };
-      });
-
+      // Rank only the game words and compute each word's share among them
+      const gameRankings = this.gameWordMappings.map(gw => ({ word: gw.word, rawProb: probabilities[gw.classIndex] || 0 }));
       const sumGameProb = gameRankings.reduce((sum, item) => sum + item.rawProb, 0);
-
-      gameRankings.forEach(item => {
-        item.gameShare = sumGameProb > 0 ? (item.rawProb / sumGameProb) : 0;
-      });
-
-      // Sort by probability descending
+      gameRankings.forEach(item => { item.gameShare = sumGameProb > 0 ? (item.rawProb / sumGameProb) : 0; });
       gameRankings.sort((a, b) => b.rawProb - a.rawProb);
 
-      const topGame = gameRankings[0];
-      const topWord = topGame.word;
-      const topGameShare = topGame.gameShare;
-      const topRawProb = topGame.rawProb;
-      const confidence = Math.round(topGameShare * 100);
-      const rawConfidence = Math.round(topRawProb * 100);
-
-      // 3. Decision Logic:
-      // - Target word must be rank 1 among game words
-      // - Game share >= MIN_GAME_SHARE (50%)
-      // - Raw prob among all 345 classes >= MIN_RAW_PROB (10%)
-      const cleanTarget = (targetWord || '').toLowerCase().trim();
-      const cleanTop = topWord.toLowerCase().trim();
-
-      const isTargetTopOne = (cleanTop === cleanTarget) ||
-        (cleanTarget.includes('eiffel') && cleanTop.includes('eiffel'));
-
-      const isCorrect = isTargetTopOne &&
-        (topGameShare >= this.MIN_GAME_SHARE) &&
-        (topRawProb >= this.MIN_RAW_PROB);
+      const top = gameRankings[0];
+      // A9: below MIN_RAW_PROB the model is not confident about any game word
+      const isConfident = top.rawProb >= this.MIN_RAW_PROB;
+      const isCorrect = isConfident && top.word === targetWord && top.gameShare >= this.MIN_GAME_SHARE;
 
       return {
-        guess: topWord,
-        confidence: confidence,
-        rawConfidence: rawConfidence,
-        globalGuess: globalGuess,
-        globalConfidence: globalConfidence,
-        isCorrect: isCorrect,
-        topGuesses: gameRankings.slice(0, 5).map(r => ({
-          label: r.word,
-          confidence: Math.round(r.gameShare * 100),
-          rawConfidence: Math.round(r.rawProb * 100)
-        }))
+        targetWord,
+        ready: true,
+        guess: top.word,
+        confidence: Math.round(top.gameShare * 100),
+        isConfident,
+        top3: gameRankings.slice(0, 3).map(r => ({ label: r.word, confidence: Math.round(r.gameShare * 100) })),
+        modelSees: { label: rawGlobalName.replace(/_/g, ' '), confidence: Math.round(globalTopProb * 100) },
+        isCorrect
       };
     } catch (err) {
       console.error('[AI] Prediction error:', err.message);
-      return this.heuristicFallback(targetWord, activePixels);
+      return emptyResult(targetWord, false);
     }
-  }
-
-  /**
-   * Fallback if model is not yet loaded
-   */
-  heuristicFallback(targetWord, activePixels) {
-    const confidence = Math.min(95, Math.floor(20 + activePixels * 0.4));
-    const isCorrect = activePixels > 40 && Math.random() > 0.4;
-    const wordList = this.gameWordMappings.map(g => g.word);
-    const guess = isCorrect ? targetWord : (wordList[Math.floor(Math.random() * wordList.length)] || targetWord);
-
-    return {
-      guess: guess,
-      confidence: confidence,
-      rawConfidence: Math.round(confidence * 0.3),
-      globalGuess: guess.toLowerCase(),
-      globalConfidence: confidence,
-      isCorrect: isCorrect && (guess.toLowerCase() === (targetWord || '').toLowerCase()),
-      topGuesses: [{ label: guess, confidence: confidence, rawConfidence: Math.round(confidence * 0.3) }]
-    };
   }
 
   getAIDrawingStrokes(word) {

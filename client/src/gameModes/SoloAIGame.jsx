@@ -4,101 +4,56 @@ import ChallengeOverlay, { ChallengeTurnPopup } from '../components/ChallengeOve
 import RoomLobby from '../components/RoomLobby';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
+import { GAME_STATUS, SOLO_AI } from '../../../shared/contract';
 import { canvasToPixels } from '../utils/canvasToPixels';
 
-export const SOLO_AI_WORDS = [
-  'Airplane', 'Apple', 'Basketball', 'Bicycle', 'Car', 'Cat', 'Clock',
-  'Computer', 'Dragon', 'Eiffel Tower', 'Elephant', 'Guitar', 'Helicopter',
-  'House', 'Pizza', 'Rainbow', 'Submarine', 'Sun', 'Tree'
-];
+// A8: the server owns the target word (room_data.currentWord — the solo player is the drawer, so it is sent to them).
+// The client never picks or infers a word; it echoes the server's word with each prediction request.
+const EMPTY_PREDICTION = { ready: true, guess: null, confidence: 0, isConfident: false, top3: [], modelSees: null, isCorrect: false };
 
 export default function SoloAIGame({ roomData, username }) {
-  const [aiGuess, setAiGuess] = useState('Draw something to start...');
-  const [aiConfidence, setAiConfidence] = useState(0);
-  const [rawConfidence, setRawConfidence] = useState(0);
-  const [globalGuess, setGlobalGuess] = useState('Waiting...');
-  const [globalConfidence, setGlobalConfidence] = useState(0);
-  const [topGuesses, setTopGuesses] = useState([]);
-  const [targetWord, setTargetWord] = useState(() => {
-    return roomData?.currentWord || SOLO_AI_WORDS[Math.floor(Math.random() * SOLO_AI_WORDS.length)];
-  });
-  const [score, setScore] = useState(0);
-  const [roundsPlayed, setRoundsPlayed] = useState(1);
-  const [isSuccessFlash, setIsSuccessFlash] = useState(false);
+  const [prediction, setPrediction] = useState(EMPTY_PREDICTION);
+  const targetWord = roomData?.currentWord || '';
+  const isPlaying = roomData?.status === GAME_STATUS.PLAYING;
+  const me = roomData?.players?.find((p) => p.username === username);
+  const score = me ? me.score : 0;
 
-  const targetWordRef = useRef(targetWord);
-  targetWordRef.current = targetWord;
+  const targetRef = useRef(targetWord);
+  const playingRef = useRef(isPlaying);
+  targetRef.current = targetWord;
+  playingRef.current = isPlaying;
 
-  const nextWord = () => {
-    const remaining = SOLO_AI_WORDS.filter((w) => w !== targetWordRef.current);
-    const random = remaining[Math.floor(Math.random() * remaining.length)] || SOLO_AI_WORDS[0];
-    setTargetWord(random);
-    setRoundsPlayed((r) => r + 1);
-    setAiGuess('Waiting for strokes...');
-    setAiConfidence(0);
-    setRawConfidence(0);
-    setGlobalGuess('Waiting...');
-    setGlobalConfidence(0);
-    setTopGuesses([]);
-    socket.emit(SOCKET_EVENTS.DRAW_CLEAR);
-  };
+  // New turn (new server word) → clear the previous AI result
+  useEffect(() => {
+    setPrediction(EMPTY_PREDICTION);
+  }, [targetWord, roomData?.currentRound]);
 
-  // 1. Listen for AI Prediction Results from Server (DoodleNet 345)
+  // 1. AI results from the server (DoodleNet 345); results for another word are ignored
   useEffect(() => {
     const handleAiPrediction = (data) => {
-      if (!data) return;
-
-      if (data.guess) {
-        setAiGuess(data.guess);
-      }
-      if (typeof data.confidence === 'number') {
-        setAiConfidence(data.confidence);
-      }
-      if (typeof data.rawConfidence === 'number') {
-        setRawConfidence(data.rawConfidence);
-      }
-      if (data.globalGuess) {
-        setGlobalGuess(data.globalGuess);
-      }
-      if (typeof data.globalConfidence === 'number') {
-        setGlobalConfidence(data.globalConfidence);
-      }
-      if (Array.isArray(data.topGuesses)) {
-        setTopGuesses(data.topGuesses);
-      }
-
-      if (data.isCorrect) {
-        setIsSuccessFlash(true);
-        setScore((currentScore) => currentScore + 500);
-        setTimeout(() => {
-          setIsSuccessFlash(false);
-          nextWord();
-        }, 1200);
-      }
+      if (!data || data.targetWord !== targetRef.current) return;
+      setPrediction({ ...EMPTY_PREDICTION, ...data });
     };
-
     socket.on(SOCKET_EVENTS.SOLO_AI_PREDICTION_RESULT, handleAiPrediction);
     return () => {
       socket.off(SOCKET_EVENTS.SOLO_AI_PREDICTION_RESULT, handleAiPrediction);
     };
   }, []);
 
-  // 2. Sample canvas drawing every 1 second and emit solo_ai_predict
+  // 2. Sample the drawing every PREDICT_INTERVAL_MS while the turn is PLAYING and send { targetWord, pixels }
   useEffect(() => {
     const intervalId = setInterval(() => {
-      const canvases = document.querySelectorAll('canvas');
-      const canvas = canvases.length > 0 ? canvases[0] : null;
+      if (!playingRef.current || !targetRef.current) return;
+      const canvas = document.querySelectorAll('canvas')[0];
       if (!canvas) return;
 
       const pixels = canvasToPixels(canvas);
-      if (!pixels || pixels.length !== 784) return;
+      if (!pixels || pixels.length !== SOLO_AI.PIXEL_COUNT) return;
 
-      // Only emit if user has drawn something (at least one pixel > 0.05)
-      const hasDrawing = pixels.some((v) => v > 0.05);
-      if (hasDrawing) {
-        socket.emit(SOCKET_EVENTS.SOLO_AI_PREDICT, { pixels });
+      if (pixels.some((v) => v > 0.05)) {
+        socket.emit(SOCKET_EVENTS.SOLO_AI_PREDICT, { targetWord: targetRef.current, pixels });
       }
-    }, 1000);
+    }, SOLO_AI.PREDICT_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -107,7 +62,15 @@ export default function SoloAIGame({ roomData, username }) {
     return <RoomLobby roomData={roomData} username={username} />;
   }
 
-  const confidence = Math.min(100, Math.max(0, Math.round(aiConfidence)));
+  const confidence = Math.min(100, Math.max(0, Math.round(prediction.confidence || 0)));
+  // A9: never show a word name unless the model is confident
+  const guessText = !prediction.ready
+    ? 'AI model is loading…'
+    : !prediction.guess
+      ? 'Waiting for strokes...'
+      : prediction.isConfident ? prediction.guess : 'Not sure yet…';
+  const showDetails = prediction.ready && prediction.guess && prediction.isConfident;
+  const isSuccessFlash = prediction.isCorrect;
 
   return (
     <section className="w-full flex flex-col gap-space-md" aria-label="Solo versus AI practice arena">
@@ -128,11 +91,11 @@ export default function SoloAIGame({ roomData, username }) {
         <div className="grid grid-cols-3 gap-space-xs w-full md:w-auto">
           <div className="bg-tertiary-fixed border-2 border-border-dark rounded-xl px-space-sm py-space-xs text-center min-w-0">
             <span className="font-label-sm text-label-sm text-on-tertiary-fixed block uppercase">Target Word</span>
-            <span className="font-headline-sm text-headline-sm text-border-dark uppercase truncate block font-black">{targetWord}</span>
+            <span className="font-headline-sm text-headline-sm text-border-dark uppercase truncate block font-black">{targetWord || '…'}</span>
           </div>
           <div className="bg-surface-card border-2 border-border-dark rounded-xl px-space-sm py-space-xs text-center">
             <span className="font-label-sm text-label-sm text-on-surface-variant block uppercase">Round</span>
-            <span className="font-headline-sm text-headline-sm text-secondary font-black">{roundsPlayed}</span>
+            <span className="font-headline-sm text-headline-sm text-secondary font-black">{roomData?.currentRound} / {roomData?.totalRounds}</span>
           </div>
           <div className="bg-primary-container text-on-primary border-2 border-border-dark rounded-xl px-space-sm py-space-xs text-center shadow-[2px_2px_0px_#18181B]">
             <span className="font-label-sm text-label-sm text-on-primary block uppercase">Score</span>
@@ -156,11 +119,11 @@ export default function SoloAIGame({ roomData, username }) {
             <div className="flex items-center gap-2">
               {isSuccessFlash && (
                 <span className="bg-secondary text-on-secondary px-3 py-1 rounded-full font-headline-sm text-label-sm font-black uppercase animate-bounce shadow-md">
-                  🎉 AI GUESSED CORRECTLY! +500
+                  🎉 AI GUESSED CORRECTLY! +{SOLO_AI.CORRECT_SCORE}
                 </span>
               )}
               <span className="font-label-sm text-label-sm bg-surface-container px-space-sm py-1 rounded-full border border-border-dark text-on-surface-variant uppercase font-bold">
-                Target: {targetWord}
+                Target: {targetWord || '…'}
               </span>
             </div>
           </div>
@@ -190,17 +153,19 @@ export default function SoloAIGame({ roomData, username }) {
             }`}>
               <span className="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold block">Current Guess</span>
               <p className="font-headline-md text-headline-md text-secondary font-black break-words mt-space-xs">
-                {aiGuess}
+                {guessText}
               </p>
               {/* Out of 345 doodle types... */}
-              <div className="mt-space-sm pt-space-xs border-t border-border-dark/20 text-center">
-                <p className="font-label-xs text-label-xs text-on-surface-variant font-medium">
-                  Out of 345 doodle types:
-                </p>
-                <p className="font-label-sm text-label-sm font-black text-on-surface uppercase truncate mt-0.5">
-                  "{globalGuess}" <span className="text-primary font-bold">({globalConfidence}%)</span>
-                </p>
-              </div>
+              {showDetails && prediction.modelSees && (
+                <div className="mt-space-sm pt-space-xs border-t border-border-dark/20 text-center">
+                  <p className="font-label-xs text-label-xs text-on-surface-variant font-medium">
+                    Out of 345 doodle types:
+                  </p>
+                  <p className="font-label-sm text-label-sm font-black text-on-surface uppercase truncate mt-0.5">
+                    "{prediction.modelSees.label}" <span className="text-primary font-bold">({prediction.modelSees.confidence}%)</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Confidence Bar (Game Share) */}
@@ -216,17 +181,17 @@ export default function SoloAIGame({ roomData, username }) {
                 />
               </div>
               <div className="flex justify-between items-center text-label-xs text-on-surface-variant font-medium px-1">
-                <span>Threshold: &ge; 50%</span>
-                <span>Raw Prob: {rawConfidence}% (&ge; 10%)</span>
+                <span>Threshold: &ge; {Math.round(SOLO_AI.MIN_GAME_SHARE * 100)}%</span>
+                <span>{prediction.isConfident ? 'Confident' : 'Not sure yet'} (raw &ge; {Math.round(SOLO_AI.MIN_RAW_PROB * 100)}%)</span>
               </div>
             </div>
 
             {/* Top Guesses List */}
-            {topGuesses.length > 1 && (
+            {showDetails && prediction.top3.length > 1 && (
               <div className="bg-surface-container-lowest p-space-sm rounded-xl border-2 border-border-dark flex flex-col gap-1">
                 <span className="font-label-xs text-label-xs uppercase font-bold text-on-surface-variant">Top Game Predictions:</span>
                 <div className="flex flex-col gap-1">
-                  {topGuesses.slice(0, 3).map((item, idx) => (
+                  {prediction.top3.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center text-label-sm font-bold">
                       <span className="text-on-surface">#{idx + 1} {item.label}</span>
                       <span className="text-primary">{item.confidence}%</span>
@@ -236,15 +201,6 @@ export default function SoloAIGame({ roomData, username }) {
               </div>
             )}
 
-            {/* Skip Word Button */}
-            <button
-              className="w-full mt-space-xs py-space-sm rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-headline-sm text-headline-sm uppercase border-3 border-border-dark shadow-[3px_3px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2"
-              onClick={nextWord}
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[20px]">skip_next</span>
-              Skip Word
-            </button>
           </div>
 
           {/* Hint Card */}

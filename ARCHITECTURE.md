@@ -115,10 +115,10 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 | Concept | Hardcoded at |
 |---|---|
 | Status strings | `RoomManager.js:43`, `RoundManager.js:17,47,64,73,94,137`, `gameHandler.js:89,132`, `chatHandler.js:17`, client `gameModes/*.jsx` |
-| AI thresholds 0.5 / 0.1 | `server/src/utils/aiPredictor.js:10,13` |
-| 19 AI words | `aiPredictor.js:16-36`, `client/src/gameModes/SoloAIGame.jsx:9-13` |
-| AI correct score 500 | `gameHandler.js:149`, `SoloAIGame.jsx:72` |
-| PIN length 5 | `RoomManager.js:14`, `client/src/App.jsx:18-22,80` |
+| AI thresholds 0.5 / 0.1 | ~~`aiPredictor.js:10,13`~~ — from `SOLO_AI` since A8 |
+| 19 AI words | ~~`aiPredictor.js`, `SoloAIGame.jsx`~~ — `SOLO_AI.GAME_WORDS` since A8 |
+| AI correct score 500 | ~~`gameHandler.js`, `SoloAIGame.jsx`~~ — `SOLO_AI.CORRECT_SCORE` since A8 |
+| PIN length 5 | `RoomManager.js:14` (room code generator); client uses `ROOM_PIN_LENGTH` since B3 |
 
 Resolution: **P1.2** (done) made `contract.js` loadable by both runtimes; later tasks switch the values they touch to the contract.
 
@@ -203,7 +203,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | C→S | `draw_begin` / `draw_path` / `draw_end` / `draw_fill` / `shape_preview` | stroke data objects | `Canvas.jsx` |
 | C→S | `draw_clear`, `draw_sync` | — | `Canvas.jsx`, `SoloAIGame.jsx:43` |
 | C→S | `send_chat` | `{text}` | `ChatBox.jsx:30` |
-| C→S | `solo_ai_predict` | `{pixels}` (no `targetWord`) | `SoloAIGame.jsx:99` |
+| C→S | `solo_ai_predict` | **since A8:** `{targetWord, pixels}` (baseline `{pixels}`) | `SoloAIGame.jsx` |
 | S→C | `room_data` | `sanitizeRoom()` output — **per player since P3.1** (`currentWord` only for drawer / reveal states) | `RoomManager.js` `sanitizeRoom`, `emitRoomData` |
 | S→C | `room_list_updated` | room summaries | `RoomManager.js:69-84` |
 | S→C | `round_change` | `{currentDrawer, currentRound, totalRounds, status}` | `RoundManager.js:43-48` |
@@ -214,7 +214,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | S→C | `game_over` | `{winnerText, finalScores, teamScores}` | `RoundManager.js:155-159` |
 | S→C | `chat_message` | `{sender, text, isSystem?, isCorrectNotice?, guesser?, isConcealedChat?}` | `chatHandler.js`, `gameHandler.js` |
 | S→C | `correct_guess` | `{points}` — guesser only | `chatHandler.js:47` |
-| S→C | `solo_ai_prediction_result` | `{guess, confidence, rawConfidence, globalGuess, globalConfidence, isCorrect, topGuesses}` | `aiPredictor.js:224-236` |
+| S→C | `solo_ai_prediction_result` | **since A8:** `{targetWord, ready, guess, confidence, isConfident, top3, modelSees, isCorrect}` | `aiPredictor.js` |
 
 `GAP` — `shared/contract.js` documents a different Solo AI payload (`{targetWord, pixels}` → `{targetWord, guess, confidence, top3, modelSees, isCorrect}`). The live code does not follow it.
 
@@ -269,7 +269,9 @@ Baseline `CURRENT FACT` — `server/src/config/database.js:7-28`: 20 in-memory w
 
 ## 13. Solo AI
 
-`CURRENT FACT`:
+**Updated in A8/A9 (pre-approved Solo AI payload change):** `heuristicFallback()`/`Math.random` removed (not ready → `ready:false`, never correct); server owns the target word (Solo turns start PLAYING immediately with an AI-supported word); request `{ targetWord, pixels }` validated, stale targets ignored, rate-limited; result `{ targetWord, ready, guess, confidence, isConfident, top3, modelSees, isCorrect }`; client shows "Not sure yet…" when not confident; client Skip button removed. The list below is the **baseline** description.
+
+Baseline `CURRENT FACT`:
 
 - Real DoodleNet (345 classes) is loaded from `server/src/ai_model/` via `tf.loadLayersModel(tf.io.fromMemory(...))` — `server/src/utils/aiPredictor.js:75-126`.
 - Decision: target must be top-1 among game words, game share ≥ 0.5, raw prob ≥ 0.1 — `aiPredictor.js:214-222` (thresholds hardcoded at `:10,13`).
@@ -320,7 +322,7 @@ Baseline `CURRENT FACT` — **no reconnect/session implementation existed.**
 | 5 | QA T-04 PASS (timeout reveals answer) | Payload contained the word but the UI did not show it; fixed in P2.4 (§8) |
 | 6 | QA T-02 PASS (timer) | Evidence shows identical values, not a countdown (§6.2) |
 | 7 | `HANDOFF.md`: eraser does not exist | Baseline had a white-paint "eraser"; real partial eraser added in D2 (§12) |
-| 8 | A8/README_AI: `{targetWord, pixels}`, `predict()` | `{pixels}` only; `predictUserDrawing()`; `Math.random` fallback (§13) |
+| 8 | A8/README_AI: `{targetWord, pixels}`, `predict()` | Baseline `{pixels}` + `Math.random` fallback; since A8 `{targetWord, pixels}`, no fallback; method is still `predictUserDrawing()` (§13) |
 | 9 | QA D-07 script note: touch handlers use `preventDefault` | False at baseline; Pointer Events + `touch-action: none` added in P5.1 (§12) |
 | 10 | QA H-04 PASS (rapid START starts once) | No status guard on `start_game` (§3.2) |
 

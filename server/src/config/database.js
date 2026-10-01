@@ -1,5 +1,5 @@
 // Database Configuration & In-Memory Storage Adapter
-const { WORD_DIFFICULTY } = require('../../../shared/contract');
+const { WORD_DIFFICULTY, SOLO_AI } = require('../../../shared/contract');
 
 class DatabaseStore {
   constructor() {
@@ -112,10 +112,12 @@ class DatabaseStore {
   }
 
   // filter.difficulty: one of WORD_DIFFICULTY, or null/undefined for all words (Mixed).
+  // filter.aiOnly: only words the Solo AI model supports (SOLO_AI.GAME_WORDS).
   // If the chosen difficulty has fewer than `count` words, fall back to Mixed so a turn always gets `count` choices.
   getRandomWords(count = 3, filter = {}) {
-    const byDifficulty = filter.difficulty ? this.words.filter(w => w.difficulty === filter.difficulty) : this.words;
-    const pool = byDifficulty.length >= count ? byDifficulty : this.words;
+    const base = filter.aiOnly ? this.words.filter(w => Object.prototype.hasOwnProperty.call(SOLO_AI.GAME_WORDS, w.word)) : this.words;
+    const byDifficulty = filter.difficulty ? base.filter(w => w.difficulty === filter.difficulty) : base;
+    const pool = byDifficulty.length >= count ? byDifficulty : base;
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }

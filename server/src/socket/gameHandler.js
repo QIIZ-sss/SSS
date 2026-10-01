@@ -1,7 +1,7 @@
 // Game Event Handler
 const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES } = require('../../../shared/gameConfig');
-const { GAME_STATUS, GAME_RULES, WORD_DIFFICULTY } = require('../../../shared/contract');
+const { GAME_STATUS, GAME_RULES, WORD_DIFFICULTY, SOLO_AI, isValidPredictRequest } = require('../../../shared/contract');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
 const crypto = require('crypto');
@@ -207,17 +207,28 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   });
 
   // Solo AI Predict
-  socket.on(SOCKET_EVENTS.SOLO_AI_PREDICT, async ({ pixels }) => {
+  // A8: the server owns the target word; the client echoes it so stale requests from a previous turn are dropped
+  socket.on(SOCKET_EVENTS.SOLO_AI_PREDICT, async (payload) => {
+    if (!isValidPredictRequest(payload)) return;
     const room = roomManager.getRoom(socket.data.roomId);
-    if (!room || room.gameMode !== GAME_MODES.SOLO_AI) return;
+    if (!room || room.gameMode !== GAME_MODES.SOLO_AI || room.status !== GAME_STATUS.PLAYING) return;
+    if (room.currentDrawer !== socket.data.username || payload.targetWord !== room.currentWord) return;
 
-    const result = await aiPredictor.predictUserDrawing(room.currentWord, pixels);
+    const now = Date.now();
+    if (socket.data.lastPredictAt && now - socket.data.lastPredictAt < SOLO_AI.SERVER_MIN_INTERVAL_MS) return;
+    socket.data.lastPredictAt = now;
+
+    const targetWord = room.currentWord;
+    const result = await aiPredictor.predictUserDrawing(targetWord, payload.pixels);
+    // The turn may have ended while the model was running
+    if (room.status !== GAME_STATUS.PLAYING || room.currentWord !== targetWord) return;
+
     socket.emit(SOCKET_EVENTS.SOLO_AI_PREDICTION_RESULT, result);
 
-    if (result.isCorrect && room.status === 'PLAYING') {
+    if (result.isCorrect) {
       const player = room.players.find(p => p.username === socket.data.username);
-      if (player) player.score += 500;
-      roundManager.endRound(io, room, `AI guessed correctly as "${room.currentWord}"! 🤖`);
+      if (player) player.score += SOLO_AI.CORRECT_SCORE;
+      roundManager.endRound(io, room, `AI guessed correctly as "${targetWord}"! 🤖`);
     }
   });
 

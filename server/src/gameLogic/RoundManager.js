@@ -48,7 +48,9 @@ class RoundManager {
       room.forcedColor = null;
     }
 
-    const wordChoices = Word.getRandomWords(3, { difficulty: room.wordDifficulty }).map(w => w.word);
+    const isSolo = room.gameMode === GAME_MODES.SOLO_AI;
+    // A8: Solo AI only uses words the model can recognise (SOLO_AI.GAME_WORDS)
+    const wordChoices = Word.getRandomWords(3, { difficulty: room.wordDifficulty, aiOnly: isSolo }).map(w => w.word);
     room.wordOptions = wordChoices;
 
     // Notify clients of Server-Authoritative turn change & state reset
@@ -61,6 +63,13 @@ class RoundManager {
 
     this.roomManager.emitRoomData(io, room, 10);
     io.to(room.id).emit(SOCKET_EVENTS.DRAW_CLEAR);
+
+    // A8: in Solo AI the server picks the target word itself and the turn starts immediately
+    if (isSolo) {
+      room.currentWord = wordChoices[0];
+      this.startRoundDrawing(io, room);
+      return;
+    }
 
     // Send word choices exclusively to current drawer
     const drawerSocketObj = room.players.find(p => p.username === room.currentDrawer);

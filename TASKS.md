@@ -36,14 +36,14 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P6.3 | C3 | 6 | Done |
 | P6.4 | C4 | 6 | Done; 375 px visual check MANUAL pending |
 | P6.5 | D1 | 6 | Done (automated); MANUAL NOT TESTED |
-| P7.1 | A8 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
-| P7.2 | A9 | 7 | **BLOCKED — BUG-03 mapping unresolved (human decision)** |
+| P7.1 | A8 | 7 | Done (automated, real model); MANUAL drawing test NOT TESTED |
+| P7.2 | A9 | 7 | Done (automated); MANUAL NOT TESTED |
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
 | P7.4 | D3 | 7 | Done (headless Chrome test); MANUAL NOT TESTED |
 
 ### Regression suite (`tests/`)
 
-- Status: **in repo**, run with `tests/check_all.sh` (see `tests/README.md`). Last run on branch `dev`: **27 passed, 0 failed, 0 skipped** (~10 min): syntax, contract, state-machine harness 20/20, client build, 7 render tests, 5 headless-Chrome runs (D2+B1 16/16, B3 9/9, B4 client 6/6, layout 375 px 9/9, 820 px 9/9), server on port 4100 + 9 e2e files (A2 14, B4 20, P2.1 8, P2.2 9, P2.3 11, P2.4 4, P2.5 5, P3.1 7, P3.2 5), server log clean.
+- Status: **in repo**, run with `tests/check_all.sh` (see `tests/README.md`). Last run on branch `dev` (with D1, D3, A8/A9): **32 passed, 0 failed, 0 skipped** (~12.5 min): syntax, contract, state-machine harness 20/20, client build, 7 render tests, 8 headless-Chrome runs (A8/A9 client 10/10, B3 9/9, B4 client 6/6, D1 setting 6/6, D2+B1 16/16, D3 popup 13/13, layout 375 px 9/9, 820 px 9/9), server on port 4100 + 11 e2e files (A2 14, A8/A9 20, B4 20, D1 13, P2.1 8, P2.2 9, P2.3 11, P2.4 4, P2.5 5, P3.1 7, P3.2 5), server log clean.
 - Without Chrome (`CHROME_PATH` not found) browser tests are SKIP, not FAIL (verified: 14 passed, 5 skipped). The layout test also needs network access to the Tailwind CDN.
 - Negative controls (`node tests/negative-control/run.js`, not in `check_all.sh`): EXPECTED FAIL on old commits — harness @ `853c0be` 11/20, D2 @ `36c2e47` 9/16, B2 @ `32d371d` 8/9.
 - Not automated: B5 LAN check (needs `vite --host` + a non-loopback address; recorded in P5.4) and every MANUAL item below.
@@ -100,7 +100,7 @@ No requirement is Deferred or Removed.
 |---|---|---|---|
 | BUG-01 Leave Lobby shows Round 4/3 | A2 | OPEN | ARCH §6.1; HANDOFF A2; QA F-02 FAIL (claim) |
 | BUG-02 Starts without all Ready | A4 | OPEN | ARCH §3.2; HANDOFF A4 |
-| BUG-03 Solo vs AI mode | **A8/A9 — NEEDS HUMAN CONFIRMATION** | OPEN (defects in ARCH §13) | Bug text is too broad to map with certainty; A8/A9 are the only Solo AI requirements. Do not force the mapping. |
+| BUG-03 Solo vs AI mode | **A8/A9 — NEEDS HUMAN CONFIRMATION** | A8/A9 implemented (P7.1/P7.2); mapping itself still unconfirmed | Bug text is too broad to map with certainty; A8/A9 are the only Solo AI requirements. Do not force the mapping. |
 | BUG-04 Team mode with one player | A5 | OPEN | ARCH §3.2; HANDOFF A5; QA H-03 FAIL (claim) |
 | BUG-05 Challenge / Don't Lift Pen popup | D3 | OPEN (inline banner + `alert()`) | ARCH §10; HANDOFF D3 |
 | BUG-06 Phone / iPad screen sizes | B2 | UNCERTAIN (QA UI-01 PASS is hardcoded) | HANDOFF B2 |
@@ -648,7 +648,15 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Manual drawing per HANDOFF A8 + frame capture + code search for `Math.random` in `aiPredictor.js`.
 - **Regression requirements:** Multiplayer modes unaffected; Solo AI excluded from leaderboard.
 - **Commit requirement:** `fix(A8): solo ai real model path`.
-- **Status:** BLOCKED by the human (BUG-03 → A8/A9 mapping unresolved). Nothing implemented. Known defects remain as listed in ARCH §13 (`heuristicFallback()` with `Math.random`, client/server target mismatch, payload differs from contract, `Astronaut` in the bank).
+- **Status:** Done (human 2026-10-02: BUG-03 does not block A8/A9; the BUG-03 mapping itself stays **NEEDS HUMAN CONFIRMATION**); MANUAL drawing test NOT TESTED.
+  - **Contract change (pre-approved for A8/A9), documented in `shared/contract.js`:**
+    - `solo_ai_predict` request — before: `{ pixels }` (client); after: `{ targetWord, pixels }` where `targetWord` is the server's `room_data.currentWord` echoed back (validated with `isValidPredictRequest`; must equal `room.currentWord`, otherwise ignored).
+    - `solo_ai_prediction_result` — before: `{ guess, confidence, rawConfidence, globalGuess, globalConfidence, isCorrect, topGuesses }`; after: `{ targetWord, ready, guess, confidence, isConfident, top3, modelSees, isCorrect }` (the contract shape plus `ready` and `isConfident`; `guess` may be `null`).
+  - Server: `aiPredictor.js` — `heuristicFallback()` / `Math.random` removed; model not loaded or prediction error → `ready: false, isCorrect: false, guess: null`; thresholds, image size, model dir and game words from `SOLO_AI`. `gameHandler.js` — request validated, only from the solo drawer during PLAYING, stale target ignored, rate-limited to `SOLO_AI.SERVER_MIN_INTERVAL_MS` per socket, result dropped if the turn changed while predicting, score `SOLO_AI.CORRECT_SCORE`. `RoundManager.js` — Solo turns use only AI-supported words (`SOLO_AI.GAME_WORDS`, with the room difficulty) and the server starts PLAYING immediately with its own word (no client word selection). `database.js` — `aiOnly` filter (so `Astronaut` is never a Solo target).
+  - Client: `SoloAIGame.jsx` — target, round and score come from `room_data`; no local word list, random pick, local score or Skip; requests `{ targetWord, pixels }` every `SOLO_AI.PREDICT_INTERVAL_MS` only while PLAYING; results for another word are ignored.
+  - **Removed feature (flag for review):** the **Skip Word** button. It picked a new word on the client (`Math.random` over a local list), which contradicts "the client must not choose the target word". A server-side skip would need a new socket event (not in the approved scope). Turns still advance on timeout or a correct guess.
+  - Checks: e2e 20/20 PASS with the real DoodleNet model — no `Math.random`/`heuristicFallback` in the source; model not ready → 20 identical `ready:false` results; empty canvas → no guess; result keys match the contract; synthetic Sun doodle → correct for Sun and not for Clock; synthetic Clock → correct; House doodle → `isConfident:false`, not correct; 12 deterministic scribbles never correct while not confident; Solo starts PLAYING without word selection with an AI-supported HARD word; wrong target / bad pixels / missing target ignored; 2 requests within 500 ms → 1 result; result echoes the server target; correct doodle ends the turn with +500 (this check runs only if a turn's target is Sun or Clock within 10 EASY turns — otherwise the test prints INFO and does not count it); `solo_ai_predict` ignored in multiplayer rooms. Browser test 10/10 PASS — server word shown, round/score from `room_data`, no Skip, `{ targetWord, pixels }` sent with 784 pixels, "AI model is loading…", stale result ignored, correct flash `+500`, panel resets on the next word.
+  - MANUAL still required (HANDOFF A8): draw Sun / House / Clock / Rainbow by hand in the real UI.
 
 ### P7.2 — Low-confidence display (A9)
 
@@ -664,7 +672,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** Manual scribble test + frame capture.
 - **Regression requirements:** P7.1 acceptance.
 - **Commit requirement:** `fix(A9): low confidence display`.
-- **Status:** BLOCKED together with A8 (BUG-03 decision). Nothing implemented.
+- **Status:** Done (automated); MANUAL NOT TESTED. Server sets `isConfident = rawProb ≥ SOLO_AI.MIN_RAW_PROB` and never marks a non-confident result correct; the client shows "Not sure yet…" and hides word names (guess, top predictions, model label) when `isConfident` is false. Checks: e2e House doodle + 12 scribbles; browser test "Not sure yet…" with no word names.
 
 ### P7.3 — Partial eraser (D2)
 

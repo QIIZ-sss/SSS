@@ -76,12 +76,15 @@ export const SOLO_AI = Object.freeze({
 // server -> client  : SOCKET_EVENTS.SOLO_AI_PREDICTION_RESULT
 //   {
 //     targetWord: string,                         // ส่งกลับคำเดิม ให้ client ทิ้งผลของคำเก่า
-//     guess: string,                              // คำในเกมที่ AI คิดว่าใช่ที่สุด
+//     ready: boolean,                             // false = โมเดลยังไม่พร้อม (ไม่มีการเดาสุ่ม, isCorrect = false)
+//     guess: string | null,                       // คำในเกมที่ AI คิดว่าใช่ที่สุด (null = ยังไม่ได้วาด / ยังไม่พร้อม)
 //     confidence: number,                         // 0..100 (ส่วนแบ่งในกลุ่มคำของเกม)
+//     isConfident: boolean,                       // ความน่าจะเป็นดิบ >= MIN_RAW_PROB (false → client แสดง "Not sure yet…")
 //     top3: [{ label: string, confidence: number }],
 //     modelSees: { label: string, confidence: number } | null,  // อันดับ 1 จาก 345 หมวด
 //     isCorrect: boolean
 //   }
+//   (A8/A9: เพิ่ม ready และ isConfident; server เป็นเจ้าของ targetWord — client ส่ง room_data.currentWord กลับมาเท่านั้น)
 
 export function isValidPredictRequest(payload) {
   if (!payload || typeof payload !== 'object') return false;
