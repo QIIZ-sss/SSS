@@ -262,8 +262,7 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 - Two stacked canvases (main + ghost), fixed 640×480 — `:281-299`.
 - **Updated in P5.1:** input uses Pointer Events (primary pointer, `preventDefault` on down) with `touch-action: none` on the canvas container and drawing canvas; `getCanvasCoords` scales to the 640×480 canvas space. (Baseline: `onMouse*`/`onTouch*`, no `touch-action` on the live path, unscaled CSS-pixel coordinates.)
-- "Eraser" paints `#ffffff` over strokes — `:36-37,184,206`. It is not a real eraser.
-- Fill fills the whole canvas — `:174-176`.
+- **Updated in P7.3 (D2):** three layers — stroke canvas (transparent, first in DOM, read by Solo AI), background canvas (bucket fill, `-z-10`), ghost canvas. The eraser uses `destination-out` on the stroke layer only (local, remote and `draw_sync` replay). (Baseline: eraser painted `#ffffff`; bucket filled the whole single canvas.)
 - Server keeps `drawingHistory` and replays it on `draw_sync` — `drawHandler.js:83-88`.
 
 ## 13. Solo AI
@@ -318,7 +317,7 @@ Baseline `CURRENT FACT` — **no reconnect/session implementation existed.**
 | 4 | QA NW-07 PASS (reconnect keeps score) | Was false at baseline; reconnect implemented in P4.1 (§14) |
 | 5 | QA T-04 PASS (timeout reveals answer) | Payload contained the word but the UI did not show it; fixed in P2.4 (§8) |
 | 6 | QA T-02 PASS (timer) | Evidence shows identical values, not a countdown (§6.2) |
-| 7 | `HANDOFF.md`: eraser does not exist | White-paint "eraser" exists; not a real eraser (§12) |
+| 7 | `HANDOFF.md`: eraser does not exist | Baseline had a white-paint "eraser"; real partial eraser added in D2 (§12) |
 | 8 | A8/README_AI: `{targetWord, pixels}`, `predict()` | `{pixels}` only; `predictUserDrawing()`; `Math.random` fallback (§13) |
 | 9 | QA D-07 script note: touch handlers use `preventDefault` | False at baseline; Pointer Events + `touch-action: none` added in P5.1 (§12) |
 | 10 | QA H-04 PASS (rapid START starts once) | No status guard on `start_game` (§3.2) |

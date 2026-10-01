@@ -38,7 +38,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P6.5 | D1 | 6 | Not started |
 | P7.1 | A8 | 7 | Not started |
 | P7.2 | A9 | 7 | Not started |
-| P7.3 | D2 | 7 | Not started |
+| P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
 | P7.4 | D3 | 7 | Not started — needs team decision |
 
 ---
@@ -367,6 +367,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - Files: `server/src/gameLogic/RoomManager.js` (`canSeeWord`, `sanitizeRoom(room, t, viewer)`, `emitRoomData`), `server/src/gameLogic/RoundManager.js`, `server/src/socket/gameHandler.js`, `server/src/socket/chatHandler.js` (all `room_data` emits switched). 4 server files, within the pre-approved contract change. Client consumers needed no change: they already treat `''` as "no word" (verified by the P2.4 render test).
   - Already correct, verified: candidate words go only to the drawer (`word_selection`); correct-guess notice is neutral; `round_start`/`round_change`/`game_over` carry no word.
   - Checks: leak e2e 7/7 PASS — every event received by every non-drawer during WORD_SELECTION/PLAYING scanned for the answer and for the other candidates (141 events, 3 drawers, incl. after a correct guess and a mid-game join): 0 leaks; drawer still gets the word; non-drawers get it in ROUND_OVER; `wordLength` kept. All earlier suites PASS (A2 e2e now guesses via a test oracle instead of the leaked word).
+  - Test note (found while running D2): the leak scan's per-turn window was based on the drawer's receive time, so a legitimate ROUND_OVER frame that reached another socket 1 ms earlier was flagged once. Window now ends at each player's own `round_end`; 5 consecutive runs 7/7 PASS. No code issue.
   - Remaining indirect channel (by design, not a leak to non-guessers): chat from players who already guessed is delivered only to the drawer and other correct guessers (`isConcealedChat`).
 
 ### P3.2 — Drawer chat restriction (A6)
@@ -644,6 +645,11 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Test procedure:** QA E cases, 2 clients.
 - **Regression requirements:** Drawing, fill, clear, challenges, Solo AI prediction.
 - **Commit requirement:** `feat(D2): partial eraser`.
+- **Status:** Done; tested in headless Chrome (no new dependency); real devices MANUAL.
+  - File: `client/src/components/Canvas.jsx`. No server or contract change: eraser strokes already travel in `draw_begin`/`draw_path` with the existing `tool: 'eraser'` field and are stored in `drawingHistory`.
+  - Layers: stroke canvas (transparent, still the first `<canvas>` in the DOM so Solo AI `canvasToPixels` keeps reading it), background canvas underneath (`-z-10`, bucket fill), ghost canvas on top. Eraser uses `globalCompositeOperation = 'destination-out'` on the stroke layer only (local and remote, incl. `draw_sync` replay); every other tool/shape resets to `source-over`. Clear empties both layers.
+  - Behaviour change to note: the bucket now colours the background behind existing strokes (HANDOFF D2 layer design) instead of painting over them. For Solo AI the bucket colour is no longer counted as ink (transparent stroke layer) — A8/A9 remain blocked; flagging for the human reviewer.
+  - Checks (headless Chrome 154, real component, stubbed socket, real PointerEvents): 16/16 PASS — eraser removes stroke pixels (alpha 0) and keeps the rest of the line, background colour survives under the erased spot, `tool:"eraser"` emitted, pen works again after the eraser, a guesser canvas replaying the emitted history matches (erased spot empty, kept parts present), clear empties both layers, first `<canvas>` is the stroke layer; also B1: computed `touch-action: none`, canvas shown at 320 px, stroke lands at canvas (320,240), emitted coordinates in 640×480 space. Negative control against the previous `Canvas.jsx`: 9/16 (white-paint eraser, alpha 255). E-03 (size slider) / E-05 (challenge interplay) not separately automated.
 
 ### P7.4 — Challenge popup (D3)
 

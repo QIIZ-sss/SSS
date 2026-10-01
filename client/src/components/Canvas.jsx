@@ -5,7 +5,8 @@ import { MINI_CHALLENGES, DEFAULT_COLOR_PALETTE } from '../../../shared/gameConf
 import { calculateShapeDimensions, drawGhostPreview } from '../gameEngine/shapePreview';
 
 export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawing }) {
-  const canvasRef = useRef(null);
+  const canvasRef = useRef(null);     // stroke layer (transparent); first <canvas> in the DOM — Solo AI reads it
+  const bgCanvasRef = useRef(null);   // background layer (bucket fill), drawn under the strokes
   const ghostCanvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const penLiftedRef = useRef(false);
@@ -24,6 +25,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     const ctx = canvas.getContext('2d');
 
     const handleDrawBegin = (data) => {
+      setStrokeMode(ctx, data.tool);
       ctx.beginPath();
       ctx.strokeStyle = data.color;
       ctx.lineWidth = data.size;
@@ -33,11 +35,8 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     };
 
     const handleDrawPath = (data) => {
-      if (data.tool === 'eraser') {
-        ctx.strokeStyle = '#ffffff';
-      } else {
-        ctx.strokeStyle = data.color;
-      }
+      setStrokeMode(ctx, data.tool);
+      ctx.strokeStyle = data.color;
       ctx.lineWidth = data.size;
       ctx.lineTo(data.x, data.y);
       ctx.stroke();
@@ -48,12 +47,12 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
         drawShape(ctx, data.shape, data.x1, data.y1, data.x2, data.y2, data.color, data.size);
       }
       ctx.closePath();
+      setStrokeMode(ctx, null);
       clearGhostCanvas();
     };
 
     const handleDrawClear = () => {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      clearLayers();
       clearGhostCanvas();
       setIsPenLocked(false);
       penLiftedRef.current = false;
@@ -61,13 +60,11 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     };
 
     const handleDrawFill = (data) => {
-      ctx.fillStyle = data.color;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      fillBackground(data.color);
     };
 
     const handleDrawSync = (history) => {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      clearLayers();
       history.forEach(event => {
         if (event.type === 'begin') handleDrawBegin(event);
         else if (event.type === 'path') handleDrawPath(event);
@@ -110,6 +107,26 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     penLiftedRef.current = false;
   }, [challenge, isDrawer]);
 
+  // D2: the eraser removes stroke pixels (destination-out) on the stroke layer only; background stays
+  const setStrokeMode = (ctx, tool) => {
+    ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+  };
+
+  const clearLayers = () => {
+    const canvas = canvasRef.current;
+    if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    const bg = bgCanvasRef.current;
+    if (bg) bg.getContext('2d').clearRect(0, 0, bg.width, bg.height);
+  };
+
+  const fillBackground = (fillColor) => {
+    const bg = bgCanvasRef.current;
+    if (!bg) return;
+    const bctx = bg.getContext('2d');
+    bctx.fillStyle = fillColor;
+    bctx.fillRect(0, 0, bg.width, bg.height);
+  };
+
   const clearGhostCanvas = () => {
     if (ghostCanvasRef.current) {
       const gctx = ghostCanvasRef.current.getContext('2d');
@@ -118,6 +135,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
   };
 
   const drawShape = (ctx, shapeType, x1, y1, x2, y2, strokeColor, size) => {
+    setStrokeMode(ctx, null);
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = size;
     ctx.beginPath();
@@ -172,9 +190,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     canvasRef.current.startY = coords.y;
 
     if (tool === 'fill') {
-      const ctx = canvasRef.current.getContext('2d');
-      ctx.fillStyle = activeColor;
-      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      fillBackground(activeColor);
       socket.emit(SOCKET_EVENTS.DRAW_FILL, { color: activeColor });
       isDrawingRef.current = false;
       return;
@@ -182,8 +198,9 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
 
     if (['pen', 'eraser'].includes(tool)) {
       const ctx = canvasRef.current.getContext('2d');
+      setStrokeMode(ctx, tool);
       ctx.beginPath();
-      ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : activeColor;
+      ctx.strokeStyle = activeColor;
       ctx.lineWidth = brushSize;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -205,7 +222,8 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
 
     if (['pen', 'eraser'].includes(tool)) {
       const ctx = canvasRef.current.getContext('2d');
-      ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : activeColor;
+      setStrokeMode(ctx, tool);
+      ctx.strokeStyle = activeColor;
       ctx.lineWidth = brushSize;
       ctx.lineTo(coords.x, coords.y);
       ctx.stroke();
@@ -266,6 +284,7 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
         size: brushSize
       });
     } else {
+      setStrokeMode(canvasRef.current.getContext('2d'), null);
       socket.emit(SOCKET_EVENTS.DRAW_END, {});
     }
 
@@ -280,12 +299,19 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
 
   return (
     <div className="flex flex-col items-center w-full gap-space-md">
-      <div style={{ touchAction: 'none' }} className="relative w-full max-w-[640px] aspect-[4/3] bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_0px_#18181B] overflow-hidden">
+      <div style={{ touchAction: 'none' }} className="relative isolate w-full max-w-[640px] aspect-[4/3] bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_0px_#18181B] overflow-hidden">
         <canvas
           ref={canvasRef}
           width={640}
           height={480}
           className={`w-full h-full ${isDrawer && !isPenLocked ? 'cursor-crosshair' : 'cursor-not-allowed'}`}
+        />
+        <canvas
+          ref={bgCanvasRef}
+          width={640}
+          height={480}
+          aria-hidden="true"
+          className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none"
         />
         <canvas
           ref={ghostCanvasRef}
