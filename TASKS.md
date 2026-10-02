@@ -814,7 +814,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-21 | Personal "close" hint | P7 | TODO | optional |
 | T1-22 | Player count drops to 1 → stop match + UI | P0 | DONE | see section T1-22 |
 | T1-23 | Solo AI alternating turns (human draws / AI draws) | P8 | TODO | last, highest risk |
-| T1-24 | Drawing tool icons | P1 | TODO | |
+| T1-24 | Drawing tool icons | P1 | DONE | see section T1-24 |
 | T1-25 | Universal result screen (FFA / Team / Solo, top 3 + full ranking, WINNER / DEFEATED) | P3 | TODO | |
 
 Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge validation (P6).
@@ -893,6 +893,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem (screenshot, on top of SOLO-1):** the Solo lobby still showed a shareable ROOM ID with a copy button (nobody can join a Solo room), a `HOST:` line and "Host:"-worded hints, and no overview of the solo setup next to START SOLO.
 - **Fix (client only, `RoomLobby.jsx`):** in Solo — `SOLO PRACTICE` badge instead of the room code / copy button, no `HOST:` line, neutral modifier hint, and a setup summary above START SOLO (rounds, seconds per drawing, word difficulty, number of mini-challenges). Multiplayer lobby unchanged.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/solo-lobby.test.jsx` now 14/14 (+4 T1-19 checks incl. FFA unchanged). Regression: T1-08 render 7/7, D1 setting 6/6, live D1 UI 6/6.
+
+### T1-24 — Drawing tool icons
+
+- **Problem:** the toolbar used emoji (✏️ 🧹 🪣 ⚪ ⬜ 🔺 📏 🗑️) that render differently per platform (🪣 is missing on older systems) and do not match the Material Symbols icons used everywhere else; buttons had no accessible name.
+- **Fix (client only, `Canvas.jsx`):** Material Symbols icons (edit, ink_eraser, format_color_fill, circle, crop_square, change_history, horizontal_rule, delete) next to the existing text labels; every tool has `aria-label` and `title` (the bucket keeps its QA-4 "Not allowed during Don't Lift Pen" title when blocked).
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-24-tool-icons.test.jsx` 4/4. Regression: B1 canvas markup 3/3, D2 16/16, QA-4 Fill 8/8, D3 popup 19/19, client build.
 
 ---
 

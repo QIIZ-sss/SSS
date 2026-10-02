@@ -373,81 +373,104 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
             {challenge !== MINI_CHALLENGES.GEOMETRIC_ONLY && (
               <>
                 <button
+                  aria-label="Pen"
+                  title="Pen"
                   className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                     tool === 'pen' ? 'bg-secondary-fixed text-on-secondary-fixed shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
                   }`}
                   onClick={() => setTool('pen')}
                   type="button"
                 >
-                  ✏️ PEN
+                  <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">edit</span>
+                  PEN
                 </button>
                 <button
+                  aria-label="Eraser"
+                  title="Eraser"
                   className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                     tool === 'eraser' ? 'bg-timer-red text-on-error shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
                   }`}
                   onClick={() => setTool('eraser')}
                   type="button"
                 >
-                  🧹 ERASER
+                  <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">ink_eraser</span>
+                  ERASER
                 </button>
                 <button
+                  aria-label="Bucket"
                   className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                     tool === 'fill' ? 'bg-accent-blue text-on-tertiary shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
                   } ${fillBlocked ? 'opacity-40 cursor-not-allowed' : ''}`}
                   onClick={() => setTool('fill')}
                   disabled={fillBlocked}
-                  title={fillBlocked ? "Not allowed during Don't Lift Pen" : undefined}
+                  title={fillBlocked ? "Not allowed during Don't Lift Pen" : 'Bucket'}
                   type="button"
                 >
-                  🪣 BUCKET
+                  <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">format_color_fill</span>
+                  BUCKET
                 </button>
               </>
             )}
 
             {/* Geometric Primitive Shape Tools */}
             <button
+              aria-label="Circle"
+              title="Circle"
               className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                 tool === 'circle' ? 'bg-tertiary-fixed text-on-tertiary-fixed shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
               }`}
               onClick={() => setTool('circle')}
               type="button"
             >
-              ⚪ CIRCLE
+              <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">circle</span>
+              CIRCLE
             </button>
             <button
+              aria-label="Rect"
+              title="Rect"
               className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                 tool === 'rect' ? 'bg-tertiary-fixed text-on-tertiary-fixed shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
               }`}
               onClick={() => setTool('rect')}
               type="button"
             >
-              ⬜ RECT
+              <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">crop_square</span>
+              RECT
             </button>
             <button
+              aria-label="Triangle"
+              title="Triangle"
               className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                 tool === 'triangle' ? 'bg-tertiary-fixed text-on-tertiary-fixed shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
               }`}
               onClick={() => setTool('triangle')}
               type="button"
             >
-              🔺 TRIANGLE
+              <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">change_history</span>
+              TRIANGLE
             </button>
             <button
+              aria-label="Line"
+              title="Line"
               className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                 tool === 'line' ? 'bg-tertiary-fixed text-on-tertiary-fixed shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
               }`}
               onClick={() => setTool('line')}
               type="button"
             >
-              📏 LINE
+              <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">horizontal_rule</span>
+              LINE
             </button>
 
             <button
+              aria-label="Clear"
+              title="Clear"
               className="ml-auto px-space-md py-1.5 rounded-lg font-label-md uppercase bg-error-container text-on-error-container border-2 border-border-dark shadow-[2px_2px_0px_#18181B] hover:bg-error hover:text-on-error transition-all"
               onClick={clearCanvas}
               type="button"
             >
-              🗑️ CLEAR
+              <span className="material-symbols-outlined text-[18px] leading-none align-middle mr-1" aria-hidden="true">delete</span>
+              CLEAR
             </button>
             {onSubmitDrawing && (
               <button
