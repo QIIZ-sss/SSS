@@ -46,6 +46,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 - Status: **in repo**, run with `tests/check_all.sh` (see `tests/README.md`). Last run on branch `dev` (with D1, D3, A8/A9): **32 passed, 0 failed, 0 skipped** (~12.5 min): syntax, contract, state-machine harness 20/20, client build, 7 render tests, 8 headless-Chrome runs (A8/A9 client 10/10, B3 9/9, B4 client 6/6, D1 setting 6/6, D2+B1 16/16, D3 popup 13/13, layout 375 px 9/9, 820 px 9/9), server on port 4100 + 11 e2e files (A2 14, A8/A9 20, B4 20, D1 13, P2.1 8, P2.2 9, P2.3 11, P2.4 4, P2.5 5, P3.1 7, P3.2 5), server log clean.
 - Without Chrome (`CHROME_PATH` not found) browser tests are SKIP, not FAIL (verified: 14 passed, 5 skipped). The layout test also needs network access to the Tailwind CDN.
 - Negative controls (`node tests/negative-control/run.js`, not in `check_all.sh`): EXPECTED FAIL on old commits — harness @ `853c0be` 11/20, D2 @ `36c2e47` 9/16, B2 @ `32d371d` 8/9.
+- Machine-specific paths: `qa/QA_REPORT.md` contained 19 `file:///D:/uni/2-Network/Justdrawit-main/…` links (written on another machine); replaced with repository-relative links (`../…`) — link text and every QA result unchanged. No other `file:///`, `D:/`, `C:\\` or `/Users/` paths remain outside `node_modules`.
 - Not automated: B5 LAN check (needs `vite --host` + a non-loopback address; recorded in P5.4) and every MANUAL item below.
 - Every task that changes behaviour should add or update a test here and keep `tests/check_all.sh` green.
 

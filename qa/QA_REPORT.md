@@ -81,7 +81,7 @@
 | D-07 | 🟡 MANUAL | **ผ่านการเทสด้วย DevTools Emulation** (onTouchStart/Move/End ทำงานได้) แต่จัดเป็น **MANUAL** เพื่อยืนยันการวาดบนมือถือจริง | `qa/evidence/D-07.txt` (ดูรายละเอียดส่วนที่ 4) |
 
 ### 5. ยางลบเฉพาะจุด (Point Eraser: 6 เคส)
-> **หมายเหตุการตรวจสอบโค้ดจริง:** ใน [`client/src/components/Canvas.jsx`](file:///D:/uni/2-Network/Justdrawit-main/client/src/components/Canvas.jsx) บรรทัดที่ 36–40 โค้ดของเครื่องมือ Eraser เป็นเพียงการวาดทับด้วยเส้นสีขาว (`ctx.strokeStyle = '#ffffff'`) ไม่ใช่ระบบยางลบเฉพาะจุดที่แท้จริง (ไม่มี `destination-out`, ไม่ลบโปร่งใส Alpha, และไม่สามารถลบเส้นบนกระดานที่เทสีพื้นหลังได้) ดังนั้นจึงจัดสถานะทั้ง 6 เคสเป็น **N/A - ยังไม่มีฟีเจอร์** ตามกฎข้อ 5
+> **หมายเหตุการตรวจสอบโค้ดจริง:** ใน [`client/src/components/Canvas.jsx`](../client/src/components/Canvas.jsx) บรรทัดที่ 36–40 โค้ดของเครื่องมือ Eraser เป็นเพียงการวาดทับด้วยเส้นสีขาว (`ctx.strokeStyle = '#ffffff'`) ไม่ใช่ระบบยางลบเฉพาะจุดที่แท้จริง (ไม่มี `destination-out`, ไม่ลบโปร่งใส Alpha, และไม่สามารถลบเส้นบนกระดานที่เทสีพื้นหลังได้) ดังนั้นจึงจัดสถานะทั้ง 6 เคสเป็น **N/A - ยังไม่มีฟีเจอร์** ตามกฎข้อ 5
 | ID | สถานะ | หมายเหตุ | หลักฐาน |
 |---|---|---|---|
 | E-01 | ⚪ N/A | ยังไม่มีฟีเจอร์ยางลบเฉพาะจุดที่แท้จริง (มีเพียงแปรงระบายทับด้วยสีขาว `#ffffff`) | `qa/evidence/E-01.txt` |
@@ -194,7 +194,7 @@
 - **ผลการทดสอบ:** 
   - ฟอนต์และปุ่ม Toggle แสดงผลสวยงามตามดีไซน์ Neo-Arcade Brushwork
   - ไม่มีข้อความขยะ `_outline_...` หลุดมาในเนื้อหาปุ่ม
-- **หลักฐานใหม่:** [`qa/evidence/H-06_settings_default.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/H-06_settings_default.png), [`qa/evidence/H-06_settings_retest.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/H-06_settings_retest.png), [`qa/evidence/H-06.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/H-06.png)
+- **หลักฐานใหม่:** [`qa/evidence/H-06_settings_default.png`](../qa/evidence/H-06_settings_default.png), [`qa/evidence/H-06_settings_retest.png`](../qa/evidence/H-06_settings_retest.png), [`qa/evidence/H-06.png`](../qa/evidence/H-06.png)
 
 ### 2. เคส G-06 (ตำแหน่งปุ่ม SEND ในกรอบแชท)
 - **การทดสอบ:** วัด Bounding Box ของปุ่ม SEND และกรอบแชทที่ 4 ขนาดหน้าจอ (1920, 1366, 768, 375 px)
@@ -202,10 +202,10 @@
   - บนจอแคบ (375 px และ 768 px) ฟอร์มแชทใช้ Flex Layout แบบ `flex-col` ทำให้ปุ่ม SEND ขยายเต็มความกว้างและอยู่ด้านล่างช่อง Input อย่างเป็นระเบียบ ไม่หลุดออกนอกขอบหน้าจอ
   - บนจอกว้าง (1366 px และ 1920 px) ปุ่ม SEND วางต่อท้ายช่อง Input ในแนวระนาบได้อย่างพอดี
 - **หลักฐานใหม่:** ครบทั้ง 4 ภาพ
-  - [`qa/evidence/G-06_1920px.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/G-06_1920px.png)
-  - [`qa/evidence/G-06_1366px.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/G-06_1366px.png)
-  - [`qa/evidence/G-06_768px.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/G-06_768px.png)
-  - [`qa/evidence/G-06_375px.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/G-06_375px.png)
+  - [`qa/evidence/G-06_1920px.png`](../qa/evidence/G-06_1920px.png)
+  - [`qa/evidence/G-06_1366px.png`](../qa/evidence/G-06_1366px.png)
+  - [`qa/evidence/G-06_768px.png`](../qa/evidence/G-06_768px.png)
+  - [`qa/evidence/G-06_375px.png`](../qa/evidence/G-06_375px.png)
 
 ### 3. เคส C-06 (Geometric Shapes Ghost Preview & Dimension Badge)
 - **การทดสอบ:** เล่นรอบที่ติดชาเลนจ์ GEOMETRIC_ONLY คลิกลากเมาส์ค้างเพื่อวาดรูปทรง และปล่อยเมาส์
@@ -214,8 +214,8 @@
   - หน้าจอคนทายได้รับ Event `shape_preview` แสดงเงาร่างตามคนวาดทันที
   - เมื่อปล่อยเมาส์ Event `draw_end` เคลียร์ Ghost Canvas ทิ้งทั้งสองฝั่ง และเรนเดอร์รูปทรงทึบอย่างสมบูรณ์
 - **หลักฐานใหม่:**
-  - ขณะคลิกลากค้าง: [`qa/evidence/C-06_dragging_drawer.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/C-06_dragging_drawer.png), [`qa/evidence/C-06_dragging_guesser.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/C-06_dragging_guesser.png)
-  - เมื่อปล่อยเมาส์: [`qa/evidence/C-06_released_drawer.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/C-06_released_drawer.png), [`qa/evidence/C-06_released_guesser.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/C-06_released_guesser.png)
+  - ขณะคลิกลากค้าง: [`qa/evidence/C-06_dragging_drawer.png`](../qa/evidence/C-06_dragging_drawer.png), [`qa/evidence/C-06_dragging_guesser.png`](../qa/evidence/C-06_dragging_guesser.png)
+  - เมื่อปล่อยเมาส์: [`qa/evidence/C-06_released_drawer.png`](../qa/evidence/C-06_released_drawer.png), [`qa/evidence/C-06_released_guesser.png`](../qa/evidence/C-06_released_guesser.png)
 
 ### 4. เคส T-02 (การนับเวลาต่อเนื่อง 3 รอบโดยไม่รีเฟรช)
 - **การทดสอบ:** เล่นต่อเนื่อง 3 รอบเต็ม (Round 1, Round 2, Round 3) บนเบราว์เซอร์ 2 ตัว (Host และ Guest) โดยไม่มีการรีเฟรชหน้าเว็บแม้แต่ครั้งเดียว
@@ -250,10 +250,10 @@
   ```
 - **ข้อสรุป:** เวลารีเซ็ตและนับถอยหลังต่อในรอบถัดไปได้อย่างราบรื่น ไม่พบอาการเวลานิ่งหรือหยุดนับ
 - **หลักฐานใหม่:** ครบทั้ง 6 Screenshots และ JSON Log
-  - Round 1: [`qa/evidence/T-02_round1_client1.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_round1_client1.png), [`qa/evidence/T-02_round1_client2.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_round1_client2.png)
-  - Round 2: [`qa/evidence/T-02_round2_client1.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_round2_client1.png), [`qa/evidence/T-02_round2_client2.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_round2_client2.png)
-  - Round 3: [`qa/evidence/T-02_round3_client1.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_round3_client1.png), [`qa/evidence/T-02_round3_client2.png`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_round3_client2.png)
-  - Log ละเอียด: [`qa/evidence/T-02_multiround_log.json`](file:///D:/uni/2-Network/Justdrawit-main/qa/evidence/T-02_multiround_log.json)
+  - Round 1: [`qa/evidence/T-02_round1_client1.png`](../qa/evidence/T-02_round1_client1.png), [`qa/evidence/T-02_round1_client2.png`](../qa/evidence/T-02_round1_client2.png)
+  - Round 2: [`qa/evidence/T-02_round2_client1.png`](../qa/evidence/T-02_round2_client1.png), [`qa/evidence/T-02_round2_client2.png`](../qa/evidence/T-02_round2_client2.png)
+  - Round 3: [`qa/evidence/T-02_round3_client1.png`](../qa/evidence/T-02_round3_client1.png), [`qa/evidence/T-02_round3_client2.png`](../qa/evidence/T-02_round3_client2.png)
+  - Log ละเอียด: [`qa/evidence/T-02_multiround_log.json`](../qa/evidence/T-02_multiround_log.json)
 
 ---
 
