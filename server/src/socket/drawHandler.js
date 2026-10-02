@@ -69,6 +69,7 @@ function setupDrawHandlers(io, socket) {
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'PLAYING') return;
     if (room.currentDrawer !== socket.data.username) return;
+    if (room.currentChallenge === MINI_CHALLENGES.DONT_LIFT_PEN) return; // D3: no bucket during Don't Lift Pen
 
     if (room.currentChallenge === MINI_CHALLENGES.COLOUR_FIX && room.forcedColor) {
       data.color = room.forcedColor;

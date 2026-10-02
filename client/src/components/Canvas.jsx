@@ -118,6 +118,12 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     penLiftedRef.current = false;
   }, [challenge, isDrawer]);
 
+  // DONT_LIFT_PEN: the bucket is not allowed (server ignores draw_fill too); fall back to the pen
+  const fillBlocked = challenge === MINI_CHALLENGES.DONT_LIFT_PEN;
+  useEffect(() => {
+    if (fillBlocked && tool === 'fill') setTool('pen');
+  }, [fillBlocked, tool]);
+
   // D2: the eraser removes stroke pixels (destination-out) on the stroke layer only; background stays
   const setStrokeMode = (ctx, tool) => {
     ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
@@ -201,8 +207,10 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
     canvasRef.current.startY = coords.y;
 
     if (tool === 'fill') {
-      fillBackground(activeColor);
-      socket.emit(SOCKET_EVENTS.DRAW_FILL, { color: activeColor });
+      if (!fillBlocked) {
+        fillBackground(activeColor);
+        socket.emit(SOCKET_EVENTS.DRAW_FILL, { color: activeColor });
+      }
       isDrawingRef.current = false;
       return;
     }
@@ -385,8 +393,10 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
                 <button
                   className={`px-space-md py-1.5 rounded-lg font-label-md uppercase border-2 border-border-dark transition-all ${
                     tool === 'fill' ? 'bg-accent-blue text-on-tertiary shadow-[2px_2px_0px_#18181B]' : 'bg-surface-card hover:bg-surface-container'
-                  }`}
+                  } ${fillBlocked ? 'opacity-40 cursor-not-allowed' : ''}`}
                   onClick={() => setTool('fill')}
+                  disabled={fillBlocked}
+                  title={fillBlocked ? "Not allowed during Don't Lift Pen" : undefined}
                   type="button"
                 >
                   🪣 BUCKET
