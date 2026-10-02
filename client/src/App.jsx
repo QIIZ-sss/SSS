@@ -623,10 +623,20 @@ export default function App() {
 
             <div className="bg-surface-card p-space-md rounded-xl border-2 border-border-dark text-left flex flex-col gap-2">
               <h4 className="font-headline-sm text-headline-sm text-border-dark uppercase">FINAL STANDINGS</h4>
+              {/* T1-02: Team totals; the list arrives ranked from the server */}
+              {gameOverModal.gameMode === GAME_MODES.TEAM && (
+                <div className="flex gap-2" id="teamTotals">
+                  {['Red', 'Blue'].map((t) => (
+                    <span key={t} className={`flex-1 text-center rounded border border-border-dark font-bold ${t === 'Red' ? 'bg-timer-red text-on-error' : 'bg-accent-blue text-on-tertiary'}`}>
+                      TEAM {t.toUpperCase()}: {gameOverModal.teamScores?.[t]?.score ?? 0} PTS
+                    </span>
+                  ))}
+                </div>
+              )}
               <ul className="flex flex-col gap-1">
                 {gameOverModal.finalScores.map((p, idx) => (
                   <li key={p.username} className="flex justify-between items-center p-space-xs rounded bg-surface-container border border-border-dark">
-                    <span>{p.avatar || '🐶'} #{idx + 1} {p.username}</span>
+                    <span>{p.avatar || '🐶'} #{idx + 1} {p.username}{gameOverModal.gameMode === GAME_MODES.TEAM && p.team ? ` (${p.team})` : ''}</span>
                     <span className="font-bold">{p.score} PTS</span>
                   </li>
                 ))}

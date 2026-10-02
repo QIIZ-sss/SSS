@@ -216,6 +216,20 @@ class RoundManager {
     return true;
   }
 
+  // T1-02: final ranking. Team: players of the higher-scoring team first (Red first on a tie), then by player score;
+  // FFA / Solo: by score. Equal scores keep join order (stable sort).
+  rankPlayers(room) {
+    const teamScore = (p) => (room.gameMode === GAME_MODES.TEAM && room.teams[p.team] ? room.teams[p.team].score : 0);
+    const teamOrder = (p) => (p.team === 'Red' ? 0 : 1);
+    return [...room.players].sort((a, b) => {
+      if (room.gameMode === GAME_MODES.TEAM) {
+        if (teamScore(b) !== teamScore(a)) return teamScore(b) - teamScore(a);
+        if (a.team !== b.team) return teamOrder(a) - teamOrder(b);
+      }
+      return b.score - a.score;
+    });
+  }
+
   // stoppedReason: set when the match was stopped early (T1-22); such a match is not recorded on the leaderboard
   endGameMatch(io, room, stoppedReason = null) {
     this.timerManager.stopTimer(room.id);
@@ -235,14 +249,15 @@ class RoundManager {
       else if (room.teams.Blue.score > room.teams.Red.score) winnerText = 'Team Blue Wins! 🔵';
       else winnerText = "It's a Tie! 🤝";
     } else {
-      const sorted = [...room.players].sort((a, b) => b.score - a.score);
+      const sorted = this.rankPlayers(room);
       winnerText = sorted[0] ? `Winner: ${sorted[0].username} 🏆` : 'Game Over';
     }
 
     // T1-07: kept so a player who reloads during GAME_OVER gets the results again (cleared in returnToLobby)
     room.lastGameOver = {
+      gameMode: room.gameMode,
       winnerText,
-      finalScores: room.players.map(p => ({ username: p.username, avatar: p.avatar, score: p.score, team: p.team })),
+      finalScores: this.rankPlayers(room).map(p => ({ username: p.username, avatar: p.avatar, score: p.score, team: p.team })),
       teamScores: room.teams,
       stopped: !!stoppedReason,
       reason: stoppedReason || ''

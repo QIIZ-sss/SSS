@@ -792,7 +792,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 |---|---|---|---|---|
 | P0-1 | All connected guessers correct → round advances at once (not tied to a T1 line) | P0 | DONE | see section P0-1 |
 | T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | TODO | decision final (see above) |
-| T1-02 | Team result / ranking (sort) | P0 / P2 | TODO | |
+| T1-02 | Team result / ranking (sort) | P0 / P2 | IN PROGRESS | ranking sort DONE (section T1-02); Team result presentation continues in T1-25 / after T1-01 |
 | T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
 | T1-04 | Score UI overflow | P1 | TODO | |
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
@@ -843,6 +843,13 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Interpretation:** the tester's reload problems could not be read from the repository; checked what a reloaded client gets back in every state on top of B4 (room, role data, drawer word choices already covered by `b4-reconnect`). Gap found: a reload during **GAME_OVER** lost the results (the modal only opens on `game_over`, which was not re-sent). Drawing history (`draw_sync` on canvas mount) and timer (`room_data.timeRemaining`) were already restored — now covered by a test.
 - **Fix:** `RoundManager.endGameMatch` keeps the payload as `room.lastGameOver` (cleared in `returnToLobby`); `rejoin_room` re-sends it to the rejoining socket while the room is in GAME_OVER. Existing event, no contract change.
 - **Status:** DONE (automated); MANUAL NOT TESTED (real browser reload). `tests/e2e/t1-07-reload.e2e.js` 6/6 (PLAYING: rejoined, timer 0 < t < 60, drawing history begin/path/end, no game_over; GAME_OVER: same results re-sent; back in LOBBY: no stale results). Not changed: chat history is not kept across a reload.
+
+### T1-02 — Result ranking order (P0 part)
+
+- **Problem:** `game_over.finalScores` was `room.players` in join order, and the modal numbered it `#1…` — the ranking was wrong, especially in Team mode; Team totals were not shown in the modal.
+- **Fix:** `RoundManager.rankPlayers()` — Team: players of the higher-scoring team first (Red first on a tie), then by player score; FFA / Solo: by score; stable for ties. Used for `finalScores` and the FFA winner text. Results modal (`App.jsx`) shows both team totals and each player's team in Team mode.
+- **Socket contract change (authorized):** `game_over.finalScores` is now ranked; `game_over` gains `gameMode`. ARCHITECTURE.md §7.
+- **Status:** ranking DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-02-ranking.e2e.js` 6/6 (FFA sorted + winner first + gameMode; Team: leading team first, sorted within each team). `tests/browser/t1-02-team-results.browser.jsx` 3/3. Remaining T1-02 scope (Team result presentation after the T1-01 rule change) → T1-25.
 
 ---
 
