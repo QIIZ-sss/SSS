@@ -798,7 +798,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
 | T1-06 | Chat overflow | P0 | DONE | see section T1-06 |
 | T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
-| T1-08 | Host START / player READY UI | P1 | TODO | |
+| T1-08 | Host START / player READY UI | P1 | DONE | see section T1-08 |
 | T1-09 | Online count | P5 | TODO | |
 | T1-10 | Header / leaderboard | P5 | TODO | |
 | T1-11 | Avatars | P1 | TODO | |
@@ -874,6 +874,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem (reproduced in a screenshot, 1280 px, real Tailwind):** in the FFA in-game LEADERBOARD a long name pushed the score out of its card ("987…" outside the row); Team roster rows had no truncation; the Team score header could not wrap. The leaderboard rank badges (#1…) followed join order, not score.
 - **Fix (client only):** `MultiplayerGame.jsx` — name side `min-w-0 flex-1` + truncate (full name in `title`), score side `shrink-0` + `tabular-nums`; list ranked by score for display. `TeamGame.jsx` — roster names truncate, scores `shrink-0`; header score row `flex-wrap`.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-04-score-overflow.browser.jsx` 5/5 (long name + 7-digit score stay inside the 4 FFA rows; ranked 9876543, 123456, 1500, 0; Team rows inside; page not wider than the window).
+
+### T1-08 — Host START / player READY
+
+- **Problem (screenshot):** the host saw a TOGGLE READY button and was listed as WAITING although the server never requires the host to be ready (P2.1); guests had no feedback on their own ready state.
+- **Fix (client only, `RoomLobby.jsx`):** host — no READY button, roster badge `HOST`, START with the existing block reason; guests — a READY button showing their state (`I'M READY` / `✓ READY — TAP TO CANCEL`, `aria-pressed`) and a hint (`Press READY so the host can start` / `Waiting for <host> to start the game`); guests never see START. Server rules unchanged.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-08-host-ready.test.jsx` 7/7. `tests/render/solo-lobby.test.jsx` updated (the host no longer has a READY button) 10/10. Regression: D1 setting 6/6, live D1 UI 6/6.
 
 ---
 

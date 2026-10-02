@@ -16,14 +16,14 @@ const render = (room, me = 'Ann', tab) => {
 const solo = { ...base, gameMode: 'SOLO_AI' };
 const soloMain = render(solo), soloSettings = render(solo, 'Ann', 'SETTINGS');
 check('Solo: no PLAYER ROSTER', !soloMain.includes('PLAYER ROSTER'));
-check('Solo: no TOGGLE READY', !soloMain.includes('TOGGLE READY'));
+check('Solo: no READY button', !soloMain.includes('id="readyButton"') && !soloMain.includes('TOGGLE READY'));
 check('Solo: no MAX PLAYERS setting', soloSettings.includes('SETTINGS') && !soloSettings.includes('MAX PLAYERS'));
 check('Solo: START SOLO button, enabled', /<button[^>]*>(?:(?!<\/button>).)*START SOLO/.test(soloMain) && !/disabled=""[^>]*>(?:(?!<\/button>).)*START SOLO/.test(soloMain));
 check('Solo: mini-challenges still offered', soloMain.includes('SELECT MINI-CHALLENGES'));
 check('Solo: rounds / timer / difficulty settings kept', /ROUND/i.test(soloSettings) && /MIXED/.test(soloSettings) && /HARD/.test(soloSettings));
 const ffa = { ...base, gameMode: 'MULTIPLAYER_FFA', players: [...base.players, { username: 'Bob', score: 0, isReady: true, team: 'Blue' }] };
 const ffaMain = render(ffa), ffaSettings = render(ffa, 'Ann', 'SETTINGS');
-check('FFA: roster, TOGGLE READY, START GAME shown', ffaMain.includes('PLAYER ROSTER') && ffaMain.includes('TOGGLE READY') && ffaMain.includes('START GAME'));
+check('FFA host: roster and START GAME shown (no READY button for the host since T1-08)', ffaMain.includes('PLAYER ROSTER') && !ffaMain.includes('id="readyButton"') && ffaMain.includes('START GAME'));
 check('FFA: MAX PLAYERS setting shown', ffaSettings.includes('MAX PLAYERS'));
 check('FFA with another player: SOLO VS AI button disabled with the reason', /<button[^>]*disabled=""[^>]*title="Solo vs AI is single-player[^"]*"[^>]*>(?:(?!<\/button>).)*SOLO VS AI/.test(ffaSettings)
   && ffaSettings.includes('id="soloBlockedReason"'));

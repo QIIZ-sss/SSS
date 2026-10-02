@@ -9,6 +9,7 @@ export default function RoomLobby({ roomData, username }) {
   const [copied, setCopied] = useState(false);
 
   const isHost = roomData.host === username;
+  const meReady = (roomData.players.find((p) => p.username === username) || {}).isReady;
 
   // UX only — the server enforces the same shared rules (GAME_RULES) on start_game
   const notReadyPlayers = GAME_RULES.REQUIRE_ALL_READY
@@ -410,12 +411,13 @@ export default function RoomLobby({ roomData, username }) {
                       </div>
                     </div>
 
+                    {/* T1-08: the host starts the game and never needs to be ready */}
                     <span
                       className={`font-label-sm text-label-sm px-2.5 py-1 rounded-full border border-border-dark font-bold ${
-                        p.isReady ? 'bg-primary-fixed text-on-primary-fixed' : 'bg-slot-empty text-on-surface-variant'
+                        isRoomHost ? 'bg-tertiary-fixed text-on-tertiary-fixed' : p.isReady ? 'bg-primary-fixed text-on-primary-fixed' : 'bg-slot-empty text-on-surface-variant'
                       }`}
                     >
-                      {p.isReady ? 'READY' : 'WAITING'}
+                      {isRoomHost ? 'HOST' : p.isReady ? 'READY' : 'WAITING'}
                     </span>
                   </div>
                 );
@@ -425,14 +427,23 @@ export default function RoomLobby({ roomData, username }) {
             )}
 
             <div className="flex flex-col gap-space-xs pt-space-xs">
-              {!isSolo && (
+              {!isSolo && !isHost && (
               <button
-                className="w-full py-space-md rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-headline-md text-headline-md uppercase border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                id="readyButton"
+                aria-pressed={!!meReady}
+                className={`w-full py-space-md rounded-xl font-headline-md text-headline-md uppercase border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all ${
+                  meReady ? 'bg-primary-fixed text-on-primary-fixed' : 'bg-tertiary-fixed text-on-tertiary-fixed'
+                }`}
                 onClick={handleToggleReady}
                 type="button"
               >
-                TOGGLE READY
+                {meReady ? "✓ READY — TAP TO CANCEL" : "I'M READY"}
               </button>
+              )}
+              {!isSolo && !isHost && (
+                <p className="font-body-sm text-body-sm text-on-surface-variant text-center" id="waitingForHost">
+                  {meReady ? `Waiting for ${roomData.host} to start the game` : 'Press READY so the host can start'}
+                </p>
               )}
               {isHost && (
                 <button
