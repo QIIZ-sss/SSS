@@ -184,13 +184,19 @@ class RoundManager {
       return;
     }
 
-    if (room.status === 'PLAYING') {
-      const totalGuessers = room.players.length - 1;
-      const correctPresent = room.correctGuessers.filter(u => room.players.some(p => p.username === u)).length;
-      if (totalGuessers > 0 && correctPresent >= totalGuessers) {
-        this.endRound(io, room, 'Everyone guessed correctly! 🎯');
-      }
-    }
+    this.endRoundIfAllGuessed(io, room);
+  }
+
+  // P0-1: the round ends as soon as every CONNECTED guesser has guessed correctly (at least one).
+  // Players in the reconnect grace period (socketId null) are not waited for.
+  endRoundIfAllGuessed(io, room) {
+    if (room.status !== 'PLAYING') return false;
+    const guessers = room.players.filter(p => p.username !== room.currentDrawer);
+    const anyCorrect = guessers.some(p => room.correctGuessers.includes(p.username));
+    const waiting = guessers.some(p => p.socketId && !room.correctGuessers.includes(p.username));
+    if (!anyCorrect || waiting) return false;
+    this.endRound(io, room, 'Everyone guessed correctly! 🎯');
+    return true;
   }
 
   endGameMatch(io, room) {

@@ -783,6 +783,48 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Fix (no event / payload change for valid clients):** `server/src/socket/gameHandler.js` — non-object payloads are treated as `{}`; `create_room` passes only well-typed options to `createRoom` (string name/username/avatar, known `gameMode`, positive finite numbers, boolean `miniChallengeEnabled`, array `enabledChallenges`; anything else → existing defaults); `join_room` accepts a string or numeric code and string username/avatar; acks called only if `typeof callback === 'function'`. `chatHandler.js` — `send_chat` ignores a non-string `text`. `drawHandler.js` — `draw_begin` / `draw_path` / `shape_preview` / `draw_end` / `draw_fill` ignore non-object payloads (not stored, not relayed). `rejoin_room`, `select_word` (QA-1) and `solo_ai_predict` (`isValidPredictRequest`) were already safe.
 - **Status:** Done (automated). `tests/e2e/sec-payloads.e2e.js` 37/37: no payload / null / string / number / array / `{}` / wrong field types for every payload handler, sent from the context that reaches its code (outside a room, host in LOBBY, Team player, drawer in WORD_SELECTION, drawer and guesser in a COLOUR_FIX turn, Solo drawer), plus non-function acks; server stays up after each batch; settings and teams unchanged; junk draw payloads neither relayed nor in `draw_sync`; valid draw still relayed with the forced colour; valid guess still scores; then a normal create + join + start works. Negative control: the same test against the previous commit → 0/16, server crashed on the first malformed `create_room`; the test has a 150 s watchdog so a regression fails instead of hanging `check_all.sh`.
 
+
+## Tester round 1 (T1-01 … T1-25)
+
+Source: human tester round 1 (2026-10-02), recorded from the one-line list in the Section 17 prompt (the full tester report is not in the repository; each task records how its line was interpreted). Final decisions from that prompt: **Team = the drawing team draws, the OPPOSING team guesses** (drawing team never guesses its own word); **Solo = single player** (switch refused while others are in the room). Work order = the prompt's priority list (P0 → P8). Statuses: TODO / IN PROGRESS / DONE / BLOCKED.
+
+| ID | Item | Priority | Status | Notes |
+|---|---|---|---|---|
+| P0-1 | All connected guessers correct → round advances at once (not tied to a T1 line) | P0 | DONE | see section P0-1 |
+| T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | TODO | decision final (see above) |
+| T1-02 | Team result / ranking (sort) | P0 / P2 | TODO | |
+| T1-03 | Solo AI timer | P0 | TODO | |
+| T1-04 | Score UI overflow | P1 | TODO | |
+| T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
+| T1-06 | Chat overflow | P0 | TODO | |
+| T1-07 | Reconnect / reload | P0 | TODO | B4 reconnect exists; tester issue to reproduce |
+| T1-08 | Host START / player READY UI | P1 | TODO | |
+| T1-09 | Online count | P5 | TODO | |
+| T1-10 | Header / leaderboard | P5 | TODO | |
+| T1-11 | Avatars | P1 | TODO | |
+| T1-12 | Mini-challenge UI | P5 | TODO | |
+| T1-13 | Lobby chat | P7 | TODO | optional |
+| T1-14 | Settings / Modifiers + Solo restriction UX | P5 | TODO | Solo switch refusal + reason already in SOLO-1 |
+| T1-15 | Team selection / switching (= U9) | P2 | TODO | merged with U9 |
+| T1-16 | Modifiers empty / purple area | — | merged into T1-17 | |
+| T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | TODO | |
+| T1-18 | Room-not-found UI | P0 / P1 | TODO | |
+| T1-19 | Solo lobby | P1 | TODO | roster / Ready / max players already hidden in SOLO-1 |
+| T1-20 | Room name | P5 | TODO | |
+| T1-21 | Personal "close" hint | P7 | TODO | optional |
+| T1-22 | Player count drops to 1 → stop match + UI | P0 | TODO | |
+| T1-23 | Solo AI alternating turns (human draws / AI draws) | P8 | TODO | last, highest risk |
+| T1-24 | Drawing tool icons | P1 | TODO | |
+| T1-25 | Universal result screen (FFA / Team / Solo, top 3 + full ranking, WINNER / DEFEATED) | P3 | TODO | |
+
+Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge validation (P6).
+
+### P0-1 — Round advances when every connected guesser is correct
+
+- **Problem:** the round ended only when `correctGuessers.length >= players.length - 1`. A guesser in the reconnect grace period (disconnected, `socketId` null, still in `room.players`) was counted, so the others waited for the 60 s timer; a disconnect never re-checked the condition.
+- **Fix:** `RoundManager.endRoundIfAllGuessed(io, room)` — in PLAYING, ends the round once at least one guesser is correct and no CONNECTED guesser is still missing. Called after a correct guess (`chatHandler.js`), after a player is removed (`handlePlayerRemoved`, replaces the old check) and after a disconnect (`gameHandler.js` `handlePlayerDisconnect`). Scoring unchanged. No event / payload change.
+- **Status:** DONE. `tests/e2e/p0-1-round-advance.e2e.js` 5/5 (one of two connected guessers correct → still PLAYING; the other disconnects → round ends at once; disconnect with nobody correct → round continues; only connected guesser correct → ends at once; both correct → ends). Regression: p2.3 11/11, p2.4 4/4, b4 20/20, p3.2 5/5; full suite below.
+
 ---
 
 ## Unassigned findings (need human decision before becoming tasks)

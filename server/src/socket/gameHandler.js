@@ -374,6 +374,8 @@ function handlePlayerDisconnect(io, socket, timerManager, roundManager) {
     text: `${player.username} disconnected — waiting for them to reconnect.`,
     isSystem: true
   });
+  // P0-1: do not keep the others waiting for a disconnected guesser
+  roundManager.endRoundIfAllGuessed(io, room);
 }
 
 // Explicit leave (LEAVE ROOM button, joining another room): remove immediately
