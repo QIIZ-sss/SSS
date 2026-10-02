@@ -199,18 +199,38 @@ class RoundManager {
     return true;
   }
 
-  endGameMatch(io, room) {
+  // T1-22: a running multiplayer match stops when a removal leaves too few players (FFA < MIN_PLAYERS_FFA,
+  // Team: a team below MIN_PLAYERS_PER_TEAM). Only real removals count (leave / reconnect grace expired).
+  stopMatchIfTooFewPlayers(io, room) {
+    if (!['WORD_SELECTION', 'PLAYING', 'ROUND_OVER'].includes(room.status) || room.gameMode === GAME_MODES.SOLO_AI) return false;
+    let enough;
+    if (room.gameMode === GAME_MODES.TEAM) {
+      const red = room.players.filter(p => p.team === 'Red').length;
+      const blue = room.players.filter(p => p.team === 'Blue').length;
+      enough = room.players.length >= GAME_RULES.MIN_PLAYERS_TEAM_TOTAL && red >= GAME_RULES.MIN_PLAYERS_PER_TEAM && blue >= GAME_RULES.MIN_PLAYERS_PER_TEAM;
+    } else {
+      enough = room.players.length >= GAME_RULES.MIN_PLAYERS_FFA;
+    }
+    if (enough) return false;
+    this.endGameMatch(io, room, 'Not enough players left — the match was stopped.');
+    return true;
+  }
+
+  // stoppedReason: set when the match was stopped early (T1-22); such a match is not recorded on the leaderboard
+  endGameMatch(io, room, stoppedReason = null) {
     this.timerManager.stopTimer(room.id);
     room.status = 'GAME_OVER';
 
-    if (room.gameMode !== GAME_MODES.SOLO_AI) {
+    if (room.gameMode !== GAME_MODES.SOLO_AI && !stoppedReason) {
       room.players.forEach(p => {
         Score.addRecord(p.username, p.score, room.gameMode);
       });
     }
 
     let winnerText = '';
-    if (room.gameMode === GAME_MODES.TEAM) {
+    if (stoppedReason) {
+      winnerText = 'Match stopped';
+    } else if (room.gameMode === GAME_MODES.TEAM) {
       if (room.teams.Red.score > room.teams.Blue.score) winnerText = 'Team Red Wins! 🔴';
       else if (room.teams.Blue.score > room.teams.Red.score) winnerText = 'Team Blue Wins! 🔵';
       else winnerText = "It's a Tie! 🤝";
@@ -222,7 +242,9 @@ class RoundManager {
     io.to(room.id).emit(SOCKET_EVENTS.GAME_OVER, {
       winnerText,
       finalScores: room.players.map(p => ({ username: p.username, avatar: p.avatar, score: p.score, team: p.team })),
-      teamScores: room.teams
+      teamScores: room.teams,
+      stopped: !!stoppedReason,
+      reason: stoppedReason || ''
     });
 
     this.roomManager.emitRoomData(io, room, 0);

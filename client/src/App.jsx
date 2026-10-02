@@ -615,8 +615,11 @@ export default function App() {
       {gameOverModal && (
         <div className="fixed inset-0 z-50 bg-border-dark/80 flex items-center justify-center p-space-md">
           <div className="bg-canvas-paper border-4 border-border-dark shadow-[8px_8px_0px_#18181B] rounded-2xl p-space-xl max-w-[500px] w-full text-center flex flex-col gap-space-md">
-            <h2 className="font-headline-xl text-headline-xl uppercase text-border-dark">🏆 MATCH RESULTS</h2>
+            <h2 className="font-headline-xl text-headline-xl uppercase text-border-dark">{gameOverModal.stopped ? '⚠️ MATCH STOPPED' : '🏆 MATCH RESULTS'}</h2>
             <h3 className="font-headline-md text-headline-md text-primary-container font-black">{gameOverModal.winnerText}</h3>
+            {gameOverModal.stopped && gameOverModal.reason && (
+              <p className="font-body-md text-body-md text-border-dark" id="matchStoppedReason">{gameOverModal.reason}</p>
+            )}
 
             <div className="bg-surface-card p-space-md rounded-xl border-2 border-border-dark text-left flex flex-col gap-2">
               <h4 className="font-headline-sm text-headline-sm text-border-dark uppercase">FINAL STANDINGS</h4>

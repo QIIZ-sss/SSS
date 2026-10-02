@@ -812,7 +812,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-19 | Solo lobby | P1 | TODO | roster / Ready / max players already hidden in SOLO-1 |
 | T1-20 | Room name | P5 | TODO | |
 | T1-21 | Personal "close" hint | P7 | TODO | optional |
-| T1-22 | Player count drops to 1 → stop match + UI | P0 | TODO | |
+| T1-22 | Player count drops to 1 → stop match + UI | P0 | DONE | see section T1-22 |
 | T1-23 | Solo AI alternating turns (human draws / AI draws) | P8 | TODO | last, highest risk |
 | T1-24 | Drawing tool icons | P1 | TODO | |
 | T1-25 | Universal result screen (FFA / Team / Solo, top 3 + full ranking, WINNER / DEFEATED) | P3 | TODO | |
@@ -824,6 +824,13 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** the round ended only when `correctGuessers.length >= players.length - 1`. A guesser in the reconnect grace period (disconnected, `socketId` null, still in `room.players`) was counted, so the others waited for the 60 s timer; a disconnect never re-checked the condition.
 - **Fix:** `RoundManager.endRoundIfAllGuessed(io, room)` — in PLAYING, ends the round once at least one guesser is correct and no CONNECTED guesser is still missing. Called after a correct guess (`chatHandler.js`), after a player is removed (`handlePlayerRemoved`, replaces the old check) and after a disconnect (`gameHandler.js` `handlePlayerDisconnect`). Scoring unchanged. No event / payload change.
 - **Status:** DONE. `tests/e2e/p0-1-round-advance.e2e.js` 5/5 (one of two connected guessers correct → still PLAYING; the other disconnects → round ends at once; disconnect with nobody correct → round continues; only connected guesser correct → ends at once; both correct → ends). Regression: p2.3 11/11, p2.4 4/4, b4 20/20, p3.2 5/5; full suite below.
+
+### T1-22 — Match stops when too few players are left
+
+- **Interpretation:** when players leave during a match and too few remain, the match must stop and the UI must say why (instead of turns continuing with nobody to guess).
+- **Fix:** `RoundManager.stopMatchIfTooFewPlayers()` runs after every real removal (`removePlayer`: leave, or reconnect grace expired — a disconnect alone does not stop the match, B4 reconnect keeps working). In WORD_SELECTION / PLAYING / ROUND_OVER of a non-Solo match: FFA below `GAME_RULES.MIN_PLAYERS_FFA`, or Team below `MIN_PLAYERS_TEAM_TOTAL` / a team below `MIN_PLAYERS_PER_TEAM` → `endGameMatch(io, room, reason)`: GAME_OVER, normal return to LOBBY after `GAME_OVER_DELAY_MS`, winner text "Match stopped", **not recorded on the leaderboard**. Client results modal shows "⚠️ MATCH STOPPED" and the reason.
+- **Socket contract change (authorized, Section 17):** `game_over` gains `stopped: boolean` and `reason: string` (`''` for a normal end). Documented in ARCHITECTURE.md §7.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-22-too-few-players.e2e.js` 7/7 (FFA 2 → 1 stopped with reason; FFA 3 → 2 continues; Team with an emptied team stopped; disconnect not stopped at once, stopped after the 30 s grace; normal end has `stopped=false`). `tests/browser/t1-22-match-stopped.browser.jsx` 5/5. Regression: p0-1, a2, p2.2, p2.3, p2.4, p3.1, b4.
 
 ---
 

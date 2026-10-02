@@ -212,7 +212,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | S→C | `round_start` | `{drawer, round, totalRounds, challenge, forcedColor, roundTime}` | `RoundManager.js:75-82` |
 | S→C | `timer_tick` | `{timeRemaining}` | `TimerManager.js:20,24` |
 | S→C | `round_end` | `{word, reason, drawerPoints, correctGuessers}` — **no client listener** | `RoundManager.js:108-113` |
-| S→C | `game_over` | `{winnerText, finalScores, teamScores}` | `RoundManager.js:155-159` |
+| S→C | `game_over` | `{winnerText, finalScores, teamScores}` **+ `stopped`, `reason` since T1-22** (match stopped early: too few players) | `RoundManager.js:155-159` |
 | S→C | `chat_message` | `{sender, text, isSystem?, isCorrectNotice?, guesser?, isConcealedChat?}` | `chatHandler.js`, `gameHandler.js` |
 | S→C | `correct_guess` | `{points}` — guesser only | `chatHandler.js:47` |
 | S→C | `solo_ai_prediction_result` | **since A8:** `{targetWord, ready, guess, confidence, isConfident, top3, modelSees, isCorrect}` | `aiPredictor.js` |

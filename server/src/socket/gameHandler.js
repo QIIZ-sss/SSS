@@ -418,6 +418,7 @@ function removePlayer(io, room, player, timerManager, roundManager) {
     }
     if (removedIndex >= 0) {
       roundManager.handlePlayerRemoved(io, room, removedIndex, player.username);
+      roundManager.stopMatchIfTooFewPlayers(io, room);
     }
     roomManager.emitRoomData(io, room, timerManager.getRemainingTime(roomId));
     io.to(roomId).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
