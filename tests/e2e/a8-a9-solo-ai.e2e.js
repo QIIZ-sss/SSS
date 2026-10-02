@@ -68,6 +68,8 @@ const keysOf = (o) => Object.keys(o).sort().join(',');
     L.check('A8 server result echoes the server target and has the contract fields', r && r.targetWord === target && keysOf(r) === RESULT_KEYS.join(','), r && keysOf(r));
     L.closeAll(A);
   }
+  // Only doodles the real model is shown above to recognise (House is the deliberate not-confident example)
+  const RECOGNISED = ['Sun', 'Clock'];
   { // Correct drawing scores SOLO_AI.CORRECT_SCORE and ends the turn (EASY pool contains Sun and Clock; try up to 10 turns)
     const A = L.player(L.nextName('S'), { autoSelect: false, autoGuess: false });
     await L.makeRoom(A, { gameMode: 'SOLO_AI', roundTime: 3 });
@@ -77,7 +79,7 @@ const keysOf = (o) => Object.keys(o).sort().join(',');
     for (let turn = 0; turn < 10 && !scored; turn++) {
       await L.waitFor(() => L.last(A) && L.last(A).status === 'PLAYING' && !seen.includes(L.last(A).currentRound + ':' + L.last(A).currentWord), 12000);
       const cur = L.last(A); seen.push(cur.currentRound + ':' + cur.currentWord);
-      if (doodles[cur.currentWord]) {
+      if (RECOGNISED.includes(cur.currentWord)) {
         await L.sleep(SOLO_AI.SERVER_MIN_INTERVAL_MS);
         A.s.emit('solo_ai_predict', { targetWord: cur.currentWord, pixels: doodles[cur.currentWord]() });
         await L.waitFor(() => A.events.some((e) => e.ev === 'round_end' && /AI guessed correctly/.test(e.data.reason)), 3000);
