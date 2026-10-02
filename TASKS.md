@@ -794,7 +794,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | TODO | decision final (see above) |
 | T1-02 | Team result / ranking (sort) | P0 / P2 | IN PROGRESS | ranking sort DONE (section T1-02); Team result presentation continues in T1-25 / after T1-01 |
 | T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
-| T1-04 | Score UI overflow | P1 | TODO | |
+| T1-04 | Score UI overflow | P1 | DONE | see section T1-04 |
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
 | T1-06 | Chat overflow | P0 | DONE | see section T1-06 |
 | T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
@@ -868,6 +868,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Interpretation (from screenshots, headless Chrome + real Tailwind):** on first load at 1280×800 the main action CREATE PRIVATE ROOM sat below the fold (y≈893); in the lobby, the MODIFIERS mini-challenge cards had an empty band between the icon row and the text (`justify-between` in equal-height grid rows) — taken as the "empty area" of T1-16.
 - **Fix:** `client/src/App.jsx` — the CREATE PRIVATE ROOM button is `sticky bottom-space-sm` (stays at the bottom of the viewport while the form is longer than the screen); the home panel uses `overflow-clip` instead of `overflow-hidden` (same clipping, but not a scroll container, so sticky works). `client/src/components/RoomLobby.jsx` — cards `justify-start`. `tests/check_all.sh` also runs `*viewport*` browser tests with the Tailwind CDN.
 - **Status:** P0 part DONE (automated); MANUAL NOT TESTED (real phones / iPad). `tests/browser/t1-17-initial-viewport.browser.jsx` 2/2 (button inside a 1280×813 window on load: 745–805 px, was 855–915; card text 8 px below the icon row, was a stretched band). Regression: B2 layout 375 / 820 px 9/9. Remaining T1-17 layout work (P5) stays open.
+
+### T1-04 — Score UI overflow
+
+- **Problem (reproduced in a screenshot, 1280 px, real Tailwind):** in the FFA in-game LEADERBOARD a long name pushed the score out of its card ("987…" outside the row); Team roster rows had no truncation; the Team score header could not wrap. The leaderboard rank badges (#1…) followed join order, not score.
+- **Fix (client only):** `MultiplayerGame.jsx` — name side `min-w-0 flex-1` + truncate (full name in `title`), score side `shrink-0` + `tabular-nums`; list ranked by score for display. `TeamGame.jsx` — roster names truncate, scores `shrink-0`; header score row `flex-wrap`.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-04-score-overflow.browser.jsx` 5/5 (long name + 7-digit score stay inside the 4 FFA rows; ranked 9876543, 123456, 1500, 0; Team rows inside; page not wider than the window).
 
 ---
 

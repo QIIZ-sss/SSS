@@ -44,7 +44,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
             <span className="font-headline-sm text-headline-sm text-border-dark font-black uppercase">⚔️ TEAM CLASH</span>
           </div>
 
-          <div className="flex items-center gap-space-xs">
+          <div className="flex flex-wrap items-center gap-space-xs min-w-0">
             <div className="bg-timer-red text-on-error font-headline-md text-headline-md px-space-md py-1 rounded-xl border-2 border-border-dark shadow-[2px_2px_0px_#18181B] font-black">
               🔴 RED: {roomData.teams?.Red?.score || 0} PTS
             </div>
@@ -102,9 +102,9 @@ export default function TeamGame({ roomData, username, wordOptions }) {
                 <span>{redPlayers.length} PLAYERS</span>
               </div>
               {redPlayers.map((p) => (
-                <div key={p.username} className="flex items-center justify-between p-space-xs bg-surface-card rounded-lg border border-border-dark font-body-sm text-body-sm">
-                  <span>{p.avatar || '🐶'} {p.username} {p.username === username ? '(ME)' : ''}</span>
-                  <span className="font-bold">{p.score} pts</span>
+                <div key={p.username} className="flex items-center justify-between gap-2 p-space-xs bg-surface-card rounded-lg border border-border-dark font-body-sm text-body-sm">
+                  <span className="truncate min-w-0" title={p.username}>{p.avatar || '🐶'} {p.username} {p.username === username ? '(ME)' : ''}</span>
+                  <span className="font-bold shrink-0 tabular-nums">{p.score} pts</span>
                 </div>
               ))}
             </div>
@@ -116,9 +116,9 @@ export default function TeamGame({ roomData, username, wordOptions }) {
                 <span>{bluePlayers.length} PLAYERS</span>
               </div>
               {bluePlayers.map((p) => (
-                <div key={p.username} className="flex items-center justify-between p-space-xs bg-surface-card rounded-lg border border-border-dark font-body-sm text-body-sm">
-                  <span>{p.avatar || '🐶'} {p.username} {p.username === username ? '(ME)' : ''}</span>
-                  <span className="font-bold">{p.score} pts</span>
+                <div key={p.username} className="flex items-center justify-between gap-2 p-space-xs bg-surface-card rounded-lg border border-border-dark font-body-sm text-body-sm">
+                  <span className="truncate min-w-0" title={p.username}>{p.avatar || '🐶'} {p.username} {p.username === username ? '(ME)' : ''}</span>
+                  <span className="font-bold shrink-0 tabular-nums">{p.score} pts</span>
                 </div>
               ))}
             </div>

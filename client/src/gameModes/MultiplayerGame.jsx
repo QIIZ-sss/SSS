@@ -105,7 +105,8 @@ export default function MultiplayerGame({ roomData, username, wordOptions }) {
             </div>
 
             <div className="flex flex-col gap-space-xs">
-              {roomData.players.map((p, idx) => {
+              {/* T1-04: ranked by score (display only) */}
+              {[...roomData.players].sort((a, b) => b.score - a.score).map((p, idx) => {
                 const isGuessed = roomData.correctGuessers ? roomData.correctGuessers.includes(p.username) : false;
                 const isMe = p.username === username;
 
@@ -116,8 +117,8 @@ export default function MultiplayerGame({ roomData, username, wordOptions }) {
                       isMe ? 'bg-surface-container-high shadow-md' : 'bg-surface-card shadow-sm'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="relative shrink-0">
                         <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm shadow-sm border border-border-dark">
                           {p.avatar || '🐶'}
                         </div>
@@ -126,8 +127,8 @@ export default function MultiplayerGame({ roomData, username, wordOptions }) {
                         </div>
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-headline-sm text-headline-sm truncate text-on-surface font-bold">{p.username}</span>
+                        <div className="flex items-center gap-1 min-w-0">
+                          <span className="font-headline-sm text-headline-sm truncate text-on-surface font-bold" title={p.username}>{p.username}</span>
                           {isMe && <span className="bg-primary text-on-primary text-[10px] font-bold px-1.5 py-0.2 rounded uppercase">ME</span>}
                         </div>
                         {isGuessed && (
@@ -138,8 +139,8 @@ export default function MultiplayerGame({ roomData, username, wordOptions }) {
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="font-headline-sm text-headline-sm text-on-surface block font-bold">{p.score}</span>
+                    <div className="text-right shrink-0 pl-2">
+                      <span className="font-headline-sm text-headline-sm text-on-surface block font-bold tabular-nums">{p.score}</span>
                       <span className="font-label-sm text-label-sm text-primary-container font-bold">PTS</span>
                     </div>
                   </div>
