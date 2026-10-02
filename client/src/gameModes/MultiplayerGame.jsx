@@ -83,7 +83,7 @@ export default function MultiplayerGame({ roomData, username, wordOptions }) {
         </div>
       </div>
 
-      <ChallengeTurnPopup roomData={roomData} />
+      <ChallengeTurnPopup roomData={roomData} username={username} />
       <ChallengeOverlay
         challenge={roomData.currentChallenge}
         forcedColor={roomData.forcedColor}

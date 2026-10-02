@@ -4,6 +4,7 @@ import { SOCKET_EVENTS } from '../../../shared/events';
 import { MINI_CHALLENGES, DEFAULT_COLOR_PALETTE } from '../../../shared/gameConfig';
 import { calculateShapeDimensions, drawGhostPreview } from '../gameEngine/shapePreview';
 import { ChallengeModal } from './ChallengeOverlay';
+import { UI } from '../../../shared/contract';
 
 export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawing }) {
   const canvasRef = useRef(null);     // stroke layer (transparent); first <canvas> in the DOM — Solo AI reads it
@@ -103,6 +104,13 @@ export default function Canvas({ isDrawer, challenge, forcedColor, onSubmitDrawi
       socket.off(SOCKET_EVENTS.SHAPE_PREVIEW, handleRemoteShapePreview);
     };
   }, [isDrawer]);
+
+  // The violation notice is dismissible (OK) and also closes by itself, so it never blocks the page
+  useEffect(() => {
+    if (!showLiftNotice) return undefined;
+    const id = setTimeout(() => setShowLiftNotice(false), UI.CHALLENGE_POPUP_MS);
+    return () => clearTimeout(id);
+  }, [showLiftNotice]);
 
   useEffect(() => {
     setIsPenLocked(false);

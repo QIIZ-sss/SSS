@@ -27,6 +27,11 @@ export const GAME_RULES = Object.freeze({
   GAME_OVER_DELAY_MS: 10000,      // GAME_OVER ค้างไว้ 10 วินาที แล้ว server พากลับ LOBBY เอง
 });
 
+// ---------- เวลาแสดงผลฝั่ง client (UX เท่านั้น ไม่ใช่กติกาที่ server บังคับ) ----------
+export const UI = Object.freeze({
+  CHALLENGE_POPUP_MS: 3000,       // D3: ป็อปอัปชาเลนจ์ต้นเทิร์นปิดเองหลัง 3 วินาที (หรือกด GOT IT)
+});
+
 // ---------- ระดับความยากของคำ ----------
 export const WORD_DIFFICULTY = Object.freeze({
   EASY: 'EASY',
@@ -99,6 +104,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     GAME_STATUS,
     GAME_RULES,
+    UI,
     WORD_DIFFICULTY,
     SOLO_AI,
     isValidPredictRequest,

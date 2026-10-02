@@ -250,7 +250,7 @@ Baseline `CURRENT FACT` — `server/src/config/database.js:7-28`: 20 in-memory w
 `CURRENT FACT`:
 
 - Challenge chosen at random per turn from `room.enabledChallenges` — `RoundManager.js:27-37`. `COLOUR_FIX` picks `forcedColor` from `DEFAULT_COLOR_PALETTE`.
-- Shown as an inline banner (`ChallengeOverlay.jsx`) and, **since D3**, as a popup at the start of each turn (`ChallengeTurnPopup`, closed by GOT IT or at turn end) in Multiplayer / Team / Solo.
+- Shown as an inline banner (`ChallengeOverlay.jsx`) and, **since D3**, as a popup at the start of each turn (`ChallengeTurnPopup`, closed by GOT IT or after `UI.CHALLENGE_POPUP_MS`; for the drawer also when PLAYING starts) in Multiplayer / Team / Solo.
 - `DONT_LIFT_PEN`: client-side lock; **since D3** the violation is shown with `ChallengeModal` (baseline used `alert()`).
 - `GEOMETRIC_ONLY`: client forces shape tools — `Canvas.jsx:163-165`; ghost preview relayed via `shape_preview` (`drawHandler.js:38-44`).
 

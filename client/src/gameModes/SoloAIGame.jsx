@@ -104,7 +104,7 @@ export default function SoloAIGame({ roomData, username }) {
         </div>
       </header>
 
-      <ChallengeTurnPopup roomData={roomData} />
+      <ChallengeTurnPopup roomData={roomData} username={username} />
       <ChallengeOverlay challenge={roomData?.currentChallenge} forcedColor={roomData?.forcedColor} />
 
       {/* Main Game Grid */}

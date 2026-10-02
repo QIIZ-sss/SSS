@@ -57,7 +57,7 @@ for t in "$TESTS"/render/*.test.jsx; do run_case "render/$(basename "$t")" node 
 echo "=== [6] browser tests (headless Chrome)"
 for t in "$TESTS"/browser/*.browser.jsx; do
   case "$t" in *b2-layout-overflow*) continue ;; esac   # needs the Tailwind CDN, run below
-  run_case "browser/$(basename "$t" .browser.jsx)" env DEV=1 node "$TESTS/lib/browser.js" "$t"
+  run_case "browser/$(basename "$t" .browser.jsx)" env DEV=1 VTB=20000 CHROME_TIMEOUT=60000 node "$TESTS/lib/browser.js" "$t"
 done
 if curl -s -m 8 -o /dev/null https://cdn.tailwindcss.com/; then
   for w in 375 820; do
