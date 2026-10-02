@@ -44,6 +44,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | QA-1 | `select_word` validation (security) | 7 | Done (automated e2e) |
 | QA-3 | server `npm run dev` auto-reload | 7 | Done (checked by hand: restart on file change) |
 | QA-4 | no Fill during DONT_LIFT_PEN (D3) | 7 | Done (headless Chrome + e2e); MANUAL NOT TESTED |
+| QA-5 | docs/test cleanup | 7 | Done |
 
 ### Regression suite (`tests/`)
 
@@ -759,6 +760,12 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Source:** QA review 2026-10-02 (fix 4). The bucket could still be used while the Don't Lift Pen rule was active.
 - **Change:** `client/src/components/Canvas.jsx` — BUCKET button `disabled` (with a title saying why) while the challenge is `DONT_LIFT_PEN`; if the bucket was the active tool when the challenge starts, the tool falls back to the pen; a press never fills under that challenge. `server/src/socket/drawHandler.js` — `draw_fill` ignored (not relayed, not stored for `draw_sync`) when `room.currentChallenge` is `DONT_LIFT_PEN` (server enforces, AGENTS §5). Other challenges unchanged (COLOUR_FIX still forces the locked colour). No event or payload change.
 - **Status:** Done (automated); MANUAL NOT TESTED. `tests/browser/d3-fill-dont-lift-pen.browser.jsx` 8/8 (NONE: enabled + fills; switch to DONT_LIFT_PEN with bucket selected → disabled, pen used, no `draw_fill`; DONT_LIFT_PEN from the start → no fill; COLOUR_FIX → enabled, fills with locked colour). `tests/e2e/d3-fill.e2e.js` 5/5 (DONT_LIFT_PEN: not relayed, not in history; NONE / COLOUR_FIX: relayed and stored). Regression: D3 popup 19/19, D2 16/16, A8/A9 client 10/10, B1 render 3/3, client build, a2 14/14, p3.2 5/5.
+
+### QA-5 — Small docs/test cleanup
+
+- **Source:** QA review 2026-10-02 (fix 5).
+- **Change:** `ARCHITECTURE.md` §7 — removed the obsolete Solo AI payload `GAP` (since A8 the live payloads follow `shared/contract.js`). `tests/lib/browser.js` — React is bundled in development mode by default (`DEV=0` for production), so a browser test run on its own no longer fails with "act(...) is not supported in production builds"; `check_all.sh` unchanged (still passes `DEV=1`). `tests/README.md` documents it.
+- **Status:** Done. Checked: `d3-challenge-popup` without `DEV` 19/19; with `DEV=0` it stays PENDING (production React, expected); `b2-layout-overflow@375px` as run by `check_all.sh` (no `DEV`, now development) 9/9.
 
 ---
 

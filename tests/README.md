@@ -34,7 +34,7 @@ Useful variables:
 | `E2E="a2-game-over p3.1-answer-leak"` | all | run only these e2e files (names without `.e2e.js`) |
 | `CHROME_PATH` | macOS Chrome | Chrome / Chromium binary |
 
-Single files can also be run directly, e.g. `node tests/lib/render.js tests/render/b3-pin-logic.test.jsx`, or an e2e file while a server runs on `TEST_PORT` (`cd server && PORT=4100 node src/server.js`).
+Single files can also be run directly, e.g. `node tests/lib/render.js tests/render/b3-pin-logic.test.jsx` or `node tests/lib/browser.js tests/browser/d3-challenge-popup.browser.jsx` (browser tests bundle React in development mode by default, which `act()` needs; `DEV=0` gives a production bundle), or an e2e file while a server runs on `TEST_PORT` (`cd server && PORT=4100 node src/server.js`).
 
 ## What runs
 

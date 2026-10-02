@@ -6,7 +6,7 @@
 //   CHROME_PATH    Chrome/Chromium binary (default: macOS Google Chrome path)
 //   REAL_HEAD=1    use client/index.html <head> (Tailwind CDN + fonts — needs network access)
 //   FRAME_W=375    run the page inside an iframe of that width (headless Chrome windows are >= 500 px wide)
-//   DEV=1          bundle React in development mode (needed by tests that use act())
+//   DEV=0          bundle React in production mode (default: development, which act() needs)
 //   LIVE_SOCKET=1  use lib/socket-live.js (real socket.io to the test server on TEST_PORT) instead of the stub;
 //                  the page is served over http://127.0.0.1, runs in real time and POSTs its result (CHROME_TIMEOUT = max wait)
 //   PAGE_QUERY     extra query string for the test page (e.g. level=HARD)
@@ -47,7 +47,7 @@ const MIN_CSS = '.relative{position:relative}.absolute{position:absolute}.top-0{
     jsx: 'automatic', loader: { '.js': 'jsx', '.jsx': 'jsx', '.css': 'empty' },
     nodePaths: [path.join(CLIENT, 'node_modules')], logLevel: 'error',
     define: {
-      'process.env.NODE_ENV': process.env.DEV ? '"development"' : '"production"',
+      'process.env.NODE_ENV': process.env.DEV === '0' ? '"production"' : '"development"',
       'process.env.TEST_PORT': JSON.stringify(process.env.TEST_PORT || '4100'),
     },
     plugins: [{ name: 'stub-socket', setup(b) { b.onResolve({ filter: /services\/socket$/ }, () => ({ path: process.env.LIVE_SOCKET ? LIVE : STUB })); } }],

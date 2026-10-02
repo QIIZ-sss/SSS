@@ -216,8 +216,6 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | S→C | `correct_guess` | `{points}` — guesser only | `chatHandler.js:47` |
 | S→C | `solo_ai_prediction_result` | **since A8:** `{targetWord, ready, guess, confidence, isConfident, top3, modelSees, isCorrect}` | `aiPredictor.js` |
 
-`GAP` — `shared/contract.js` documents a different Solo AI payload (`{targetWord, pixels}` → `{targetWord, guess, confidence, top3, modelSees, isCorrect}`). The live code does not follow it.
-
 ## 8. Player data visibility (current)
 
 **Updated in P3.1 (pre-approved contract change):** `room_data` is sent per player by `RoomManager.emitRoomData()`; `sanitizeRoom(room, t, viewer)` sets `currentWord` to `''` unless the viewer is the current drawer or `status` is in `GAME_RULES.REVEAL_WORD_STATUSES`. The table below is the **baseline** (`0d8fb96`) behaviour, kept for history; after P3.1 every "LEAK" cell is closed (verified by a leak-scan e2e).
