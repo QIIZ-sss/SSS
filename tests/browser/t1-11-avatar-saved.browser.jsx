@@ -1,0 +1,24 @@
+// T1-11: an avatar picked on the create/join screen is remembered (localStorage) without logging in again, and is sent on create.
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { act } from 'react-dom/test-utils';
+import App from '../../client/src/App.jsx';
+import { emitted } from '../lib/socket-stub.js';
+window.addEventListener('error', (e) => { document.getElementById('out').textContent = 'FAIL  script error: ' + e.message; });
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const results = []; const check = (n, c, d = '') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
+localStorage.setItem('game_username', 'Ann'); localStorage.setItem('game_avatar', '🐼');
+const root = createRoot(document.getElementById('root'));
+act(() => root.render(<App />));
+const fox = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === '🦊');
+act(() => fox.click());
+check('picking 🦊 is saved immediately', localStorage.getItem('game_avatar') === '🦊', localStorage.getItem('game_avatar'));
+act(() => document.getElementById('createRoomButton').click());
+const create = emitted.filter((e) => e.ev === 'create_room').pop();
+check('create_room sends the picked avatar', create && create.data.avatar === '🦊', create && create.data.avatar);
+act(() => root.unmount());
+const root2 = createRoot(document.getElementById('root'));
+act(() => root2.render(<App />));
+const selected = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === '🦊');
+check('after a reload the picked avatar is still selected', selected && /ring-4/.test(selected.className));
+document.getElementById('out').textContent = results.join('\n') + `\n\n${results.filter((r) => r.startsWith('PASS')).length}/${results.length} PASS`;

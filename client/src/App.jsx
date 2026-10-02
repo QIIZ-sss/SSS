@@ -80,6 +80,8 @@ export default function App() {
     try { return localStorage.getItem('game_username') || ''; } catch (e) { return ''; }
   });
   const [avatar, setAvatar] = useState(localStorage.getItem('game_avatar') || '🐼');
+  // T1-11: remember the avatar whenever it changes (it was only saved at login)
+  useEffect(() => { try { localStorage.setItem('game_avatar', avatar); } catch (e) { /* storage unavailable */ } }, [avatar]);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('game_username'));
 
   const [modeTab, setModeTab] = useState('create'); // 'create' | 'join'

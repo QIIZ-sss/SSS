@@ -1,6 +1,6 @@
 // Game Event Handler
 const { SOCKET_EVENTS } = require('../../../shared/events');
-const { GAME_MODES } = require('../../../shared/gameConfig');
+const { GAME_MODES, AVATARS } = require('../../../shared/gameConfig');
 const { GAME_STATUS, GAME_RULES, WORD_DIFFICULTY, SOLO_AI, isValidPredictRequest } = require('../../../shared/contract');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
@@ -10,6 +10,8 @@ const crypto = require('crypto');
 // wrong-typed fields fall back to defaults, and acks are only called when they are functions.
 const asObject = (p) => (p && typeof p === 'object' && !Array.isArray(p) ? p : {});
 const asString = (v) => (typeof v === 'string' ? v : undefined);
+// T1-11: only the shared avatar set is accepted
+const asAvatar = (v) => (AVATARS.some((a) => a.emoji === v) ? v : undefined);
 const asPositiveNumber = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
 const reply = (callback, data) => { if (typeof callback === 'function') callback(data); };
 
@@ -23,7 +25,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   socket.on(SOCKET_EVENTS.CREATE_ROOM, (payload, callback) => {
     const roomConfig = asObject(payload);
     const username = asString(roomConfig.username) || socket.data.username || 'Player';
-    const avatar = asString(roomConfig.avatar) || socket.data.avatar || '🐶';
+    const avatar = asAvatar(roomConfig.avatar) || socket.data.avatar || AVATARS[0].emoji;
     socket.data.username = username;
     socket.data.avatar = avatar;
 
@@ -55,7 +57,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const codeOrId = [code, roomId].find((v) => (typeof v === 'string' && v) || (typeof v === 'number' && Number.isFinite(v)));
     const targetCode = codeOrId === undefined ? '' : String(codeOrId).trim();
     socket.data.username = asString(username) || socket.data.username || 'Player';
-    socket.data.avatar = asString(avatar) || socket.data.avatar || '🐶';
+    socket.data.avatar = asAvatar(avatar) || socket.data.avatar || AVATARS[0].emoji;
 
     const room = roomManager.getRoom(targetCode);
 

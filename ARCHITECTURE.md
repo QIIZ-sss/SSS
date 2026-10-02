@@ -193,7 +193,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 |---|---|---|---|
 | C→S | `get_rooms` | — | `gameHandler.js:9` |
 | C→S | `create_room` | `{name, username, avatar, gameMode, maxPlayers, roundTime, miniChallengeEnabled}` + ack `{success, roomId, code}` | `App.jsx:96-110`, `gameHandler.js:14-32` |
-| C→S | `join_room` | `{code \| roomId, username, avatar}` + ack | `App.jsx:85`, `RoomList.jsx:25`, `gameHandler.js:35-55` |
+| C→S | `join_room` | `{code \| roomId, username, avatar}` + ack (**since T1-11** `avatar` must be one of `AVATARS[].emoji`, also for `create_room`; otherwise the default) | `App.jsx:85`, `RoomList.jsx:25`, `gameHandler.js:35-55` |
 | C→S | `rejoin_room` (**new in P4.1**) | `{code, sessionId}` + ack `{success, roomId, code, username, avatar}` | `App.jsx`, `gameHandler.js` |
 | C→S | `leave_room` | — | `App.jsx:114` |
 | C→S | `switch_team` | `{team}` | `gameHandler.js:63` |

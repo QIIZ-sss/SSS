@@ -801,7 +801,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-08 | Host START / player READY UI | P1 | DONE | see section T1-08 |
 | T1-09 | Online count | P5 | TODO | |
 | T1-10 | Header / leaderboard | P5 | TODO | |
-| T1-11 | Avatars | P1 | TODO | |
+| T1-11 | Avatars | P1 | DONE | see section T1-11 |
 | T1-12 | Mini-challenge UI | P5 | TODO | |
 | T1-13 | Lobby chat | P7 | TODO | optional |
 | T1-14 | Settings / Modifiers + Solo restriction UX | P5 | TODO | Solo switch refusal + reason already in SOLO-1 |
@@ -880,6 +880,13 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem (screenshot):** the host saw a TOGGLE READY button and was listed as WAITING although the server never requires the host to be ready (P2.1); guests had no feedback on their own ready state.
 - **Fix (client only, `RoomLobby.jsx`):** host — no READY button, roster badge `HOST`, START with the existing block reason; guests — a READY button showing their state (`I'M READY` / `✓ READY — TAP TO CANCEL`, `aria-pressed`) and a hint (`Press READY so the host can start` / `Waiting for <host> to start the game`); guests never see START. Server rules unchanged.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-08-host-ready.test.jsx` 7/7. `tests/render/solo-lobby.test.jsx` updated (the host no longer has a READY button) 10/10. Regression: D1 setting 6/6, live D1 UI 6/6.
+
+### T1-11 — Avatars
+
+- **Interpretation (code reading; C4 already shows all 8):** an avatar picked on the create/join screen after login was not remembered (`game_avatar` was only written at login), so it reverted after a reload; the server accepted any string as an avatar and showed it to every player.
+- **Fix:** `client/src/App.jsx` saves `game_avatar` whenever the avatar changes. `server/src/socket/gameHandler.js` (`create_room`, `join_room`) accepts only an emoji from the shared `AVATARS` (`shared/gameConfig.js`), otherwise the default `AVATARS[0]`. Valid avatars unchanged.
+- **Socket contract note:** `avatar` in `create_room` / `join_room` must be one of `AVATARS[].emoji` (others are replaced). ARCHITECTURE.md §7.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-11-avatar.e2e.js` 4/4; `tests/browser/t1-11-avatar-saved.browser.jsx` 3/3. Regression: C4 render 3/3, SEC-2 37/37, B4 20/20.
 
 ---
 
