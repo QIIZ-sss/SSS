@@ -41,6 +41,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
 | P7.4 | D3 | 7 | Done incl. auto-close follow-up (headless Chrome test); MANUAL NOT TESTED |
 | W1 | no repeated target words in a match | 7 | Done (automated e2e); MANUAL NOT TESTED |
+| QA-1 | `select_word` validation (security) | 7 | Done (automated e2e) |
 
 ### Regression suite (`tests/`)
 
@@ -735,7 +736,15 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - **Always 3 choices (human decision 2026-10-02):** unused eligible words come first; if fewer than 3 remain, the turn is topped up with already-used words from the same eligible pool (same difficulty / D1 fallback / Solo AI filter). Timeout auto-pick and Solo AI take the first word, so they never repeat before exhaustion; a drawer may deliberately pick a topped-up used word (accepted).
   - Files: `server/src/config/database.js` (`getRandomWords` gains `filter.exclude`, applied after the difficulty pool is chosen), `server/src/gameLogic/RoundManager.js` (choices = unused words first, top-up via `exclude: <unused already chosen>`; no unused left → reset and pick from the full eligible pool; the target is recorded when drawing starts — drawer pick, timeout auto-pick or Solo AI; reset in `returnToLobby`), `server/src/socket/gameHandler.js` (reset on `start_game`).
   - Checks: `tests/e2e/w1-no-repeat-words.e2e.js` 15/15 (exclude after difficulty filter; HARD match of 6 turns: always 3 distinct HARD choices, first 5 targets distinct, unused words first and all of them offered when < 3 remain, turn 6 reuses after reset; two HARD rooms played at the same time keep separate lists; EASY match → LOBBY → new match is not restricted to the words left over; Solo AI + HARD (4 AI-supported words) 6 turns: non-empty targets, no repeat before exhaustion, reuse after). D1 e2e unchanged and 14/14.
-  - Known, not changed (separate task): `select_word` does not check that the word is one of `room.wordOptions`.
+  - ~~Known, not changed (separate task): `select_word` does not check that the word is one of `room.wordOptions`.~~ Fixed in QA-1.
+
+### QA-1 — Validate `select_word` (security)
+
+- **Source:** independent QA review 2026-10-02 (fix 1).
+- **Problem:** the server set `room.currentWord` to whatever the drawer sent — a forged word, a word from another difficulty, or a non-string — and recorded it in W1 `usedWords`.
+- **Fix:** `server/src/socket/gameHandler.js` `select_word` accepts only a string that is in `room.wordOptions` (exact match). Anything else is ignored silently: status stays `WORD_SELECTION`, the 10 s selection timer keeps running (auto-pick of the first offered word), nothing is recorded. Malformed payloads no longer throw. No event or payload change.
+- **Status:** Done (automated). `tests/e2e/sec-select-word.e2e.js` 12/12: arbitrary word, real bank word not offered, wrong case, number, array, no payload → ignored, no `round_start`, never the current word; non-drawer ignored; offered word afterwards → PLAYING and revealed at `round_end`; forged word then timeout → auto-pick of the first offered word; HARD match where both drawers forge first → W1 order and distinct targets unaffected. Regression: a2 14/14, b4 20/20, p3.1 7/7, p3.2 5/5, d1 14/14, w1 15/15, live D1 6/6, server log clean.
+  - Legacy `qa/test_sec_cases.js`, `qa/test_chat_scoring.js`, `qa/test_modes_and_ui.js` select hardcoded words (`Elephant`, `Guitar`, `House`) that are usually not offered; they now stay in WORD_SELECTION. Not part of `check_all.sh`, not changed (their results are documentation claims, AGENTS §8).
 
 ---
 

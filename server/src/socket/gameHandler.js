@@ -198,10 +198,13 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   });
 
   // Select Word
-  socket.on(SOCKET_EVENTS.SELECT_WORD, ({ word }) => {
+  socket.on(SOCKET_EVENTS.SELECT_WORD, (payload) => {
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'WORD_SELECTION') return;
     if (room.currentDrawer !== socket.data.username) return;
+    // Only a word offered this turn; anything else is ignored and the selection (and its timer) continues
+    const word = payload && payload.word;
+    if (typeof word !== 'string' || !(room.wordOptions || []).includes(word)) return;
 
     room.currentWord = word;
     roundManager.startRoundDrawing(io, room);
