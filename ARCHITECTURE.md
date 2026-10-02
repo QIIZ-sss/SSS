@@ -70,7 +70,7 @@ Shared files imported by the live client: `shared/events.js`, `shared/gameConfig
 | `shared/constants.js` | Only imported by dead `roomHandler.js` |
 | ~~`shared/contract.js`~~ | No longer dead: required by the live server since P1.3 and imported by the client since P1.2 (see §4) |
 
-`README.md` documents the legacy game and file layout, not the live one (`DOCUMENTATION CLAIM` vs `CURRENT FACT` conflict, see §17).
+At baseline `README.md` documented the legacy game and file layout, not the live one (`DOCUMENTATION CLAIM` vs `CURRENT FACT` conflict, see §17). **Updated:** `README.md` was rewritten for the live game; the old text is kept unchanged in `docs/legacy-README.md`.
 
 ## 3. Server / client responsibilities (current)
 
@@ -317,7 +317,7 @@ Baseline `CURRENT FACT` — **no reconnect/session implementation existed.**
 |---|---|---|
 | 1 | `contract.js` is the single source of truth (`HANDOFF.md` §1) | Loadable by both runtimes since P1.2; values adopted task by task (§4) |
 | 2 | `HANDOFF.md` C2/C3/C4 cite "BUG-05/06/07" | Those numbers are `QA_REPORT.md` numbering and collide with the team's 14-bug list |
-| 3 | `README.md` describes the "วาดต่อ" game and file map | Live code is `server.js` + `gameLogic/` + `socket/` (§2). Run section corrected in C2; other sections still legacy (README warns) |
+| 3 | `README.md` describes the "วาดต่อ" game and file map | Resolved: `README.md` rewritten for the live game; old README moved unchanged to `docs/legacy-README.md` |
 | 4 | QA NW-07 PASS (reconnect keeps score) | Was false at baseline; reconnect implemented in P4.1 (§14) |
 | 5 | QA T-04 PASS (timeout reveals answer) | Payload contained the word but the UI did not show it; fixed in P2.4 (§8) |
 | 6 | QA T-02 PASS (timer) | Evidence shows identical values, not a countdown (§6.2) |

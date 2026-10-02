@@ -32,7 +32,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P5.3 | B3 | 5 | Done (logic + headless Chrome DOM test); mobile keypad MANUAL pending |
 | P5.4 | B5 | 5 | Verified on a non-localhost host (no code change); real devices MANUAL pending |
 | P6.1 | C1 | 6 | Done |
-| P6.2 | C2 | 6 | Done (run section only); full README rewrite needs human decision |
+| P6.2 | C2 | 6 | Done — run section fixed, then README rewritten for the live game (human request) |
 | P6.3 | C3 | 6 | Done |
 | P6.4 | C4 | 6 | Done; 375 px visual check MANUAL pending |
 | P6.5 | D1 | 6 | Done (automated); MANUAL NOT TESTED |
@@ -574,6 +574,7 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Regression requirements:** —
 - **Commit requirement:** `docs(C2): fix run instructions`.
 - **Status:** Done for the run instructions; whether to rewrite the rest of `README.md` (which documents the legacy "วาดต่อ" game) is still a human decision.
+  - **Update (human request 2026-10-02, `docs: rewrite README for live game`):** `README.md` rewritten from the current implementation — game, modes, implemented features (and what is not there: no database, no accounts, legacy admin page unusable), install/run, regression tests (link to `tests/README.md`), live code map, developer notes, known limitations from this file, manual-test status exactly as recorded below (items 1–4 performed by the human, the rest NOT TESTED), DoodleNet / Quick, Draw! credits. The previous README (incl. the C2 run-section edit) moved unchanged to `docs/legacy-README.md` (git rename, 100 % similarity); its relative links (e.g. `HANDOFF.md`) now point one level too deep — left unchanged on purpose. Original baseline text is in git at `0d8fb96`.
   - `README.md` "เริ่มรัน" now lists only commands that exist for the live project (server `npm install` + `npm run dev` on port 4000; client `npm install` + `npm run dev`, with `-- --host` for LAN), drops the database / `.env` / `migrate` / `create-admin` / admin-page steps, and warns that the other README sections describe legacy code (link to `ARCHITECTURE.md`).
   - Checks: every `npm run` in the section's code blocks exists in the matching `package.json` (3/3); `npm run dev` for server and client were executed during this session (server listening on 4000, Vite ready on 5173).
 
