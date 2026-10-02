@@ -25,6 +25,7 @@ export const GAME_RULES = Object.freeze({
   ROOM_PIN_LENGTH: 5,
   RECONNECT_GRACE_MS: 30000,      // เก็บที่ผู้เล่นที่หลุดไว้ 30 วินาที
   GAME_OVER_DELAY_MS: 10000,      // GAME_OVER ค้างไว้ 10 วินาที แล้ว server พากลับ LOBBY เอง
+  CHAT_MAX_LENGTH: 200,           // T1-06: ข้อความแชท/คำทายยาวสุด (client จำกัดช่องพิมพ์, server ไม่รับที่ยาวกว่า)
 });
 
 // ---------- เวลาแสดงผลฝั่ง client (UX เท่านั้น ไม่ใช่กติกาที่ server บังคับ) ----------

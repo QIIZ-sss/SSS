@@ -12,7 +12,7 @@ function setupChatHandlers(io, socket, timerManager, roundManager) {
 
     const username = socket.data.username;
     const text = payload && typeof payload === 'object' ? payload.text : undefined; // untrusted payload
-    if (typeof text !== 'string' || text.trim().length === 0) return;
+    if (typeof text !== 'string' || text.trim().length === 0 || text.length > GAME_RULES.CHAT_MAX_LENGTH) return;
 
     const isDrawer = room.currentDrawer === username;
     const hasGuessed = room.correctGuessers ? room.correctGuessers.includes(username) : false;

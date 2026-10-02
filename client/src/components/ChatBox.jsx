@@ -6,7 +6,7 @@ import { GAME_STATUS, GAME_RULES } from '../../../shared/contract';
 export default function ChatBox({ username, isDrawer, roomStatus }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const messagesEndRef = useRef(null);
+  const listRef = useRef(null);
   // UX only — the server enforces the same rule
   const chatLocked = isDrawer && !GAME_RULES.DRAWER_CAN_CHAT &&
     (roomStatus === GAME_STATUS.WORD_SELECTION || roomStatus === GAME_STATUS.PLAYING);
@@ -24,7 +24,8 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // T1-06: scroll the message list itself (scrollIntoView could also scroll the whole page)
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages]);
 
   const handleSend = (e) => {
@@ -47,13 +48,13 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col gap-space-xs p-space-xs">
+      <div ref={listRef} id="chatMessages" className="flex-1 min-h-0 max-h-[360px] overflow-y-auto overflow-x-hidden flex flex-col gap-space-xs p-space-xs">
         {messages.map((m, i) => {
           if (m.isSystem) {
             return (
               <div
                 key={i}
-                className={`p-space-xs px-space-sm rounded-lg font-body-sm text-body-sm ${
+                className={`p-space-xs px-space-sm rounded-lg break-words [overflow-wrap:anywhere] min-w-0 font-body-sm text-body-sm ${
                   m.isCorrectNotice
                     ? 'bg-primary-fixed text-on-primary-fixed font-bold border border-border-dark shadow-sm'
                     : 'bg-surface-card-subtle text-on-surface-variant font-italic'
@@ -66,7 +67,7 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
 
           if (m.isConcealedChat) {
             return (
-              <div key={i} className="p-space-xs px-space-sm rounded-lg bg-surface-card text-on-surface-variant font-body-sm text-body-sm">
+              <div key={i} className="p-space-xs px-space-sm rounded-lg break-words [overflow-wrap:anywhere] min-w-0 bg-surface-card text-on-surface-variant font-body-sm text-body-sm">
                 <strong className="text-on-surface">{m.sender}:</strong>{' '}
                 <span className="bg-border-dark text-border-dark select-none px-1 rounded">██████ (GUESSED)</span>
               </div>
@@ -76,7 +77,7 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
           return (
             <div
               key={i}
-              className={`p-space-xs px-space-sm rounded-lg font-body-sm text-body-sm ${
+              className={`p-space-xs px-space-sm rounded-lg break-words [overflow-wrap:anywhere] min-w-0 font-body-sm text-body-sm ${
                 m.sender === username ? 'bg-secondary-fixed text-on-secondary-fixed font-bold' : 'bg-surface-card text-on-surface'
               }`}
             >
@@ -84,7 +85,6 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
             </div>
           );
         })}
-        <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSend} className="flex flex-col sm:flex-row gap-space-xs pt-space-sm border-t-2 border-border-dark mt-space-sm">
@@ -93,6 +93,7 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={chatLocked}
+          maxLength={GAME_RULES.CHAT_MAX_LENGTH}
           placeholder={
             chatLocked
               ? 'You are drawing — chat is disabled this turn'

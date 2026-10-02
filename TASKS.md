@@ -796,7 +796,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
 | T1-04 | Score UI overflow | P1 | TODO | |
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
-| T1-06 | Chat overflow | P0 | TODO | |
+| T1-06 | Chat overflow | P0 | DONE | see section T1-06 |
 | T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
 | T1-08 | Host START / player READY UI | P1 | TODO | |
 | T1-09 | Online count | P5 | TODO | |
@@ -850,6 +850,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Fix:** `RoundManager.rankPlayers()` — Team: players of the higher-scoring team first (Red first on a tie), then by player score; FFA / Solo: by score; stable for ties. Used for `finalScores` and the FFA winner text. Results modal (`App.jsx`) shows both team totals and each player's team in Team mode.
 - **Socket contract change (authorized):** `game_over.finalScores` is now ranked; `game_over` gains `gameMode`. ARCHITECTURE.md §7.
 - **Status:** ranking DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-02-ranking.e2e.js` 6/6 (FFA sorted + winner first + gameMode; Team: leading team first, sorted within each team). `tests/browser/t1-02-team-results.browser.jsx` 3/3. Remaining T1-02 scope (Team result presentation after the T1-01 rule change) → T1-25.
+
+### T1-06 — Chat overflow
+
+- **Problem:** chat bubbles had no word wrapping (a long unbroken word ran out of the box), the message list could grow instead of scrolling (`flex-1` without `min-h-0` / max height), auto-scroll used `scrollIntoView` (can scroll the whole page), and messages had no length limit.
+- **Fix:** `client/src/components/ChatBox.jsx` — bubbles `break-words [overflow-wrap:anywhere] min-w-0`; list `min-h-0 max-h-[360px] overflow-y-auto overflow-x-hidden`, scrolled to the newest message via its own `scrollTop`; input `maxLength`. New `GAME_RULES.CHAT_MAX_LENGTH` (200) in `shared/contract.js`; `chatHandler.js` ignores longer messages (server-authoritative). `tests/check_all.sh`: `*overflow*` browser tests run with the Tailwind CDN (`REAL_HEAD=1`), SKIP without network.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-06-chat-overflow.browser.jsx` 5/5 (320 px: long words wrap, 42 messages scroll in ≤ 360 px, scrolled to newest, page not wider, input maxLength 200). `tests/e2e/t1-06-chat-length.e2e.js` 2/2 (201 chars ignored, 200 delivered). Regression: p3.1, p3.2.
 
 ---
 

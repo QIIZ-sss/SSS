@@ -46,7 +46,7 @@ Single files can also be run directly, e.g. `node tests/lib/render.js tests/rend
 | client build | `vite build` into `TEST_TMP` | Node | client compiles |
 | render | `render/*.test.jsx` via `lib/render.js` | Node | component markup and pure logic (answer reveal, chat lock, canvas markup, mobile order, PIN rules, default name, avatars) |
 | browser | `browser/*.browser.jsx` via `lib/browser.js` | **Chrome** | real DOM / canvas: eraser + pointer scaling (D2, B1), PIN typing / paste (B3), reconnect client flow (B4), difficulty setting (D1), challenge popup (D3), no Fill during Don't Lift Pen (QA-4), Solo AI client (A8/A9) |
-| browser layout | `browser/b2-layout-overflow.browser.jsx` | **Chrome + network** (Tailwind CDN) | no horizontal overflow on 9 screens at 375 px and 820 px |
+| browser layout | `browser/*overflow*.browser.jsx` | **Chrome + network** (Tailwind CDN) | B2: no horizontal overflow on 9 screens at 375 px and 820 px; T1-06: chat wraps long words and scrolls inside a bounded list |
 | e2e | `e2e/*.e2e.js` against a real server on `TEST_PORT` | Node | A2, P2.1–P2.5, P3.1, P3.2, B4, D1, W1, QA-1 (`select_word` validation), SEC-2 (malformed payloads never crash the server), QA-4 (no `draw_fill` during Don't Lift Pen), Solo single-player room, A8/A9 with real socket.io clients; A8/A9 also loads the real DoodleNet model in-process |
 | live UI | `e2e/*.live.jsx` via `lib/browser.js` with `LIVE_SOCKET=1` | **Chrome** | the real `App` UI in headless Chrome talking to the real test server (no stub): D1 — host clicks a difficulty in Settings, presses START, every word offered during a full match is checked. Not run with `E2E=…`; run without `LIVE_SOCKET=1` it reports SKIPPED |
 
