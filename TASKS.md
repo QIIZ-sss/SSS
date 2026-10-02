@@ -793,7 +793,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | P0-1 | All connected guessers correct → round advances at once (not tied to a T1 line) | P0 | DONE | see section P0-1 |
 | T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | TODO | decision final (see above) |
 | T1-02 | Team result / ranking (sort) | P0 / P2 | TODO | |
-| T1-03 | Solo AI timer | P0 | TODO | |
+| T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
 | T1-04 | Score UI overflow | P1 | TODO | |
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
 | T1-06 | Chat overflow | P0 | TODO | |
@@ -831,6 +831,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Fix:** `RoundManager.stopMatchIfTooFewPlayers()` runs after every real removal (`removePlayer`: leave, or reconnect grace expired — a disconnect alone does not stop the match, B4 reconnect keeps working). In WORD_SELECTION / PLAYING / ROUND_OVER of a non-Solo match: FFA below `GAME_RULES.MIN_PLAYERS_FFA`, or Team below `MIN_PLAYERS_TEAM_TOTAL` / a team below `MIN_PLAYERS_PER_TEAM` → `endGameMatch(io, room, reason)`: GAME_OVER, normal return to LOBBY after `GAME_OVER_DELAY_MS`, winner text "Match stopped", **not recorded on the leaderboard**. Client results modal shows "⚠️ MATCH STOPPED" and the reason.
 - **Socket contract change (authorized, Section 17):** `game_over` gains `stopped: boolean` and `reason: string` (`''` for a normal end). Documented in ARCHITECTURE.md §7.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-22-too-few-players.e2e.js` 7/7 (FFA 2 → 1 stopped with reason; FFA 3 → 2 continues; Team with an emptied team stopped; disconnect not stopped at once, stopped after the 30 s grace; normal end has `stopped=false`). `tests/browser/t1-22-match-stopped.browser.jsx` 5/5. Regression: p0-1, a2, p2.2, p2.3, p2.4, p3.1, b4.
+
+### T1-03 — Solo AI timer
+
+- **Problem:** the Solo screen showed no round timer at all (the server already ran it and sent `timer_tick`). `TimerBadge` also printed `00:<seconds>`, so rounds over 59 s showed e.g. `00:90`.
+- **Fix:** `client/src/gameModes/SoloAIGame.jsx` shows `TimerBadge` (via the existing `useGameTimer`) during PLAYING. `client/src/components/TimerBadge.jsx` formats `MM:SS` (90 → `01:30`; negative / invalid → `00:00`) — also used by Multiplayer / Team. No server or contract change.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-03-solo-timer.browser.jsx` 4/4. Regression: A8/A9 client 10/10, B2 layout 375/820 9/9.
 
 ---
 

@@ -2,7 +2,8 @@ import React from 'react';
 
 export default function TimerBadge({ seconds }) {
   const isUrgent = seconds <= 10;
-  const formattedTime = `00:${seconds < 10 ? '0' : ''}${seconds}`;
+  const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+  const formattedTime = `${String(Math.floor(safe / 60)).padStart(2, '0')}:${String(safe % 60).padStart(2, '0')}`; // T1-03: 90 s → 01:30
 
   return (
     <div

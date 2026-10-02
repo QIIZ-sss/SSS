@@ -6,6 +6,8 @@ import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
 import { GAME_STATUS, SOLO_AI } from '../../../shared/contract';
 import { canvasToPixels } from '../utils/canvasToPixels';
+import TimerBadge from '../components/TimerBadge';
+import useGameTimer from '../hooks/useGameTimer';
 
 // A8: the server owns the target word (room_data.currentWord — the solo player is the drawer, so it is sent to them).
 // The client never picks or infers a word; it echoes the server's word with each prediction request.
@@ -17,6 +19,7 @@ export default function SoloAIGame({ roomData, username }) {
   const isPlaying = roomData?.status === GAME_STATUS.PLAYING;
   const me = roomData?.players?.find((p) => p.username === username);
   const score = me ? me.score : 0;
+  const timeRemaining = useGameTimer(roomData?.timeRemaining || 0); // T1-03: server round timer
 
   const targetRef = useRef(targetWord);
   const playingRef = useRef(isPlaying);
@@ -102,6 +105,11 @@ export default function SoloAIGame({ roomData, username }) {
             <span className="font-headline-sm text-headline-sm text-on-primary font-black">{score}</span>
           </div>
         </div>
+        {isPlaying && (
+          <div className="md:col-span-2 flex justify-end">
+            <TimerBadge seconds={timeRemaining} />
+          </div>
+        )}
       </header>
 
       <ChallengeTurnPopup roomData={roomData} username={username} />
