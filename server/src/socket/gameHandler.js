@@ -121,6 +121,10 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     if (room.status === GAME_STATUS.WORD_SELECTION && room.currentDrawer === player.username) {
       socket.emit(SOCKET_EVENTS.WORD_SELECTION, { words: room.wordOptions });
     }
+    // T1-07: a reload during GAME_OVER shows the results again
+    if (room.status === GAME_STATUS.GAME_OVER && room.lastGameOver) {
+      socket.emit(SOCKET_EVENTS.GAME_OVER, room.lastGameOver);
+    }
     io.to(room.id).emit(SOCKET_EVENTS.CHAT_MESSAGE, {
       sender: 'System',
       text: `${player.username} reconnected.`,

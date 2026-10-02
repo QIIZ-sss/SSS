@@ -797,7 +797,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-04 | Score UI overflow | P1 | TODO | |
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
 | T1-06 | Chat overflow | P0 | TODO | |
-| T1-07 | Reconnect / reload | P0 | TODO | B4 reconnect exists; tester issue to reproduce |
+| T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
 | T1-08 | Host START / player READY UI | P1 | TODO | |
 | T1-09 | Online count | P5 | TODO | |
 | T1-10 | Header / leaderboard | P5 | TODO | |
@@ -837,6 +837,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** the Solo screen showed no round timer at all (the server already ran it and sent `timer_tick`). `TimerBadge` also printed `00:<seconds>`, so rounds over 59 s showed e.g. `00:90`.
 - **Fix:** `client/src/gameModes/SoloAIGame.jsx` shows `TimerBadge` (via the existing `useGameTimer`) during PLAYING. `client/src/components/TimerBadge.jsx` formats `MM:SS` (90 → `01:30`; negative / invalid → `00:00`) — also used by Multiplayer / Team. No server or contract change.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-03-solo-timer.browser.jsx` 4/4. Regression: A8/A9 client 10/10, B2 layout 375/820 9/9.
+
+### T1-07 — Reload / reconnect
+
+- **Interpretation:** the tester's reload problems could not be read from the repository; checked what a reloaded client gets back in every state on top of B4 (room, role data, drawer word choices already covered by `b4-reconnect`). Gap found: a reload during **GAME_OVER** lost the results (the modal only opens on `game_over`, which was not re-sent). Drawing history (`draw_sync` on canvas mount) and timer (`room_data.timeRemaining`) were already restored — now covered by a test.
+- **Fix:** `RoundManager.endGameMatch` keeps the payload as `room.lastGameOver` (cleared in `returnToLobby`); `rejoin_room` re-sends it to the rejoining socket while the room is in GAME_OVER. Existing event, no contract change.
+- **Status:** DONE (automated); MANUAL NOT TESTED (real browser reload). `tests/e2e/t1-07-reload.e2e.js` 6/6 (PLAYING: rejoined, timer 0 < t < 60, drawing history begin/path/end, no game_over; GAME_OVER: same results re-sent; back in LOBBY: no stale results). Not changed: chat history is not kept across a reload.
 
 ---
 

@@ -239,13 +239,15 @@ class RoundManager {
       winnerText = sorted[0] ? `Winner: ${sorted[0].username} 🏆` : 'Game Over';
     }
 
-    io.to(room.id).emit(SOCKET_EVENTS.GAME_OVER, {
+    // T1-07: kept so a player who reloads during GAME_OVER gets the results again (cleared in returnToLobby)
+    room.lastGameOver = {
       winnerText,
       finalScores: room.players.map(p => ({ username: p.username, avatar: p.avatar, score: p.score, team: p.team })),
       teamScores: room.teams,
       stopped: !!stoppedReason,
       reason: stoppedReason || ''
-    });
+    };
+    io.to(room.id).emit(SOCKET_EVENTS.GAME_OVER, room.lastGameOver);
 
     this.roomManager.emitRoomData(io, room, 0);
 
@@ -268,6 +270,7 @@ class RoundManager {
     room.currentWord = '';
     room.wordOptions = [];
     room.usedWords = []; // W1
+    room.lastGameOver = null; // T1-07
     room.correctGuessers = [];
     room.currentChallenge = MINI_CHALLENGES.NONE;
     room.forcedColor = null;
