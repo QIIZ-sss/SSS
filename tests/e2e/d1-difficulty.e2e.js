@@ -33,6 +33,17 @@ const offered = (...ps) => ps.flatMap((p) => p.events.filter((e) => e.ev === 'wo
     L.check(`D1 ${level}: difficulty kept after the game returns to LOBBY`, await L.waitFor(() => L.last(A).status === 'LOBBY', 15000) && L.last(A).wordDifficulty === level);
     L.closeAll(A, B);
   }
+  { // MIXED (null): offered words may come from several levels
+    const A = L.player(L.nextName('H')), B = L.player(L.nextName('G'));
+    const { code } = await L.makeRoom(A); await L.join(B, code);
+    A.s.emit('update_room_settings', { wordDifficulty: null, totalRounds: 3 }); B.s.emit('toggle_ready'); await L.sleep(300);
+    A.s.emit('start_game');
+    await L.waitFor(() => A.frames.some((f) => f.status === 'GAME_OVER'), 90000);
+    const words = offered(A, B);
+    const levels = [...new Set(words.map((w) => (db.words.find((x) => x.word === w) || {}).difficulty))];
+    L.check('D1 MIXED: offered words span more than one difficulty level', words.length === 18 && levels.length >= 2, `levels: ${levels.join(', ')}`);
+    L.closeAll(A, B);
+  }
   { // fallback: a difficulty with fewer than 3 words falls back to Mixed (checked on this process's copy of the bank)
     const saved = db.words;
     const counts = Object.values(WORD_DIFFICULTY).map((d) => `${d}=${bank(d).length}`).join(' ');

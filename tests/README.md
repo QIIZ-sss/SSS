@@ -48,6 +48,7 @@ Single files can also be run directly, e.g. `node tests/lib/render.js tests/rend
 | browser | `browser/*.browser.jsx` via `lib/browser.js` | **Chrome** | real DOM / canvas: eraser + pointer scaling (D2, B1), PIN typing / paste (B3), reconnect client flow (B4), difficulty setting (D1), challenge popup (D3), Solo AI client (A8/A9) |
 | browser layout | `browser/b2-layout-overflow.browser.jsx` | **Chrome + network** (Tailwind CDN) | no horizontal overflow on 9 screens at 375 px and 820 px |
 | e2e | `e2e/*.e2e.js` against a real server on `TEST_PORT` | Node | A2, P2.1–P2.5, P3.1, P3.2, B4, D1, A8/A9 with real socket.io clients; A8/A9 also loads the real DoodleNet model in-process |
+| live UI | `e2e/*.live.jsx` via `lib/browser.js` with `LIVE_SOCKET=1` | **Chrome** | the real `App` UI in headless Chrome talking to the real test server (no stub): D1 — host clicks a difficulty in Settings, presses START, every word offered during a full match is checked. Not run with `E2E=…`; run without `LIVE_SOCKET=1` it reports SKIPPED |
 
 Render and browser tests replace `client/src/services/socket.js` with `lib/socket-stub.js`; they are not end-to-end.
 The A8/A9 "correct drawing scores +500" check only runs when a Solo turn's random target is Sun or Clock within 10 turns; otherwise the e2e prints `INFO … not exercised` and does not count it (the in-process model checks always run).

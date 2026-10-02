@@ -80,6 +80,12 @@ else
     if [ -n "${E2E:-}" ]; then FILES=""; for n in $E2E; do FILES="$FILES $TESTS/e2e/$n.e2e.js"; done
     else FILES="$(ls "$TESTS"/e2e/*.e2e.js)"; fi
     for t in $FILES; do run_case "e2e/$(basename "$t")" node "$t"; done
+    # real UI + real server (headless Chrome, live socket); SKIP without Chrome
+    if [ -z "${E2E:-}" ]; then
+      for t in "$TESTS"/e2e/*.live.jsx; do
+        run_case "e2e/$(basename "$t")" env LIVE_SOCKET=1 DEV=1 CHROME_TIMEOUT=180000 node "$TESTS/lib/browser.js" "$t"
+      done
+    fi
   else
     bad "server startup on :$TEST_PORT"; tail -10 "$TEST_TMP/server.log"
   fi
