@@ -50,7 +50,16 @@ class RoundManager {
 
     const isSolo = room.gameMode === GAME_MODES.SOLO_AI;
     // A8: Solo AI only uses words the model can recognise (SOLO_AI.GAME_WORDS)
-    const wordChoices = Word.getRandomWords(3, { difficulty: room.wordDifficulty, aiOnly: isSolo }).map(w => w.word);
+    // W1: unused eligible words come first; if fewer than 3 remain, top up with used words from the same pool;
+    // once every eligible word was used the list starts over
+    const wordFilter = { difficulty: room.wordDifficulty, aiOnly: isSolo };
+    let wordChoices = Word.getRandomWords(3, { ...wordFilter, exclude: room.usedWords || [] }).map(w => w.word);
+    if (wordChoices.length === 0) {
+      room.usedWords = [];
+      wordChoices = Word.getRandomWords(3, wordFilter).map(w => w.word);
+    } else if (wordChoices.length < 3) {
+      wordChoices = wordChoices.concat(Word.getRandomWords(3 - wordChoices.length, { ...wordFilter, exclude: wordChoices }).map(w => w.word));
+    }
     room.wordOptions = wordChoices;
 
     // Notify clients of Server-Authoritative turn change & state reset
@@ -92,6 +101,7 @@ class RoundManager {
   startRoundDrawing(io, room) {
     this.timerManager.stopTimer(room.id);
     room.status = 'PLAYING';
+    room.usedWords = [...(room.usedWords || []), room.currentWord]; // W1
 
     io.to(room.id).emit(SOCKET_EVENTS.ROUND_START, {
       drawer: room.currentDrawer,
@@ -229,6 +239,7 @@ class RoundManager {
     room.currentDrawer = null;
     room.currentWord = '';
     room.wordOptions = [];
+    room.usedWords = []; // W1
     room.correctGuessers = [];
     room.currentChallenge = MINI_CHALLENGES.NONE;
     room.forcedColor = null;

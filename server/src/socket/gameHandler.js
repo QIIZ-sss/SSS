@@ -189,6 +189,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
 
     room.currentRound = 1;
     room.drawerIndex = 0;
+    room.usedWords = []; // W1: word repeat tracking is per match
     room.players.forEach(p => { p.score = 0; });
     room.teams.Red.score = 0;
     room.teams.Blue.score = 0;

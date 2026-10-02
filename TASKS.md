@@ -40,6 +40,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | P7.2 | A9 | 7 | Done (automated); MANUAL NOT TESTED |
 | P7.3 | D2 | 7 | Done (headless Chrome test); real-device MANUAL pending |
 | P7.4 | D3 | 7 | Done incl. auto-close follow-up (headless Chrome test); MANUAL NOT TESTED |
+| W1 | no repeated target words in a match | 7 | Done (automated e2e); MANUAL NOT TESTED |
 
 ### Regression suite (`tests/`)
 
@@ -722,6 +723,18 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
   - Follow-up checks: browser test rewritten, 19/19 PASS (delay from contract; GOT IT closes immediately; still open shortly after WORD_SELECTION→PLAYING for a guesser and closed ~3 s after the turn start; drawer sees it in WORD_SELECTION and it closes when PLAYING starts; turn starting in PLAYING shows it and it closes by itself; none for NONE / outside a turn; no candidate words; violation modal: shown, no alert, OK closes, auto-closes, banner remains). Full suite 32/32, client build PASS.
   - Remaining `alert()` calls in the live client are join / PIN error messages (`App.jsx`, `RoomList.jsx`), not challenge notifications — unchanged.
   - Checks: headless Chrome 13/13 PASS — popup at turn start for a guesser; DONT_LIFT_PEN text says the pen must not be lifted; GOT IT closes it and it stays closed when PLAYING starts; none after the turn; shown again next turn; auto-closes at turn end if not dismissed; none for NONE; drawer sees it before drawing with the COLOUR_FIX locked colour; no candidate words in the popup; lifting then drawing shows the DON'T LIFT PEN modal, `window.alert` never called, OK closes it and the board stays locked. Render / browser / build regression PASS.
+
+### W1 — No repeated target words within a match
+
+- **Task ID:** W1 (new task, human request 2026-10-02; not a D-series ID)
+- **Goal:** A target word is not repeated in a match while unused eligible words remain.
+- **Rules:** filter by difficulty first (D1, incl. the small-pool fallback to Mixed), then remove words already used; tracking is per room / match (not global); reset when a match starts and when the room returns to LOBBY; when the eligible pool is exhausted the list resets and words may be reused. Word bank unchanged.
+- **Commit requirement:** `feat(W1): no repeated words in a match`.
+- **Status:** Done (automated); MANUAL NOT TESTED. No socket contract change: `room.usedWords` is server-only (not in `sanitizeRoom`).
+  - **Always 3 choices (human decision 2026-10-02):** unused eligible words come first; if fewer than 3 remain, the turn is topped up with already-used words from the same eligible pool (same difficulty / D1 fallback / Solo AI filter). Timeout auto-pick and Solo AI take the first word, so they never repeat before exhaustion; a drawer may deliberately pick a topped-up used word (accepted).
+  - Files: `server/src/config/database.js` (`getRandomWords` gains `filter.exclude`, applied after the difficulty pool is chosen), `server/src/gameLogic/RoundManager.js` (choices = unused words first, top-up via `exclude: <unused already chosen>`; no unused left → reset and pick from the full eligible pool; the target is recorded when drawing starts — drawer pick, timeout auto-pick or Solo AI; reset in `returnToLobby`), `server/src/socket/gameHandler.js` (reset on `start_game`).
+  - Checks: `tests/e2e/w1-no-repeat-words.e2e.js` 15/15 (exclude after difficulty filter; HARD match of 6 turns: always 3 distinct HARD choices, first 5 targets distinct, unused words first and all of them offered when < 3 remain, turn 6 reuses after reset; two HARD rooms played at the same time keep separate lists; EASY match → LOBBY → new match is not restricted to the words left over; Solo AI + HARD (4 AI-supported words) 6 turns: non-empty targets, no repeat before exhaustion, reuse after). D1 e2e unchanged and 14/14.
+  - Known, not changed (separate task): `select_word` does not check that the word is one of `room.wordOptions`.
 
 ---
 

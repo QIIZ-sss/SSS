@@ -114,11 +114,14 @@ class DatabaseStore {
   // filter.difficulty: one of WORD_DIFFICULTY, or null/undefined for all words (Mixed).
   // filter.aiOnly: only words the Solo AI model supports (SOLO_AI.GAME_WORDS).
   // If the chosen difficulty has fewer than `count` words, fall back to Mixed so a turn always gets `count` choices.
+  // filter.exclude (W1): words to leave out, removed AFTER the difficulty pool is chosen;
+  // may return fewer than `count` (or none, when every word of the pool is excluded).
   getRandomWords(count = 3, filter = {}) {
     const base = filter.aiOnly ? this.words.filter(w => Object.prototype.hasOwnProperty.call(SOLO_AI.GAME_WORDS, w.word)) : this.words;
     const byDifficulty = filter.difficulty ? base.filter(w => w.difficulty === filter.difficulty) : base;
     const pool = byDifficulty.length >= count ? byDifficulty : base;
-    const shuffled = [...pool].sort(() => 0.5 - Math.random());
+    const unused = filter.exclude ? pool.filter(w => !filter.exclude.includes(w.word)) : pool;
+    const shuffled = [...unused].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 }
