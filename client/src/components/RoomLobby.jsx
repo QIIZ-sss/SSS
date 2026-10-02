@@ -77,6 +77,13 @@ export default function RoomLobby({ roomData, username }) {
       <div className="flex flex-wrap items-center justify-between gap-space-md pb-space-lg border-b-[3px] border-border-dark">
         {/* Left: Room ID Badge & Copy */}
         <div className="flex items-center gap-space-sm flex-wrap">
+          {/* T1-19: a Solo room cannot be joined, so it shows no code to share */}
+          {isSolo ? (
+            <div className="bg-tertiary-fixed px-space-md py-1.5 rounded-full flex items-center gap-space-sm border-2 border-border-dark shadow-[3px_3px_0px_0px_#18181B]" id="soloBadge">
+              <span className="material-symbols-outlined text-border-dark text-[20px]">smart_toy</span>
+              <span className="font-headline-sm text-headline-sm text-border-dark font-black">SOLO PRACTICE</span>
+            </div>
+          ) : (
           <div className="bg-tertiary-fixed px-space-md py-1.5 rounded-full flex items-center gap-space-sm border-2 border-border-dark shadow-[3px_3px_0px_0px_#18181B]">
             <span className="font-label-sm text-label-sm text-on-tertiary-fixed tracking-wider font-bold">ROOM ID:</span>
             <span className="font-headline-sm text-headline-sm text-border-dark tracking-widest font-black select-all" id="roomCodeDisplay">
@@ -93,6 +100,7 @@ export default function RoomLobby({ roomData, username }) {
               </span>
             </button>
           </div>
+          )}
           {copied && <span className="font-label-sm text-label-sm text-primary font-bold animate-pulse">Copied to Clipboard!</span>}
         </div>
 
@@ -100,7 +108,7 @@ export default function RoomLobby({ roomData, username }) {
         <div className="flex items-center gap-space-md">
           <div className="flex flex-col text-right">
             <span className="font-headline-sm text-headline-sm text-border-dark font-black uppercase">{roomData.name || 'JUST DRAW IT ARENA'}</span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant">HOST: {roomData.host} 👑</span>
+            {!isSolo && <span className="font-label-sm text-label-sm text-on-surface-variant">HOST: {roomData.host} 👑</span>}
           </div>
         </div>
       </div>
@@ -151,7 +159,7 @@ export default function RoomLobby({ roomData, username }) {
                 {isHost && (
                   <div className="font-thai-safe bg-canvas-paper/70 p-2 rounded-lg border border-border-dark/40 text-xs font-bold text-border-dark flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px] text-primary">touch_app</span>
-                    Host: Click any mini-challenge card below to turn it ON or OFF!
+                    {isSolo ? 'Click a mini-challenge card to turn it ON or OFF.' : 'Host: Click any mini-challenge card below to turn it ON or OFF!'}
                   </div>
                 )}
 
@@ -372,6 +380,13 @@ export default function RoomLobby({ roomData, username }) {
                   <h3 className="font-headline-sm text-headline-sm uppercase text-border-dark font-black">SOLO VS AI</h3>
                 </div>
                 <p className="font-body-sm text-body-sm text-on-surface-variant">Single player: you draw, the AI guesses. No Ready step.</p>
+                <ul className="font-body-sm text-body-sm text-border-dark flex flex-wrap gap-x-space-md gap-y-1" id="soloSummary">
+                  <li><strong>{roomData.totalRounds}</strong> rounds</li>
+                  <li><strong>{roomData.roundTime}s</strong> per drawing</li>
+                  <li>Words: <strong>{roomData.wordDifficulty || 'MIXED'}</strong></li>
+                  <li><strong>{enabledChallenges.length}</strong> mini-challenge(s)</li>
+                </ul>
+                <p className="font-label-sm text-label-sm text-on-surface-variant">Change these in SETTINGS / MODIFIERS.</p>
               </div>
             ) : (
             <>

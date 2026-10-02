@@ -809,7 +809,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-16 | Modifiers empty / purple area | — | DONE (merged into T1-17) | card blank band removed |
 | T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | IN PROGRESS | P0 part DONE (section T1-17); further layout items in P5 |
 | T1-18 | Room-not-found UI | P0 / P1 | DONE | see section T1-18 |
-| T1-19 | Solo lobby | P1 | TODO | roster / Ready / max players already hidden in SOLO-1 |
+| T1-19 | Solo lobby | P1 | DONE | see section T1-19 (on top of SOLO-1) |
 | T1-20 | Room name | P5 | TODO | |
 | T1-21 | Personal "close" hint | P7 | TODO | optional |
 | T1-22 | Player count drops to 1 → stop match + UI | P0 | DONE | see section T1-22 |
@@ -887,6 +887,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Fix:** `client/src/App.jsx` saves `game_avatar` whenever the avatar changes. `server/src/socket/gameHandler.js` (`create_room`, `join_room`) accepts only an emoji from the shared `AVATARS` (`shared/gameConfig.js`), otherwise the default `AVATARS[0]`. Valid avatars unchanged.
 - **Socket contract note:** `avatar` in `create_room` / `join_room` must be one of `AVATARS[].emoji` (others are replaced). ARCHITECTURE.md §7.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-11-avatar.e2e.js` 4/4; `tests/browser/t1-11-avatar-saved.browser.jsx` 3/3. Regression: C4 render 3/3, SEC-2 37/37, B4 20/20.
+
+### T1-19 — Solo lobby
+
+- **Problem (screenshot, on top of SOLO-1):** the Solo lobby still showed a shareable ROOM ID with a copy button (nobody can join a Solo room), a `HOST:` line and "Host:"-worded hints, and no overview of the solo setup next to START SOLO.
+- **Fix (client only, `RoomLobby.jsx`):** in Solo — `SOLO PRACTICE` badge instead of the room code / copy button, no `HOST:` line, neutral modifier hint, and a setup summary above START SOLO (rounds, seconds per drawing, word difficulty, number of mini-challenges). Multiplayer lobby unchanged.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/solo-lobby.test.jsx` now 14/14 (+4 T1-19 checks incl. FFA unchanged). Regression: T1-08 render 7/7, D1 setting 6/6, live D1 UI 6/6.
 
 ---
 
