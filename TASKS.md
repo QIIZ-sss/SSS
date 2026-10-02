@@ -46,6 +46,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | QA-4 | no Fill during DONT_LIFT_PEN (D3) | 7 | Done (headless Chrome + e2e); MANUAL NOT TESTED |
 | QA-5 | docs/test cleanup | 7 | Done |
 | SOLO-1 | Solo vs AI single-player room | 7 | Done (automated); MANUAL NOT TESTED |
+| SEC-2 | malformed socket payloads never crash the server | 7 | Done (automated e2e + negative control) |
 
 ### Regression suite (`tests/`)
 
@@ -776,6 +777,12 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Status:** Done (automated); MANUAL NOT TESTED. `tests/e2e/solo-room.e2e.js` 16/16 (Solo not listed; PIN join rejected with reason, room keeps 1 player; Solo starts without Ready; switch with 2 players refused + system message, still listed; TEAM switch still works; alone → switch allowed, unlisted, join rejected; back to FFA → listed again; FFA alone / guest not Ready still blocked, all Ready starts). `tests/render/solo-lobby.test.jsx` 10/10. Regression: p2.1 8/8, p2.2 9/9, a8-a9 20/20, b4 20/20, a2 14/14, live D1 6/6, D1 setting 6/6, B2 layout 375/820 9/9, client build.
   - Known, not changed: a disconnected Solo player keeps the slot for the reconnect grace period (B4), so the room stays closed to others meanwhile (intended). The dead `server/src/socket/roomHandler.js` also answers `get_rooms` but is not loaded by `server.js`.
 
+### SEC-2 — Ignore malformed socket payloads (security)
+
+- **Source:** self-review 2026-10-02. One `join_room` without a payload crashed the whole server process (`TypeError: Cannot destructure property 'roomId' of 'undefined'`, `gameHandler.js`, baseline `0d8fb96`): any connected client could stop every game. Same pattern (by code reading) in `create_room`, `switch_team`, `send_chat`, `update_room_settings` (host), and `draw_*` during COLOUR_FIX; acks were called whenever truthy, so a non-function ack argument also threw.
+- **Fix (no event / payload change for valid clients):** `server/src/socket/gameHandler.js` — non-object payloads are treated as `{}`; `create_room` passes only well-typed options to `createRoom` (string name/username/avatar, known `gameMode`, positive finite numbers, boolean `miniChallengeEnabled`, array `enabledChallenges`; anything else → existing defaults); `join_room` accepts a string or numeric code and string username/avatar; acks called only if `typeof callback === 'function'`. `chatHandler.js` — `send_chat` ignores a non-string `text`. `drawHandler.js` — `draw_begin` / `draw_path` / `shape_preview` / `draw_end` / `draw_fill` ignore non-object payloads (not stored, not relayed). `rejoin_room`, `select_word` (QA-1) and `solo_ai_predict` (`isValidPredictRequest`) were already safe.
+- **Status:** Done (automated). `tests/e2e/sec-payloads.e2e.js` 37/37: no payload / null / string / number / array / `{}` / wrong field types for every payload handler, sent from the context that reaches its code (outside a room, host in LOBBY, Team player, drawer in WORD_SELECTION, drawer and guesser in a COLOUR_FIX turn, Solo drawer), plus non-function acks; server stays up after each batch; settings and teams unchanged; junk draw payloads neither relayed nor in `draw_sync`; valid draw still relayed with the forced colour; valid guess still scores; then a normal create + join + start works. Negative control: the same test against the previous commit → 0/16, server crashed on the first malformed `create_room`; the test has a 150 s watchdog so a regression fails instead of hanging `check_all.sh`.
+
 ---
 
 ## Unassigned findings (need human decision before becoming tasks)
@@ -785,12 +792,13 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 | ID | Finding | Evidence | Possible home |
 |---|---|---|---|
 | U1 | Identity is username-based; same-name join takes over a player/host slot | ARCH §3.3 | P4.1 discovery |
-| U2 | `select_word` accepts any word, not only `wordOptions` | `gameHandler.js:135` | P3.1 or new task |
+| U2 | `select_word` accepts any word, not only `wordOptions` — **resolved in QA-1** | `gameHandler.js:135` | P3.1 or new task |
 | U3 | `start_game` has no `status` guard (restart mid-game) — **resolved in P2.1** | `gameHandler.js:116-127` | P2.1 |
-| U4 | No payload validation / rate limit in live handlers | ARCH §3.2 | new security task |
+| U4 | No payload validation / rate limit in live handlers — **payload type validation done in SEC-2; rate limiting still missing** (except `solo_ai_predict`) | ARCH §3.2 | new security task |
 | U5 | DONT_LIFT_PEN / GEOMETRIC_ONLY enforced only on client | ARCH §3.2, §10 | new task |
 | U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |
 | U7 | Dead/legacy code tree (ARCH §2.3) | ARCH §2.3 | cleanup task, only with explicit approval |
 | U10 | `create_room` accepts any `roundTime`/`totalRounds`/`maxPlayers` without the 15–180 / 1–10 / 2–16 clamps used by `update_room_settings` | `RoomManager.createRoom`, `gameHandler.js` create_room | validation task |
 | U9 | No client UI for the existing `switch_team` event; a team emptied by a leave in LOBBY blocks START until someone joins | `client/src` (no `SWITCH_TEAM` usage) | new UI task |
 | U8 | Header logo click clears `currentRoomId` without emitting `leave_room` → player stays in the room server-side | `client/src/App.jsx` header logo `onClick` | P2.3 or new task |
+| U11 | `update_room_settings` (host, LOBBY) and `create_room` accept any array for `enabledChallenges` without checking the items against `MINI_CHALLENGES`; an unknown string could become a turn's `currentChallenge` and the client may render it oddly. **NOT VERIFIED** (code reading, self-review 2026-10-02) | `gameHandler.js` update_room_settings / create_room, `RoundManager.startTurnSelection` | validation task |

@@ -6,12 +6,13 @@ const roomManager = require('../gameLogic/RoomManager');
 const { GAME_STATUS, GAME_RULES } = require('../../../shared/contract');
 
 function setupChatHandlers(io, socket, timerManager, roundManager) {
-  socket.on(SOCKET_EVENTS.SEND_CHAT, ({ text }) => {
+  socket.on(SOCKET_EVENTS.SEND_CHAT, (payload) => {
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room) return;
 
     const username = socket.data.username;
-    if (!text || text.trim().length === 0) return;
+    const text = payload && typeof payload === 'object' ? payload.text : undefined; // untrusted payload
+    if (typeof text !== 'string' || text.trim().length === 0) return;
 
     const isDrawer = room.currentDrawer === username;
     const hasGuessed = room.correctGuessers ? room.correctGuessers.includes(username) : false;

@@ -6,6 +6,13 @@ const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
 const crypto = require('crypto');
 
+// Payloads come from untrusted clients: anything that is not a plain object is treated as {},
+// wrong-typed fields fall back to defaults, and acks are only called when they are functions.
+const asObject = (p) => (p && typeof p === 'object' && !Array.isArray(p) ? p : {});
+const asString = (v) => (typeof v === 'string' ? v : undefined);
+const asPositiveNumber = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
+const reply = (callback, data) => { if (typeof callback === 'function') callback(data); };
+
 function setupGameHandlers(io, socket, timerManager, roundManager) {
   // Get public room list
   socket.on(SOCKET_EVENTS.GET_ROOMS, () => {
@@ -13,52 +20,63 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   });
 
   // Create Room (Supports custom options & 5-digit code)
-  socket.on(SOCKET_EVENTS.CREATE_ROOM, (roomConfig, callback) => {
-    const username = roomConfig.username || socket.data.username || 'Player';
-    const avatar = roomConfig.avatar || socket.data.avatar || '🐶';
+  socket.on(SOCKET_EVENTS.CREATE_ROOM, (payload, callback) => {
+    const roomConfig = asObject(payload);
+    const username = asString(roomConfig.username) || socket.data.username || 'Player';
+    const avatar = asString(roomConfig.avatar) || socket.data.avatar || '🐶';
     socket.data.username = username;
     socket.data.avatar = avatar;
-    
+
+    // Only well-typed options reach createRoom (it applies its own defaults to the rest)
+    const options = {
+      maxPlayers: asPositiveNumber(roomConfig.maxPlayers),
+      roundTime: asPositiveNumber(roomConfig.roundTime),
+      totalRounds: asPositiveNumber(roomConfig.totalRounds),
+      miniChallengeEnabled: typeof roomConfig.miniChallengeEnabled === 'boolean' ? roomConfig.miniChallengeEnabled : undefined,
+      enabledChallenges: Array.isArray(roomConfig.enabledChallenges) ? roomConfig.enabledChallenges : undefined,
+    };
     const newRoom = roomManager.createRoom(
       null, // auto-generates 5-digit code
-      roomConfig.name,
+      asString(roomConfig.name),
       username,
-      roomConfig.gameMode || GAME_MODES.MULTIPLAYER_FFA,
-      roomConfig
+      Object.values(GAME_MODES).includes(roomConfig.gameMode) ? roomConfig.gameMode : GAME_MODES.MULTIPLAYER_FFA,
+      options
     );
 
     const sessionId = joinPlayerToRoom(io, socket, newRoom, username, avatar, timerManager, roundManager);
 
-    if (callback) callback({ success: true, roomId: newRoom.id, code: newRoom.code, sessionId });
+    reply(callback, { success: true, roomId: newRoom.id, code: newRoom.code, sessionId });
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
   });
 
   // Join Room by 5-Digit Code or Room ID
-  socket.on(SOCKET_EVENTS.JOIN_ROOM, ({ roomId, code, username, avatar }, callback) => {
-    const targetCode = (code || roomId || '').toString().trim();
-    socket.data.username = username || socket.data.username || 'Player';
-    socket.data.avatar = avatar || socket.data.avatar || '🐶';
+  socket.on(SOCKET_EVENTS.JOIN_ROOM, (payload, callback) => {
+    const { roomId, code, username, avatar } = asObject(payload);
+    const codeOrId = [code, roomId].find((v) => (typeof v === 'string' && v) || (typeof v === 'number' && Number.isFinite(v)));
+    const targetCode = codeOrId === undefined ? '' : String(codeOrId).trim();
+    socket.data.username = asString(username) || socket.data.username || 'Player';
+    socket.data.avatar = asString(avatar) || socket.data.avatar || '🐶';
 
     const room = roomManager.getRoom(targetCode);
 
     if (!room) {
-      if (callback) callback({ success: false, message: 'Room not found. Please check your 5-digit code!' });
+      reply(callback, { success: false, message: 'Room not found. Please check your 5-digit code!' });
       return;
     }
 
     // Solo vs AI is single-player: nobody can join a Solo room that already has its player
     if (room.gameMode === GAME_MODES.SOLO_AI && room.players.length > 0) {
-      if (callback) callback({ success: false, message: 'This is a Solo vs AI room (single player). Nobody else can join.' });
+      reply(callback, { success: false, message: 'This is a Solo vs AI room (single player). Nobody else can join.' });
       return;
     }
 
     if (room.players.length >= room.maxPlayers) {
-      if (callback) callback({ success: false, message: 'Room is full!' });
+      reply(callback, { success: false, message: 'Room is full!' });
       return;
     }
 
     const sessionId = joinPlayerToRoom(io, socket, room, socket.data.username, socket.data.avatar, timerManager, roundManager);
-    if (callback) callback({ success: true, roomId: room.id, code: room.code, sessionId });
+    reply(callback, { success: true, roomId: room.id, code: room.code, sessionId });
     io.emit(SOCKET_EVENTS.ROOM_LIST_UPDATED, roomManager.getPublicRoomList());
   });
 
@@ -71,7 +89,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       : null;
 
     if (!player) {
-      if (callback) callback({ success: false, message: 'Session expired.' });
+      reply(callback, { success: false, message: 'Session expired.' });
       return;
     }
 
@@ -109,7 +127,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       isSystem: true
     });
 
-    if (callback) callback({ success: true, roomId: room.id, code: room.code, username: player.username, avatar: player.avatar });
+    reply(callback, { success: true, roomId: room.id, code: room.code, username: player.username, avatar: player.avatar });
   });
 
   // Leave Room
@@ -118,7 +136,8 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   });
 
   // Switch Team
-  socket.on(SOCKET_EVENTS.SWITCH_TEAM, ({ team }) => {
+  socket.on(SOCKET_EVENTS.SWITCH_TEAM, (payload) => {
+    const { team } = asObject(payload);
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.gameMode !== GAME_MODES.TEAM) return;
 
@@ -142,7 +161,8 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   });
 
   // Update Room Settings (Host Only in LOBBY)
-  socket.on(SOCKET_EVENTS.UPDATE_ROOM_SETTINGS, (settings) => {
+  socket.on(SOCKET_EVENTS.UPDATE_ROOM_SETTINGS, (payload) => {
+    const settings = asObject(payload);
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.host !== socket.data.username || room.status !== 'LOBBY') return;
 

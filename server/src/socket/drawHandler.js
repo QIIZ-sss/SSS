@@ -3,9 +3,13 @@ const { SOCKET_EVENTS } = require('../../../shared/events');
 const { MINI_CHALLENGES } = require('../../../shared/gameConfig');
 const roomManager = require('../gameLogic/RoomManager');
 
+// Draw payloads come from an untrusted client: only plain objects are stored and relayed
+const isPayload = (data) => !!data && typeof data === 'object' && !Array.isArray(data);
+
 function setupDrawHandlers(io, socket) {
   // Client starts drawing stroke
   socket.on(SOCKET_EVENTS.DRAW_BEGIN, (data) => {
+    if (!isPayload(data)) return;
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'PLAYING') return;
     if (room.currentDrawer !== socket.data.username) return;
@@ -21,6 +25,7 @@ function setupDrawHandlers(io, socket) {
 
   // Client continuous stroke path
   socket.on(SOCKET_EVENTS.DRAW_PATH, (data) => {
+    if (!isPayload(data)) return;
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'PLAYING') return;
     if (room.currentDrawer !== socket.data.username) return;
@@ -36,6 +41,7 @@ function setupDrawHandlers(io, socket) {
 
   // Live Ghost Shape Preview broadcast for Geometric Shapes
   socket.on(SOCKET_EVENTS.SHAPE_PREVIEW, (data) => {
+    if (!isPayload(data)) return;
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'PLAYING') return;
     if (room.currentDrawer !== socket.data.username) return;
@@ -45,6 +51,7 @@ function setupDrawHandlers(io, socket) {
 
   // Client finishes stroke path / geometric shape
   socket.on(SOCKET_EVENTS.DRAW_END, (data) => {
+    if (!isPayload(data)) return;
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'PLAYING') return;
     if (room.currentDrawer !== socket.data.username) return;
@@ -66,6 +73,7 @@ function setupDrawHandlers(io, socket) {
 
   // Client bucket fill
   socket.on(SOCKET_EVENTS.DRAW_FILL, (data) => {
+    if (!isPayload(data)) return;
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.status !== 'PLAYING') return;
     if (room.currentDrawer !== socket.data.username) return;
