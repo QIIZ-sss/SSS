@@ -56,7 +56,7 @@ for t in "$TESTS"/render/*.test.jsx; do run_case "render/$(basename "$t")" node 
 
 echo "=== [6] browser tests (headless Chrome)"
 for t in "$TESTS"/browser/*.browser.jsx; do
-  case "$t" in *overflow*) continue ;; esac   # *overflow* tests need the Tailwind CDN, run below
+  case "$t" in *overflow*|*viewport*) continue ;; esac   # *overflow* / *viewport* tests need the Tailwind CDN, run below
   run_case "browser/$(basename "$t" .browser.jsx)" env DEV=1 VTB=20000 CHROME_TIMEOUT=60000 node "$TESTS/lib/browser.js" "$t"
 done
 if curl -s -m 8 -o /dev/null https://cdn.tailwindcss.com/; then
@@ -64,12 +64,12 @@ if curl -s -m 8 -o /dev/null https://cdn.tailwindcss.com/; then
     run_case "browser/b2-layout-overflow@${w}px" \
       env FRAME_W=$w REAL_HEAD=1 VTB=25000 CHROME_TIMEOUT=120000 node "$TESTS/lib/browser.js" "$TESTS/browser/b2-layout-overflow.browser.jsx"
   done
-  for t in "$TESTS"/browser/*overflow*.browser.jsx; do
+  for t in "$TESTS"/browser/*overflow*.browser.jsx "$TESTS"/browser/*viewport*.browser.jsx; do
     case "$t" in *b2-layout-overflow*) continue ;; esac
     run_case "browser/$(basename "$t" .browser.jsx)" env REAL_HEAD=1 VTB=25000 CHROME_TIMEOUT=120000 node "$TESTS/lib/browser.js" "$t"
   done
 else
-  skip "browser/*overflow* (no network access to cdn.tailwindcss.com)"
+  skip "browser/*overflow* *viewport* (no network access to cdn.tailwindcss.com)"
 fi
 
 echo "=== [7] server on :$TEST_PORT + e2e (real socket.io clients)"

@@ -381,7 +381,7 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
                   {/* LEFT PANEL: Player Persona & Room Setup (5 Cols) */}
                   <div className="lg:col-span-5 flex flex-col gap-space-lg">
-                    <div className="bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_#18181B] p-space-lg flex flex-col gap-space-lg relative overflow-hidden">
+                    <div className="bg-canvas-paper rounded-xl border-4 border-border-dark shadow-[6px_6px_0px_#18181B] p-space-lg flex flex-col gap-space-lg relative overflow-clip">
                       {/* Tab Mode Switcher */}
                       <div className="grid grid-cols-2 gap-space-xs bg-surface-card-subtle p-1.5 rounded-xl border-2 border-border-dark">
                         <button
@@ -533,8 +533,10 @@ export default function App() {
                             </div>
                           </div>
 
+                          {/* T1-17: the main action stays in view on first load (sticks to the bottom of the viewport) */}
                           <button
-                            className="w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase tracking-wider border-3 border-border-dark shadow-[4px_4px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-space-sm"
+                            id="createRoomButton"
+                            className="sticky bottom-space-sm z-10 w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase tracking-wider border-3 border-border-dark shadow-[4px_4px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-space-sm"
                             onClick={handleCreateRoom}
                             type="button"
                           >

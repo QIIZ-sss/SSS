@@ -806,8 +806,8 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-13 | Lobby chat | P7 | TODO | optional |
 | T1-14 | Settings / Modifiers + Solo restriction UX | P5 | TODO | Solo switch refusal + reason already in SOLO-1 |
 | T1-15 | Team selection / switching (= U9) | P2 | TODO | merged with U9 |
-| T1-16 | Modifiers empty / purple area | — | merged into T1-17 | |
-| T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | TODO | |
+| T1-16 | Modifiers empty / purple area | — | DONE (merged into T1-17) | card blank band removed |
+| T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | IN PROGRESS | P0 part DONE (section T1-17); further layout items in P5 |
 | T1-18 | Room-not-found UI | P0 / P1 | DONE | see section T1-18 |
 | T1-19 | Solo lobby | P1 | TODO | roster / Ready / max players already hidden in SOLO-1 |
 | T1-20 | Room name | P5 | TODO | |
@@ -862,6 +862,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** a failed join (wrong PIN / room not found, Solo room, room full, incomplete PIN) used a blocking browser `alert()`.
 - **Fix:** `client/src/App.jsx` (PIN form) and `client/src/components/RoomList.jsx` show the server's reason inline (`role="alert"`, red box above the JOIN button / room grid); the PIN stays for correction and the message clears when the PIN is edited. No server or contract change (the server already sends `{success:false, message}`).
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-18-room-not-found.browser.jsx` 7/7 (incomplete PIN → message, nothing sent; edit clears; not found → server message inline; PIN kept; room list failure inline; no `alert()`). Regression: B3 PIN 9/9, B4 client 6/6.
+
+### T1-17 / T1-16 — Initial viewport and Modifiers layout (P0 part)
+
+- **Interpretation (from screenshots, headless Chrome + real Tailwind):** on first load at 1280×800 the main action CREATE PRIVATE ROOM sat below the fold (y≈893); in the lobby, the MODIFIERS mini-challenge cards had an empty band between the icon row and the text (`justify-between` in equal-height grid rows) — taken as the "empty area" of T1-16.
+- **Fix:** `client/src/App.jsx` — the CREATE PRIVATE ROOM button is `sticky bottom-space-sm` (stays at the bottom of the viewport while the form is longer than the screen); the home panel uses `overflow-clip` instead of `overflow-hidden` (same clipping, but not a scroll container, so sticky works). `client/src/components/RoomLobby.jsx` — cards `justify-start`. `tests/check_all.sh` also runs `*viewport*` browser tests with the Tailwind CDN.
+- **Status:** P0 part DONE (automated); MANUAL NOT TESTED (real phones / iPad). `tests/browser/t1-17-initial-viewport.browser.jsx` 2/2 (button inside a 1280×813 window on load: 745–805 px, was 855–915; card text 8 px below the icon row, was a stretched band). Regression: B2 layout 375 / 820 px 9/9. Remaining T1-17 layout work (P5) stays open.
 
 ---
 

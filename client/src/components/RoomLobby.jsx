@@ -161,7 +161,7 @@ export default function RoomLobby({ roomData, username }) {
                       <div
                         key={key}
                         onClick={() => isHost && handleToggleChallenge(key)}
-                        className={`p-space-sm bg-canvas-paper rounded-lg border-2 border-border-dark shadow-[3px_3px_0px_0px_#18181B] flex flex-col justify-between gap-space-sm transition-all ${
+                        className={`p-space-sm bg-canvas-paper rounded-lg border-2 border-border-dark shadow-[3px_3px_0px_0px_#18181B] flex flex-col justify-start gap-space-sm transition-all ${
                           isHost ? 'cursor-pointer hover:-translate-y-0.5 active:translate-y-0' : ''
                         } ${!isEnabled ? 'opacity-50 grayscale[30%]' : ''}`}
                       >
