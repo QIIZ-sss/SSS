@@ -808,7 +808,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-15 | Team selection / switching (= U9) | P2 | TODO | merged with U9 |
 | T1-16 | Modifiers empty / purple area | — | merged into T1-17 | |
 | T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | TODO | |
-| T1-18 | Room-not-found UI | P0 / P1 | TODO | |
+| T1-18 | Room-not-found UI | P0 / P1 | DONE | see section T1-18 |
 | T1-19 | Solo lobby | P1 | TODO | roster / Ready / max players already hidden in SOLO-1 |
 | T1-20 | Room name | P5 | TODO | |
 | T1-21 | Personal "close" hint | P7 | TODO | optional |
@@ -856,6 +856,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** chat bubbles had no word wrapping (a long unbroken word ran out of the box), the message list could grow instead of scrolling (`flex-1` without `min-h-0` / max height), auto-scroll used `scrollIntoView` (can scroll the whole page), and messages had no length limit.
 - **Fix:** `client/src/components/ChatBox.jsx` — bubbles `break-words [overflow-wrap:anywhere] min-w-0`; list `min-h-0 max-h-[360px] overflow-y-auto overflow-x-hidden`, scrolled to the newest message via its own `scrollTop`; input `maxLength`. New `GAME_RULES.CHAT_MAX_LENGTH` (200) in `shared/contract.js`; `chatHandler.js` ignores longer messages (server-authoritative). `tests/check_all.sh`: `*overflow*` browser tests run with the Tailwind CDN (`REAL_HEAD=1`), SKIP without network.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-06-chat-overflow.browser.jsx` 5/5 (320 px: long words wrap, 42 messages scroll in ≤ 360 px, scrolled to newest, page not wider, input maxLength 200). `tests/e2e/t1-06-chat-length.e2e.js` 2/2 (201 chars ignored, 200 delivered). Regression: p3.1, p3.2.
+
+### T1-18 — Room-not-found UI
+
+- **Problem:** a failed join (wrong PIN / room not found, Solo room, room full, incomplete PIN) used a blocking browser `alert()`.
+- **Fix:** `client/src/App.jsx` (PIN form) and `client/src/components/RoomList.jsx` show the server's reason inline (`role="alert"`, red box above the JOIN button / room grid); the PIN stays for correction and the message clears when the PIN is edited. No server or contract change (the server already sends `{success:false, message}`).
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-18-room-not-found.browser.jsx` 7/7 (incomplete PIN → message, nothing sent; edit clears; not found → server message inline; PIN kept; room list failure inline; no `alert()`). Regression: B3 PIN 9/9, B4 client 6/6.
 
 ---
 

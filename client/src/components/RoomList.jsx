@@ -6,6 +6,7 @@ export default function RoomList({ username, avatar, onJoinRoom }) {
   const [rooms, setRooms] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('ALL');
+  const [joinError, setJoinError] = useState(''); // T1-18: inline join error instead of alert()
 
   useEffect(() => {
     socket.emit(SOCKET_EVENTS.GET_ROOMS);
@@ -22,11 +23,12 @@ export default function RoomList({ username, avatar, onJoinRoom }) {
   }, []);
 
   const handleJoin = (roomId) => {
+    setJoinError('');
     socket.emit(SOCKET_EVENTS.JOIN_ROOM, { roomId, username, avatar }, (response) => {
       if (response && response.success) {
         onJoinRoom(roomId, response);
       } else {
-        alert(response?.message || 'Could not join room');
+        setJoinError(response?.message || 'Could not join the room.');
       }
     });
   };
@@ -91,6 +93,12 @@ export default function RoomList({ username, avatar, onJoinRoom }) {
           search
         </span>
       </div>
+
+      {joinError && (
+        <p role="alert" id="roomListJoinError" className="font-body-md text-body-md font-bold text-on-error bg-timer-red border-2 border-border-dark rounded-xl px-space-md py-space-xs text-center break-words">
+          {joinError}
+        </p>
+      )}
 
       {/* Rooms Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-space-md">

@@ -161,8 +161,10 @@ export default function App() {
   };
 
   // B3: PIN boxes — digits only, auto-advance, Backspace goes back, paste fills from the first box
+  const [joinError, setJoinError] = useState(''); // T1-18: inline join error instead of alert()
   const applyPin = ({ digits, focus }) => {
     setPinDigits(digits);
+    setJoinError('');
     if (focus !== null && pinRefs.current[focus]) pinRefs.current[focus].focus();
   };
 
@@ -170,7 +172,7 @@ export default function App() {
     e.preventDefault();
     const fullPin = pinDigits.join('');
     if (fullPin.length < PIN_LENGTH) {
-      alert(`Please enter a ${PIN_LENGTH}-digit room code!`);
+      setJoinError(`Please enter the ${PIN_LENGTH}-digit room code.`);
       return;
     }
 
@@ -179,7 +181,7 @@ export default function App() {
         saveSession(res);
         setCurrentRoomId(res.roomId);
       } else {
-        alert(res?.message || 'Failed to join room!');
+        setJoinError(res?.message || 'Could not join the room.');
       }
     });
   };
@@ -575,6 +577,12 @@ export default function App() {
                               />
                             ))}
                           </div>
+
+                          {joinError && (
+                            <p role="alert" id="joinError" className="font-body-md text-body-md font-bold text-on-error bg-timer-red border-2 border-border-dark rounded-xl px-space-md py-space-xs text-center break-words">
+                              {joinError}
+                            </p>
+                          )}
 
                           <button
                             className="w-full py-space-md rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-headline-md text-headline-md uppercase tracking-wider border-3 border-border-dark shadow-[4px_4px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-space-sm"
