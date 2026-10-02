@@ -59,7 +59,8 @@ npm run dev -- --host    # ให้มือถือ/ไอแพดในว�
 
 - server ต้องแสดง `JUST DRAW IT Server listening on port 4000` และ `[AI] โหลด DoodleNet สำเร็จ: 345 หมวด, ใช้ในเกม 19 คำ`
   (มีคำเตือนเรื่อง tfjs-node และ `conv2d_1` — ไม่มีผลกับการทาย)
-- เปลี่ยนพอร์ต server ได้ด้วย `PORT=4001 npm run dev` ถ้าพอร์ตถูกใช้อยู่ server จะแจ้งข้อความแล้วออก
+- `npm run dev` ของ server ใช้ `node --watch` (มีใน Node.js อยู่แล้ว ไม่ต้องติดตั้งเพิ่ม): แก้ไฟล์ใน `server/src/` หรือ `shared/` แล้ว server รีสตาร์ตเอง — ห้องและคะแนนที่อยู่ในหน่วยความจำจะหายทุกครั้งที่รีสตาร์ต ให้รีเฟรชหน้าเว็บแล้วสร้างห้องใหม่; `npm start` ยังเป็น `node src/server.js` ธรรมดา (ไม่รีสตาร์ตเอง). ถ้าพอร์ตถูกใช้อยู่ `npm run dev` จะแสดงข้อความเดิมแล้วรอการแก้ไฟล์แทนการปิดตัว — กด Ctrl+C แล้วรันใหม่ด้วย PORT อื่น
+- เปลี่ยนพอร์ต server ได้ด้วย `PORT=4001 npm run dev` ถ้าพอร์ตถูกใช้อยู่ server จะแจ้งข้อความแล้วออก (`npm start`; `npm run dev` ดูข้อบน)
 - เปิดผ่าน `localhost` → หน้าเว็บต่อ server ที่ `localhost:4000` ตรง ๆ; เปิดผ่าน IP (อุปกรณ์อื่น) → ต่อผ่าน proxy ของ Vite (`/socket.io`, `/api` → `127.0.0.1:4000` ใน `client/vite.config.js`) — ดู `client/src/services/socket.js`
 - ทดสอบหลายคนบนเครื่องเดียว: เปิดหน้าต่างไม่ระบุตัวตนเพิ่ม (แต่ละแท็บมี session ของตัวเอง)
 - server ปัจจุบันไม่อ่านไฟล์ `.env` และไม่ต้องใช้ PostgreSQL / Docker (`server/.env.example` และ `docker-compose.yml` เป็นของโค้ดชุดเก่า)

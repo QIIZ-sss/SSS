@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "dev": "node --watch src/server.js"
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
