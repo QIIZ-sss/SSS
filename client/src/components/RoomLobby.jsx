@@ -16,8 +16,14 @@ export default function RoomLobby({ roomData, username }) {
     : [];
   const redCount = roomData.players.filter((p) => p.team === 'Red').length;
   const blueCount = roomData.players.filter((p) => p.team === 'Blue').length;
+  // Solo vs AI is single-player (server enforces it): no roster, no Ready, no max players
+  const isSolo = roomData.gameMode === GAME_MODES.SOLO_AI;
+  const othersInRoom = roomData.players.some((p) => p.username !== roomData.host);
+  const SOLO_BLOCKED = 'Solo vs AI is single-player: everyone else must leave the room first';
   let startBlockReason = null;
-  if (roomData.gameMode === GAME_MODES.MULTIPLAYER_FFA && roomData.players.length < GAME_RULES.MIN_PLAYERS_FFA) {
+  if (isSolo) {
+    startBlockReason = othersInRoom ? SOLO_BLOCKED : null;
+  } else if (roomData.gameMode === GAME_MODES.MULTIPLAYER_FFA && roomData.players.length < GAME_RULES.MIN_PLAYERS_FFA) {
     startBlockReason = `At least ${GAME_RULES.MIN_PLAYERS_FFA} players are required`;
   } else if (
     roomData.gameMode === GAME_MODES.TEAM &&
@@ -205,21 +211,28 @@ export default function RoomLobby({ roomData, username }) {
                       { mode: GAME_MODES.MULTIPLAYER_FFA, label: 'FREE-FOR-ALL', icon: 'groups', color: 'bg-primary-container text-on-primary' },
                       { mode: GAME_MODES.TEAM, label: 'TEAM CLASH', icon: 'diversity_3', color: 'bg-accent-blue text-on-tertiary' },
                       { mode: GAME_MODES.SOLO_AI, label: 'SOLO VS AI', icon: 'smart_toy', color: 'bg-tertiary-fixed text-on-tertiary-fixed' }
-                    ].map((item) => (
-                      <button
-                        key={item.mode}
-                        disabled={!isHost}
-                        className={`flex flex-col items-center justify-center p-space-xs rounded-xl border-2 border-border-dark transition-all text-center ${
-                          roomData.gameMode === item.mode ? `${item.color} shadow-[2px_2px_0px_#18181B] font-bold` : 'bg-canvas-paper text-on-surface hover:bg-surface-container'
-                        } ${!isHost ? 'cursor-default opacity-90' : 'hover:translate-x-[-1px] hover:translate-y-[-1px]'}`}
-                        onClick={() => handleUpdateSetting({ gameMode: item.mode })}
-                        type="button"
-                      >
-                        <span className="material-symbols-outlined text-[20px] mb-0.5">{item.icon}</span>
-                        <span className="font-label-sm text-label-sm leading-tight">{item.label}</span>
-                      </button>
-                    ))}
+                    ].map((item) => {
+                      const soloBlocked = item.mode === GAME_MODES.SOLO_AI && othersInRoom;
+                      return (
+                        <button
+                          key={item.mode}
+                          disabled={!isHost || soloBlocked}
+                          title={soloBlocked ? SOLO_BLOCKED : undefined}
+                          className={`flex flex-col items-center justify-center p-space-xs rounded-xl border-2 border-border-dark transition-all text-center ${
+                            roomData.gameMode === item.mode ? `${item.color} shadow-[2px_2px_0px_#18181B] font-bold` : 'bg-canvas-paper text-on-surface hover:bg-surface-container'
+                          } ${!isHost ? 'cursor-default opacity-90' : soloBlocked ? 'opacity-40 cursor-not-allowed' : 'hover:translate-x-[-1px] hover:translate-y-[-1px]'}`}
+                          onClick={() => handleUpdateSetting({ gameMode: item.mode })}
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-[20px] mb-0.5">{item.icon}</span>
+                          <span className="font-label-sm text-label-sm leading-tight">{item.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
+                  {isHost && othersInRoom && (
+                    <p className="font-body-sm text-body-sm text-on-surface-variant" id="soloBlockedReason">{SOLO_BLOCKED}.</p>
+                  )}
                 </div>
 
                 {/* Granular Mini-Challenges Selection */}
@@ -320,7 +333,8 @@ export default function RoomLobby({ roomData, username }) {
                   </div>
                 </div>
 
-                {/* Max Capacity */}
+                {/* Max Capacity (not for Solo vs AI) */}
+                {!isSolo && (
                 <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex items-center justify-between shadow-sm">
                   <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">5. MAX PLAYERS:</span>
                   <div className="flex items-center gap-1">
@@ -341,6 +355,7 @@ export default function RoomLobby({ roomData, username }) {
                     ))}
                   </div>
                 </div>
+                )}
               </div>
             )}
           </div>
@@ -349,6 +364,16 @@ export default function RoomLobby({ roomData, username }) {
         {/* RIGHT SECTION (Columns 8-12): Player Roster */}
         <div className="lg:col-span-5 flex flex-col gap-space-md">
           <div className="bg-canvas-paper rounded-xl p-space-md border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] flex flex-col gap-space-md">
+            {isSolo ? (
+              <div className="flex flex-col gap-space-xs pb-space-xs border-b-2 border-border-dark" id="soloPanel">
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-primary text-[22px]">smart_toy</span>
+                  <h3 className="font-headline-sm text-headline-sm uppercase text-border-dark font-black">SOLO VS AI</h3>
+                </div>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">Single player: you draw, the AI guesses. No Ready step.</p>
+              </div>
+            ) : (
+            <>
             <div className="flex items-center justify-between pb-space-xs border-b-2 border-border-dark">
               <div className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-primary text-[22px]">group</span>
@@ -396,8 +421,11 @@ export default function RoomLobby({ roomData, username }) {
                 );
               })}
             </div>
+            </>
+            )}
 
             <div className="flex flex-col gap-space-xs pt-space-xs">
+              {!isSolo && (
               <button
                 className="w-full py-space-md rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-headline-md text-headline-md uppercase border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all"
                 onClick={handleToggleReady}
@@ -405,6 +433,7 @@ export default function RoomLobby({ roomData, username }) {
               >
                 TOGGLE READY
               </button>
+              )}
               {isHost && (
                 <button
                   className="w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0"
@@ -413,7 +442,7 @@ export default function RoomLobby({ roomData, username }) {
                   type="button"
                 >
                   <span className="material-symbols-outlined text-[24px]">play_arrow</span>
-                  START GAME
+                  {isSolo ? 'START SOLO' : 'START GAME'}
                 </button>
               )}
               {isHost && startBlockReason && (

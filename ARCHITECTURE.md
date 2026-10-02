@@ -87,6 +87,7 @@ At baseline `README.md` documented the legacy game and file layout, not the live
 ### 3.2 NOT enforced on the server (CURRENT FACT → GAP)
 
 - **Updated in P2.1/P2.2:** `start_game` is validated by `getStartBlockReason()` in `gameHandler.js` — LOBBY only, all non-host ready, FFA ≥ `MIN_PLAYERS_FFA`, TEAM ≥ `MIN_PLAYERS_TEAM_TOTAL` with ≥ `MIN_PLAYERS_PER_TEAM` per team (Solo AI exempt). Switching a lobby to TEAM alternates players Red/Blue (no team-switch UI exists).
+- **Updated in SOLO-1:** Solo vs AI is single-player on the server: Solo rooms are left out of `getPublicRoomList()`; `join_room` to a Solo room that already has a player is rejected (ack `{success:false, message}`); `update_room_settings` refuses a switch to `SOLO_AI` while anyone besides the host is in the room (system `chat_message` to the host; the lobby also disables the button with the reason); `getStartBlockReason()` lets a Solo room start with only the host and no Ready step.
 - ~~Drawer chat is broadcast to all — `chatHandler.js:70-74` (A6).~~ **Fixed in P3.2:** drawer messages are dropped during WORD_SELECTION/PLAYING (`GAME_RULES.DRAWER_CAN_CHAT`); `ChatBox.jsx` disables input.
 - `select_word` does not validate `word` against `room.wordOptions` — `gameHandler.js:135`.
 - `DONT_LIFT_PEN` and `GEOMETRIC_ONLY` enforced only in the client — `client/src/components/Canvas.jsx:157-165`.
@@ -205,7 +206,7 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | C→S | `send_chat` | `{text}` | `ChatBox.jsx:30` |
 | C→S | `solo_ai_predict` | **since A8:** `{targetWord, pixels}` (baseline `{pixels}`) | `SoloAIGame.jsx` |
 | S→C | `room_data` | `sanitizeRoom()` output — **per player since P3.1** (`currentWord` only for drawer / reveal states) | `RoomManager.js` `sanitizeRoom`, `emitRoomData` |
-| S→C | `room_list_updated` | room summaries | `RoomManager.js:69-84` |
+| S→C | `room_list_updated` | room summaries (**Solo AI rooms omitted since SOLO-1**) | `RoomManager.js` `getPublicRoomList` |
 | S→C | `round_change` | `{currentDrawer, currentRound, totalRounds, status}` | `RoundManager.js:43-48` |
 | S→C | `word_selection` | `{words}` — drawer socket only | `RoundManager.js:54-60` |
 | S→C | `round_start` | `{drawer, round, totalRounds, challenge, forcedColor, roundTime}` | `RoundManager.js:75-82` |

@@ -45,6 +45,7 @@ Rules for every task: follow `AGENTS.md`. Facts about current behaviour are in `
 | QA-3 | server `npm run dev` auto-reload | 7 | Done (checked by hand: restart on file change) |
 | QA-4 | no Fill during DONT_LIFT_PEN (D3) | 7 | Done (headless Chrome + e2e); MANUAL NOT TESTED |
 | QA-5 | docs/test cleanup | 7 | Done |
+| SOLO-1 | Solo vs AI single-player room | 7 | Done (automated); MANUAL NOT TESTED |
 
 ### Regression suite (`tests/`)
 
@@ -766,6 +767,14 @@ Requirements with no original bug: A7, B5, C2, C3, C4, D2 (from QA/HANDOFF).
 - **Source:** QA review 2026-10-02 (fix 5).
 - **Change:** `ARCHITECTURE.md` §7 — removed the obsolete Solo AI payload `GAP` (since A8 the live payloads follow `shared/contract.js`). `tests/lib/browser.js` — React is bundled in development mode by default (`DEV=0` for production), so a browser test run on its own no longer fails with "act(...) is not supported in production builds"; `check_all.sh` unchanged (still passes `DEV=1`). `tests/README.md` documents it.
 - **Status:** Done. Checked: `d3-challenge-popup` without `DEV` 19/19; with `DEV=0` it stays PENDING (production React, expected); `b2-layout-overflow@375px` as run by `check_all.sh` (no `DEV`, now development) 9/9.
+
+### SOLO-1 — Solo vs AI is a single-player room
+
+- **Source:** human request 2026-10-02. Before: Solo rooms were in the public room list and a second player could join from the list or by PIN (`join_room` only checked `maxPlayers`, default 10).
+- **Rules (server-authoritative):** Solo rooms not in the public list; `join_room` rejected when the Solo room already has its player; switch to `SOLO_AI` refused while anyone besides the host is in the room; Solo starts with only the host and no Ready. FFA / Team validation unchanged. "Single-player" is expressed as "nobody besides the host" — no new numeric constant, no `shared/` change, no new event or payload field.
+- **Files:** `server/src/gameLogic/RoomManager.js` (list filter), `server/src/socket/gameHandler.js` (join, settings, start), `client/src/components/RoomLobby.jsx` (Solo: no roster, no TOGGLE READY, no MAX PLAYERS, START SOLO; rounds / timer / difficulty / challenges kept; SOLO VS AI button disabled with the reason while others are in the room). The PIN rejection reason is shown by the existing `alert(res.message)` in `App.jsx`.
+- **Status:** Done (automated); MANUAL NOT TESTED. `tests/e2e/solo-room.e2e.js` 16/16 (Solo not listed; PIN join rejected with reason, room keeps 1 player; Solo starts without Ready; switch with 2 players refused + system message, still listed; TEAM switch still works; alone → switch allowed, unlisted, join rejected; back to FFA → listed again; FFA alone / guest not Ready still blocked, all Ready starts). `tests/render/solo-lobby.test.jsx` 10/10. Regression: p2.1 8/8, p2.2 9/9, a8-a9 20/20, b4 20/20, a2 14/14, live D1 6/6, D1 setting 6/6, B2 layout 375/820 9/9, client build.
+  - Known, not changed: a disconnected Solo player keeps the slot for the reconnect grace period (B4), so the room stays closed to others meanwhile (intended). The dead `server/src/socket/roomHandler.js` also answers `get_rooms` but is not loaded by `server.js`.
 
 ---
 

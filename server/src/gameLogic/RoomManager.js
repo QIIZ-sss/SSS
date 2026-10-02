@@ -71,6 +71,7 @@ class RoomManager {
   getPublicRoomList() {
     const list = [];
     this.rooms.forEach(room => {
+      if (room.gameMode === GAME_MODES.SOLO_AI) return; // Solo vs AI rooms are single-player: not listed
       list.push({
         id: room.id,
         code: room.code,

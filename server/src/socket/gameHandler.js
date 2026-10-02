@@ -46,6 +46,12 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
       return;
     }
 
+    // Solo vs AI is single-player: nobody can join a Solo room that already has its player
+    if (room.gameMode === GAME_MODES.SOLO_AI && room.players.length > 0) {
+      if (callback) callback({ success: false, message: 'This is a Solo vs AI room (single player). Nobody else can join.' });
+      return;
+    }
+
     if (room.players.length >= room.maxPlayers) {
       if (callback) callback({ success: false, message: 'Room is full!' });
       return;
@@ -140,7 +146,12 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.host !== socket.data.username || room.status !== 'LOBBY') return;
 
-    if (settings.gameMode && Object.values(GAME_MODES).includes(settings.gameMode)) {
+    // Solo vs AI is single-player: refuse the switch while anyone besides the host is in the room
+    const soloRefused = settings.gameMode === GAME_MODES.SOLO_AI && room.players.some(p => p.username !== room.host);
+    if (soloRefused) {
+      socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: 'System', text: 'Solo vs AI is single-player: everyone else must leave the room first.', isSystem: true });
+    }
+    if (!soloRefused && settings.gameMode && Object.values(GAME_MODES).includes(settings.gameMode)) {
       const switchedToTeam = settings.gameMode === GAME_MODES.TEAM && room.gameMode !== GAME_MODES.TEAM;
       room.gameMode = settings.gameMode;
       // Players who joined before the switch were not team-balanced; there is no team-switch UI
@@ -245,6 +256,11 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
 // Server-authoritative START validation. Returns a reason string, or null when the game may start.
 function getStartBlockReason(room) {
   if (room.status !== GAME_STATUS.LOBBY) return 'The game can only be started from the lobby.';
+
+  // Solo vs AI: exactly the host, no Ready step
+  if (room.gameMode === GAME_MODES.SOLO_AI) {
+    return room.players.some(p => p.username !== room.host) ? 'Solo vs AI is single-player: everyone else must leave the room first.' : null;
+  }
 
   if (GAME_RULES.REQUIRE_ALL_READY) {
     const notReady = room.players.filter(p => p.username !== room.host && !p.isReady);
