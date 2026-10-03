@@ -5,6 +5,7 @@ import MultiplayerGame from './gameModes/MultiplayerGame';
 import TeamGame from './gameModes/TeamGame';
 import SoloAIGame from './gameModes/SoloAIGame';
 import { clearChatHistory } from './components/ChatBox';
+import ResultScreen from './components/ResultScreen';
 import { socket, connectSocket } from './services/socket';
 import { SOCKET_EVENTS } from '../../shared/events';
 import { GAME_MODES, AVATARS } from '../../shared/gameConfig';
@@ -642,47 +643,8 @@ export default function App() {
         </div>
       </main>
 
-      {/* Match Over Summary Modal */}
-      {gameOverModal && (
-        <div className="fixed inset-0 z-50 bg-border-dark/80 flex items-center justify-center p-space-md">
-          <div className="bg-canvas-paper border-4 border-border-dark shadow-[8px_8px_0px_#18181B] rounded-2xl p-space-xl max-w-[500px] w-full text-center flex flex-col gap-space-md">
-            <h2 className="font-headline-xl text-headline-xl uppercase text-border-dark">{gameOverModal.stopped ? '⚠️ MATCH STOPPED' : '🏆 MATCH RESULTS'}</h2>
-            <h3 className="font-headline-md text-headline-md text-primary-container font-black">{gameOverModal.winnerText}</h3>
-            {gameOverModal.stopped && gameOverModal.reason && (
-              <p className="font-body-md text-body-md text-border-dark" id="matchStoppedReason">{gameOverModal.reason}</p>
-            )}
-
-            <div className="bg-surface-card p-space-md rounded-xl border-2 border-border-dark text-left flex flex-col gap-2">
-              <h4 className="font-headline-sm text-headline-sm text-border-dark uppercase">FINAL STANDINGS</h4>
-              {/* T1-02: Team totals; the list arrives ranked from the server */}
-              {gameOverModal.gameMode === GAME_MODES.TEAM && (
-                <div className="flex gap-2" id="teamTotals">
-                  {['Red', 'Blue'].map((t) => (
-                    <span key={t} className={`flex-1 text-center rounded border border-border-dark font-bold ${t === 'Red' ? 'bg-timer-red text-on-error' : 'bg-accent-blue text-on-tertiary'}`}>
-                      TEAM {t.toUpperCase()}: {gameOverModal.teamScores?.[t]?.score ?? 0} PTS
-                    </span>
-                  ))}
-                </div>
-              )}
-              <ul className="flex flex-col gap-1">
-                {gameOverModal.finalScores.map((p, idx) => (
-                  <li key={p.username} className="flex justify-between items-center p-space-xs rounded bg-surface-container border border-border-dark">
-                    <span>{p.avatar || '🐶'} #{idx + 1} {p.username}{gameOverModal.gameMode === GAME_MODES.TEAM && p.team ? ` (${p.team})` : ''}</span>
-                    <span className="font-bold">{p.score} PTS</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              className="w-full py-space-md rounded-xl bg-primary-container text-on-primary font-headline-md text-headline-md uppercase border-3 border-border-dark shadow-[4px_4px_0px_#18181B] hover:opacity-90 transition-all"
-              onClick={handleLeaveRoom}
-            >
-              LEAVE ROOM
-            </button>
-          </div>
-        </div>
-      )}
+      {/* T1-25: universal result screen (closes when the room returns to LOBBY, see handleRoomData) */}
+      {gameOverModal && <ResultScreen result={gameOverModal} username={username} onLeave={handleLeaveRoom} />}
     </div>
   );
 }
