@@ -19,7 +19,28 @@ const asRoomName = (v) => {
   const clean = Array.from(v.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').trim()).slice(0, GAME_RULES.ROOM_NAME_MAX_LENGTH).join('').trim();
   return clean || undefined;
 };
-const asPositiveNumber = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
+// U11 / U10: one set of rules for create_room and update_room_settings. Returns null when the payload must be
+// rejected (an enabledChallenges list with an ID not in MINI_CHALLENGES); otherwise only the fields to apply, with
+// numbers clamped. `unknownMode`: gameMode given but not a GAME_MODES value (update ignores it, create rejects it).
+const parseRoomSettings = (settings) => {
+  const out = {};
+  if (Array.isArray(settings.enabledChallenges)) {
+    if (!settings.enabledChallenges.every((id) => Object.values(MINI_CHALLENGES).includes(id))) return null;
+    out.enabledChallenges = settings.enabledChallenges;
+    out.miniChallengeEnabled = settings.enabledChallenges.length > 0;
+  } else if (typeof settings.miniChallengeEnabled === 'boolean') {
+    out.miniChallengeEnabled = settings.miniChallengeEnabled;
+  }
+  if (Object.values(GAME_MODES).includes(settings.gameMode)) out.gameMode = settings.gameMode;
+  else if (settings.gameMode !== undefined) out.unknownMode = true;
+  if (settings.roundTime && typeof settings.roundTime === 'number') out.roundTime = Math.max(15, Math.min(180, settings.roundTime));
+  if (settings.totalRounds && typeof settings.totalRounds === 'number') out.totalRounds = Math.max(1, Math.min(10, settings.totalRounds));
+  if (settings.maxPlayers && typeof settings.maxPlayers === 'number') out.maxPlayers = Math.max(2, Math.min(16, settings.maxPlayers));
+  // D1: word difficulty (null = Mixed); anything else is ignored
+  if (Object.prototype.hasOwnProperty.call(settings, 'wordDifficulty')
+    && (settings.wordDifficulty === null || Object.values(WORD_DIFFICULTY).includes(settings.wordDifficulty))) out.wordDifficulty = settings.wordDifficulty;
+  return out;
+};
 const reply = (callback, data) => { if (typeof callback === 'function') callback(data); };
 
 function setupGameHandlers(io, socket, timerManager, roundManager) {
@@ -33,24 +54,31 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const roomConfig = asObject(payload);
     const username = asString(roomConfig.username) || socket.data.username || 'Player';
     const avatar = asAvatar(roomConfig.avatar) || socket.data.avatar || AVATARS[0].emoji;
+    // U11 / U10: same rules as update_room_settings; unknown challenge ID or game mode → no room
+    const parsed = parseRoomSettings(roomConfig);
+    if (!parsed || parsed.unknownMode) {
+      reply(callback, { success: false, message: 'Invalid room settings' });
+      return;
+    }
     socket.data.username = username;
     socket.data.avatar = avatar;
 
-    // Only well-typed options reach createRoom (it applies its own defaults to the rest)
+    // Only validated options reach createRoom (it applies its own defaults to the rest)
     const options = {
-      maxPlayers: asPositiveNumber(roomConfig.maxPlayers),
-      roundTime: asPositiveNumber(roomConfig.roundTime),
-      totalRounds: asPositiveNumber(roomConfig.totalRounds),
-      miniChallengeEnabled: typeof roomConfig.miniChallengeEnabled === 'boolean' ? roomConfig.miniChallengeEnabled : undefined,
-      enabledChallenges: Array.isArray(roomConfig.enabledChallenges) ? roomConfig.enabledChallenges : undefined,
+      maxPlayers: parsed.maxPlayers,
+      roundTime: parsed.roundTime,
+      totalRounds: parsed.totalRounds,
+      miniChallengeEnabled: parsed.miniChallengeEnabled,
+      enabledChallenges: parsed.enabledChallenges,
     };
     const newRoom = roomManager.createRoom(
       null, // auto-generates 5-digit code
       asRoomName(roomConfig.name) || asRoomName(`${username}'s Room`),
       username,
-      Object.values(GAME_MODES).includes(roomConfig.gameMode) ? roomConfig.gameMode : GAME_MODES.MULTIPLAYER_FFA,
+      parsed.gameMode || GAME_MODES.MULTIPLAYER_FFA,
       options
     );
+    if (parsed.wordDifficulty !== undefined) newRoom.wordDifficulty = parsed.wordDifficulty;
 
     const sessionId = joinPlayerToRoom(io, socket, newRoom, username, avatar, timerManager, roundManager);
 
@@ -180,44 +208,24 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.host !== socket.data.username || room.status !== 'LOBBY') return;
     // U11: an enabledChallenges list with any unknown challenge ID rejects the whole update (room unchanged)
-    if (Array.isArray(settings.enabledChallenges)
-      && !settings.enabledChallenges.every((id) => Object.values(MINI_CHALLENGES).includes(id))) return;
+    const parsed = parseRoomSettings(settings);
+    if (!parsed) return;
 
     // Solo vs AI is single-player: refuse the switch while anyone besides the host is in the room
-    const soloRefused = settings.gameMode === GAME_MODES.SOLO_AI && room.players.some(p => p.username !== room.host);
+    const soloRefused = parsed.gameMode === GAME_MODES.SOLO_AI && room.players.some(p => p.username !== room.host);
     if (soloRefused) {
       socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: 'System', text: 'Solo vs AI is single-player: everyone else must leave the room first.', isSystem: true });
     }
-    if (!soloRefused && settings.gameMode && Object.values(GAME_MODES).includes(settings.gameMode)) {
-      const switchedToTeam = settings.gameMode === GAME_MODES.TEAM && room.gameMode !== GAME_MODES.TEAM;
-      room.gameMode = settings.gameMode;
+    if (!soloRefused && parsed.gameMode) {
+      const switchedToTeam = parsed.gameMode === GAME_MODES.TEAM && room.gameMode !== GAME_MODES.TEAM;
+      room.gameMode = parsed.gameMode;
       // Players who joined before the switch were not team-balanced; there is no team-switch UI
       if (switchedToTeam) {
         room.players.forEach((p, idx) => { p.team = idx % 2 === 0 ? 'Red' : 'Blue'; });
       }
     }
-    if (typeof settings.miniChallengeEnabled === 'boolean') {
-      room.miniChallengeEnabled = settings.miniChallengeEnabled;
-    }
-    if (Array.isArray(settings.enabledChallenges)) {
-      room.enabledChallenges = settings.enabledChallenges;
-      room.miniChallengeEnabled = settings.enabledChallenges.length > 0;
-    }
-    if (settings.roundTime && typeof settings.roundTime === 'number') {
-      room.roundTime = Math.max(15, Math.min(180, settings.roundTime));
-    }
-    if (settings.totalRounds && typeof settings.totalRounds === 'number') {
-      room.totalRounds = Math.max(1, Math.min(10, settings.totalRounds));
-    }
-    // D1: word difficulty (null = Mixed); anything else is ignored
-    if (Object.prototype.hasOwnProperty.call(settings, 'wordDifficulty')) {
-      const d = settings.wordDifficulty;
-      if (d === null || Object.values(WORD_DIFFICULTY).includes(d)) {
-        room.wordDifficulty = d;
-      }
-    }
-    if (settings.maxPlayers && typeof settings.maxPlayers === 'number') {
-      room.maxPlayers = Math.max(2, Math.min(16, settings.maxPlayers));
+    for (const key of ['miniChallengeEnabled', 'enabledChallenges', 'roundTime', 'totalRounds', 'wordDifficulty', 'maxPlayers']) {
+      if (parsed[key] !== undefined) room[key] = parsed[key];
     }
 
     roomManager.emitRoomData(io, room, timerManager.getRemainingTime(room.id));

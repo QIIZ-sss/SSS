@@ -72,12 +72,12 @@ const keysOf = (o) => Object.keys(o).sort().join(',');
   const RECOGNISED = ['Sun', 'Clock'];
   { // Correct drawing scores SOLO_AI.CORRECT_SCORE and ends the turn (EASY pool contains Sun and Clock; try up to 10 turns)
     const A = L.player(L.nextName('S'), { autoSelect: false, autoGuess: false });
-    await L.makeRoom(A, { gameMode: 'SOLO_AI', roundTime: 3 });
+    await L.makeRoom(A, { gameMode: 'SOLO_AI', roundTime: 15 }); // shortest allowed round (U11 clamp)
     A.s.emit('update_room_settings', { wordDifficulty: WORD_DIFFICULTY.EASY, totalRounds: 10 }); await L.sleep(300);
     A.s.emit('start_game');
     let scored = null; const seen = [];
     for (let turn = 0; turn < 10 && !scored; turn++) {
-      await L.waitFor(() => L.last(A) && L.last(A).status === 'PLAYING' && !seen.includes(L.last(A).currentRound + ':' + L.last(A).currentWord), 12000);
+      await L.waitFor(() => L.last(A) && L.last(A).status === 'PLAYING' && !seen.includes(L.last(A).currentRound + ':' + L.last(A).currentWord), 25000);
       const cur = L.last(A); seen.push(cur.currentRound + ':' + cur.currentWord);
       if (RECOGNISED.includes(cur.currentWord)) {
         await L.sleep(SOLO_AI.SERVER_MIN_INTERVAL_MS);

@@ -41,14 +41,20 @@ setTimeout(() => { L.check('suite finished within 150 s (server unresponsive?)',
     L.closeAll(P);
   }
 
-  { // 2) create_room with wrong field types → a normal room with defaults; also a non-function ack
+  { // 2) create_room with wrong field types; also a non-function ack
     const P = L.player(L.nextName('C'));
-    const res = await new Promise((r) => P.s.emit('create_room', { username: 42, avatar: {}, name: { x: 1 }, gameMode: 'XYZ', roundTime: 'abc',
-      totalRounds: -3, maxPlayers: [], enabledChallenges: 'abc', miniChallengeEnabled: 'yes' }, r));
+    const WRONG = { username: 42, avatar: {}, name: { x: 1 }, roundTime: 'abc', totalRounds: -3, maxPlayers: [], enabledChallenges: 'abc', miniChallengeEnabled: 'yes' };
+    // U11/U10: an unknown game mode → no room, safe error ack
+    const rej = await new Promise((r) => P.s.emit('create_room', { ...WRONG, gameMode: 'XYZ' }, r));
+    await L.sleep(300);
+    L.check('create_room with an unknown gameMode → rejected with { success: false, message }, no room', rej && rej.success === false
+      && typeof rej.message === 'string' && !L.last(P), JSON.stringify(rej));
+    const res = await new Promise((r) => P.s.emit('create_room', WRONG, r));
     await L.sleep(300);
     const d = L.last(P);
-    L.check('create_room with wrong types → room created with safe defaults (FFA, 60 s, 3 rounds, string name/username, all challenges)',
-      res && res.success && d.gameMode === 'MULTIPLAYER_FFA' && d.roundTime === 60 && d.totalRounds === 3 && d.maxPlayers === 10
+    // same rules as update_room_settings: non-numbers ignored (defaults), -3 rounds clamped to 1, non-array challenge list ignored
+    L.check('create_room with wrong types (no mode) → room created with safe defaults (FFA, 60 s, rounds clamped to 1, string name/username, all challenges)',
+      res && res.success && d.gameMode === 'MULTIPLAYER_FFA' && d.roundTime === 60 && d.totalRounds === 1 && d.maxPlayers === 10
       && typeof d.name === 'string' && typeof d.host === 'string' && Array.isArray(d.enabledChallenges) && d.enabledChallenges.length === 4,
       JSON.stringify({ mode: d.gameMode, t: d.roundTime, r: d.totalRounds, max: d.maxPlayers, name: d.name, host: d.host, ch: d.enabledChallenges }));
     const Q = L.player(L.nextName('C'));

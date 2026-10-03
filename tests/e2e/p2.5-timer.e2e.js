@@ -1,12 +1,12 @@
 // P2.5 (A7) timer evidence: real timer_tick values with timestamps, 2 clients, 3 rounds, no refresh.
 const L = require('../lib/e2e-lib');
 (async () => {
-  const RT = 5;
+  const RT = 15; // the shortest round the server allows (create_room clamps like update_room_settings since U11)
   const A = L.player(L.nextName('H'), { autoGuess: false }), B = L.player(L.nextName('G'), { autoGuess: false });
   const { code } = await L.makeRoom(A, { roundTime: RT }); await L.join(B, code);
   A.s.emit('update_room_settings', { totalRounds: 3 }); B.s.emit('toggle_ready'); await L.sleep(300);
   A.s.emit('start_game');
-  await L.waitFor(() => A.frames.some(f => f.status === 'GAME_OVER'), 120000);
+  await L.waitFor(() => A.frames.some(f => f.status === 'GAME_OVER'), 240000);
   // split ticks into PLAYING segments: each segment starts at a tick equal to RT right after a round_start
   const segs = p => {
     const out = []; let cur = null;
