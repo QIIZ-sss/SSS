@@ -238,6 +238,8 @@ Client UI hides the word from guessers (`'_ '.repeat(wordLength)` — `Multiplay
 
 `CURRENT FACT` — `chatHandler.js:19-54`: a correct guess is **not** echoed; the room gets a neutral system message `🎉 คุณ X ทายถูกแล้ว! (+N คะแนน)` with `isCorrectNotice`, the guesser gets `correct_guess {points}`. Later messages from correct guessers go only to the drawer and other correct guessers (`isConcealedChat`, `:57-69`); the client masks them (`ChatBox.jsx:63-70`). Non-PLAYING messages are broadcast to everyone (`:70-74`). Drawer messages during WORD_SELECTION/PLAYING are rejected since P3.2.
 
+**Since T1-21 (close guesses):** during PLAYING, a non-drawer who has not guessed yet and whose normalized message is *close* to the normalized answer (`isCloseGuess` in `chatHandler.js`: answer < 4 characters never; 4–7 characters edit distance 1; 8+ characters distance 1–2; multi-word answers compared as one string) gets the message echoed to **their own socket only** — it is no longer broadcast (before T1-21 every wrong guess, close ones included, went to the whole room). An eligible guesser (`RoundManager.isGuesser`; Team = opposing team) also gets `chat_message { sender: 'System', text: "You're close!", isSystem: true }` on that socket only. Far guesses are still public. No new event.
+
 ## 9. Word management
 
 **Updated in D1 (approved contract change):** the bank uses `WORD_DIFFICULTY` values; the host picks `wordDifficulty` (EASY / MEDIUM / HARD / null = Mixed) via `update_room_settings`, `room_data` carries it, and `RoundManager.startTurnSelection` draws word choices only from that difficulty. Baseline below.

@@ -5,6 +5,29 @@ const { calculateGuesserScore, normalizeGuess } = require('../../../shared/utils
 const roomManager = require('../gameLogic/RoomManager');
 const { GAME_STATUS, GAME_RULES } = require('../../../shared/contract');
 
+// T1-21: personal "close" hint — fixed text (no answer, letters, length or distance)
+const CLOSE_HINT = "You're close!";
+// Levenshtein distance on code points (Thai / emoji safe); both strings are at most CHAT_MAX_LENGTH long
+function editDistance(a, b) {
+  const x = Array.from(a), y = Array.from(b);
+  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= x.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[y.length];
+}
+// Both arguments already normalized (normalizeGuess); multi-word answers are compared as one full string.
+// Answer < 4 characters: never close; 4–7: distance 1; 8+: distance 1–2. An exact match is not "close".
+function isCloseGuess(guess, answer) {
+  const len = Array.from(answer).length;
+  if (len < 4 || guess === answer) return false;
+  const max = len >= 8 ? 2 : 1;
+  if (Math.abs(Array.from(guess).length - len) > max) return false;
+  return editDistance(guess, answer) <= max;
+}
+
 function setupChatHandlers(io, socket, timerManager, roundManager) {
   socket.on(SOCKET_EVENTS.SEND_CHAT, (payload) => {
     const room = roomManager.getRoom(socket.data.roomId);
@@ -64,6 +87,16 @@ function setupChatHandlers(io, socket, timerManager, roundManager) {
         roundManager.endRoundIfAllGuessed(io, room);
         return;
       }
+
+      // T1-21: a close (not exact) guess is never broadcast — it would hint the answer to everyone. It is echoed to the
+      // sender only; an eligible guesser (T1-01: Team = the opposing team) also gets the fixed hint, on this socket only.
+      if (isCloseGuess(cleanGuess, cleanAnswer)) {
+        socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: username, text });
+        if (roundManager.isGuesser(room, username)) {
+          socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: 'System', text: CLOSE_HINT, isSystem: true });
+        }
+        return;
+      }
     }
 
     if (isPlaying && hasGuessed) {
@@ -88,4 +121,4 @@ function setupChatHandlers(io, socket, timerManager, roundManager) {
   });
 }
 
-module.exports = { setupChatHandlers };
+module.exports = { setupChatHandlers, isCloseGuess, CLOSE_HINT };
