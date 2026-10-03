@@ -4,6 +4,7 @@ import Leaderboard from './components/Leaderboard';
 import MultiplayerGame from './gameModes/MultiplayerGame';
 import TeamGame from './gameModes/TeamGame';
 import SoloAIGame from './gameModes/SoloAIGame';
+import { clearChatHistory } from './components/ChatBox';
 import { socket, connectSocket } from './services/socket';
 import { SOCKET_EVENTS } from '../../shared/events';
 import { GAME_MODES, AVATARS } from '../../shared/gameConfig';
@@ -90,6 +91,10 @@ export default function App() {
   const pinRefs = useRef([]);
 
   const [currentRoomId, setCurrentRoomId] = useState(null);
+  // T1-13: entering / leaving a room starts an empty chat history; done during render so a ChatBox mounting in this
+  // render never shows the previous room's messages (idempotent)
+  const chatRoomRef = useRef(currentRoomId);
+  if (chatRoomRef.current !== currentRoomId) { chatRoomRef.current = currentRoomId; clearChatHistory(); }
   const [roomData, setRoomData] = useState(null);
   const [wordOptions, setWordOptions] = useState([]);
   const [activeNav, setActiveNav] = useState('lobby'); // 'lobby' | 'leaderboard'

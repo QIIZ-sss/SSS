@@ -3,6 +3,7 @@ import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
 import { CHALLENGE_DETAILS, GAME_MODES } from '../../../shared/gameConfig';
 import { GAME_RULES, WORD_DIFFICULTY } from '../../../shared/contract';
+import ChatBox from './ChatBox';
 
 export default function RoomLobby({ roomData, username }) {
   const [copied, setCopied] = useState(false);
@@ -463,6 +464,9 @@ export default function RoomLobby({ roomData, username }) {
               )}
             </div>
           </div>
+
+          {/* T1-13: lobby chat under the roster (not in Solo: single player) */}
+          {!isSolo && <ChatBox username={username} isDrawer={false} roomStatus={roomData.status} variant="lobby" />}
         </div>
       </div>
     </div>

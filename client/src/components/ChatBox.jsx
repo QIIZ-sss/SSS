@@ -3,8 +3,15 @@ import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
 import { GAME_STATUS, GAME_RULES } from '../../../shared/contract';
 
-export default function ChatBox({ username, isDrawer, roomStatus }) {
-  const [messages, setMessages] = useState([]);
+// T1-13: one message history for the current room, shared by the lobby and the game ChatBox, so the conversation
+// survives LOBBY → game → LOBBY. App clears it whenever the player enters or leaves a room.
+let roomHistory = [];
+export function clearChatHistory() { roomHistory = []; }
+
+// variant "lobby" (T1-13): LOBBY CHAT title, compact height
+export default function ChatBox({ username, isDrawer, roomStatus, variant }) {
+  const lobby = variant === 'lobby';
+  const [messages, setMessages] = useState(() => roomHistory);
   const [input, setInput] = useState('');
   const listRef = useRef(null);
   // UX only — the server enforces the same rule
@@ -13,7 +20,7 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
 
   useEffect(() => {
     const handleChatMessage = (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => { roomHistory = [...prev, msg]; return roomHistory; });
     };
 
     socket.on(SOCKET_EVENTS.CHAT_MESSAGE, handleChatMessage);
@@ -37,18 +44,18 @@ export default function ChatBox({ username, isDrawer, roomStatus }) {
   };
 
   return (
-    <div className="bg-canvas-paper rounded-xl p-space-md shadow-xl flex flex-col h-full min-h-[460px] border-2 border-border-dark">
+    <div className={`bg-canvas-paper rounded-xl p-space-md shadow-xl flex flex-col border-2 border-border-dark ${lobby ? '' : 'h-full min-h-[460px]'}`} id={lobby ? 'lobbyChat' : undefined}>
       <div className="flex items-center justify-between pb-space-xs border-b-2 border-border-dark mb-space-sm">
         <div className="flex items-center gap-1">
           <span className="material-symbols-outlined text-accent-blue text-[20px]">forum</span>
-          <h2 className="font-headline-sm text-headline-sm uppercase text-on-surface">GUESS FEED</h2>
+          <h2 className="font-headline-sm text-headline-sm uppercase text-on-surface">{lobby ? 'LOBBY CHAT' : 'GUESS FEED'}</h2>
         </div>
         <span className="font-label-sm text-label-sm bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full font-bold">
           LIVE
         </span>
       </div>
 
-      <div ref={listRef} id="chatMessages" className="flex-1 min-h-0 max-h-[360px] overflow-y-auto overflow-x-hidden flex flex-col gap-space-xs p-space-xs">
+      <div ref={listRef} id="chatMessages" className={`${lobby ? 'h-[200px] shrink-0' : 'flex-1 min-h-0 max-h-[360px]'} overflow-y-auto overflow-x-hidden flex flex-col gap-space-xs p-space-xs`}>
         {messages.map((m, i) => {
           if (m.isSystem) {
             return (
