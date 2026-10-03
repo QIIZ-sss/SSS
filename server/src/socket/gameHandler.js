@@ -1,6 +1,6 @@
 // Game Event Handler
 const { SOCKET_EVENTS } = require('../../../shared/events');
-const { GAME_MODES, AVATARS } = require('../../../shared/gameConfig');
+const { GAME_MODES, AVATARS, MINI_CHALLENGES } = require('../../../shared/gameConfig');
 const { GAME_STATUS, GAME_RULES, WORD_DIFFICULTY, SOLO_AI, isValidPredictRequest } = require('../../../shared/contract');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
@@ -179,6 +179,9 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     const settings = asObject(payload);
     const room = roomManager.getRoom(socket.data.roomId);
     if (!room || room.host !== socket.data.username || room.status !== 'LOBBY') return;
+    // U11: an enabledChallenges list with any unknown challenge ID rejects the whole update (room unchanged)
+    if (Array.isArray(settings.enabledChallenges)
+      && !settings.enabledChallenges.every((id) => Object.values(MINI_CHALLENGES).includes(id))) return;
 
     // Solo vs AI is single-player: refuse the switch while anyone besides the host is in the room
     const soloRefused = settings.gameMode === GAME_MODES.SOLO_AI && room.players.some(p => p.username !== room.host);
