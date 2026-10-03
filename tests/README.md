@@ -24,6 +24,12 @@ tests/check_all.sh
 
 Takes about 12–13 minutes on the reference Mac (e2e use real timers, e.g. the reconnect test waits for the 30 s grace period; the Tailwind layout test loads the CDN). Use `E2E=...` to run a subset. Exit code 0 only if nothing failed.
 
+```bash
+tests/check_all.sh --fast
+```
+
+Fast mode skips only step [6] (every `browser/*.browser.jsx` test, including the Tailwind layout tests); each one is listed as `SKIP … (--fast)`. Syntax, contract, harness, client build, render, all e2e, the live UI test and the server-log check still run. Use it while iterating; run the full suite before committing a task.
+
 Useful variables:
 
 | Variable | Default | Meaning |

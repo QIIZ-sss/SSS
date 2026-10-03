@@ -2,7 +2,15 @@
 # JUST DRAW IT regression suite. Run from anywhere: tests/check_all.sh
 # Env: TEST_PORT (default 4100), TEST_TMP (default tests/.tmp), CHROME_PATH, KEEP_TMP=1 (keep generated files),
 #      E2E="a2-game-over p2.1-ready" (run only these e2e files, without the .e2e.js suffix)
+# Flag: --fast skips step [6] (headless Chrome browser + layout tests); everything else runs as usual.
 set -u
+FAST=0
+for arg in "$@"; do
+  case "$arg" in
+    --fast) FAST=1 ;;
+    *) echo "Unknown option: $arg (supported: --fast)"; exit 2 ;;
+  esac
+done
 TESTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$TESTS/.." && pwd)"
 export TEST_PORT="${TEST_PORT:-4100}"
@@ -55,6 +63,9 @@ echo "=== [5] render tests (react-dom/server)"
 for t in "$TESTS"/render/*.test.jsx; do run_case "render/$(basename "$t")" node "$TESTS/lib/render.js" "$t"; done
 
 echo "=== [6] browser tests (headless Chrome)"
+if [ $FAST = 1 ]; then
+  for t in "$TESTS"/browser/*.browser.jsx; do skip "browser/$(basename "$t" .browser.jsx) (--fast)"; done
+else
 for t in "$TESTS"/browser/*.browser.jsx; do
   case "$t" in *overflow*|*viewport*) continue ;; esac   # *overflow* / *viewport* tests need the Tailwind CDN, run below
   run_case "browser/$(basename "$t" .browser.jsx)" env DEV=1 VTB=20000 CHROME_TIMEOUT=60000 node "$TESTS/lib/browser.js" "$t"
@@ -70,6 +81,7 @@ if curl -s -m 8 -o /dev/null https://cdn.tailwindcss.com/; then
   done
 else
   skip "browser/*overflow* *viewport* (no network access to cdn.tailwindcss.com)"
+fi
 fi
 
 echo "=== [7] server on :$TEST_PORT + e2e (real socket.io clients)"
