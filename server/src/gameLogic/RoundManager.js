@@ -124,7 +124,7 @@ class RoundManager {
     this.timerManager.stopTimer(room.id);
     room.status = 'ROUND_OVER';
 
-    const totalGuessers = Math.max(1, room.players.length - 1);
+    const totalGuessers = Math.max(1, this.guesserCount(room));
     const correctCount = room.correctGuessers ? room.correctGuessers.length : 0;
     const drawerPoints = calculateDrawerScore(correctCount, totalGuessers);
 
@@ -187,11 +187,30 @@ class RoundManager {
     this.endRoundIfAllGuessed(io, room);
   }
 
+  // T1-01: who may guess this turn. FFA / Solo: everyone except the drawer. Team: only the OPPOSING team —
+  // the drawer's teammates never guess their own team's word.
+  isGuesser(room, username) {
+    if (username === room.currentDrawer) return false;
+    if (room.gameMode !== GAME_MODES.TEAM) return true;
+    const drawer = room.players.find(p => p.username === room.currentDrawer);
+    const player = room.players.find(p => p.username === username);
+    return !!(drawer && player && player.team !== drawer.team);
+  }
+
+  getGuessers(room) {
+    return room.players.filter(p => this.isGuesser(room, p.username));
+  }
+
+  // Scoring divisor: Team counts the opposing team only; FFA keeps "everyone but the drawer"
+  guesserCount(room) {
+    return room.gameMode === GAME_MODES.TEAM ? this.getGuessers(room).length : room.players.length - 1;
+  }
+
   // P0-1: the round ends as soon as every CONNECTED guesser has guessed correctly (at least one).
-  // Players in the reconnect grace period (socketId null) are not waited for.
+  // Players in the reconnect grace period (socketId null) are not waited for. T1-01: Team = opposing team only.
   endRoundIfAllGuessed(io, room) {
     if (room.status !== 'PLAYING') return false;
-    const guessers = room.players.filter(p => p.username !== room.currentDrawer);
+    const guessers = this.getGuessers(room);
     const anyCorrect = guessers.some(p => room.correctGuessers.includes(p.username));
     const waiting = guessers.some(p => p.socketId && !room.correctGuessers.includes(p.username));
     if (!anyCorrect || waiting) return false;

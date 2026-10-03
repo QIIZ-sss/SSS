@@ -30,9 +30,14 @@ function setupChatHandlers(io, socket, timerManager, roundManager) {
       const cleanAnswer = normalizeGuess(room.currentWord);
 
       if (cleanGuess === cleanAnswer) {
+        // T1-01: the drawing team cannot guess its own word — no points, and the answer is not broadcast
+        if (!roundManager.isGuesser(room, username)) {
+          socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, { sender: 'System', text: 'Your team is drawing — only the other team can guess.', isSystem: true });
+          return;
+        }
         room.correctGuessers.push(username);
         const guessOrder = room.correctGuessers.length;
-        const totalGuessers = Math.max(1, room.players.length - 1);
+        const totalGuessers = Math.max(1, roundManager.guesserCount(room));
         const timeRemaining = timerManager.getRemainingTime(room.id);
         const pointsEarned = calculateGuesserScore(guessOrder, totalGuessers, timeRemaining, room.roundTime);
 

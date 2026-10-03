@@ -791,7 +791,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | ID | Item | Priority | Status | Notes |
 |---|---|---|---|---|
 | P0-1 | All connected guessers correct → round advances at once (not tied to a T1 line) | P0 | DONE | see section P0-1 |
-| T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | TODO | decision final (see above) |
+| T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | DONE | see section T1-01 |
 | T1-02 | Team result / ranking (sort) | P0 / P2 | IN PROGRESS | ranking sort DONE (section T1-02); Team result presentation continues in T1-25 / after T1-01 |
 | T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
 | T1-04 | Score UI overflow | P1 | DONE | see section T1-04 |
@@ -843,6 +843,13 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Interpretation:** the tester's reload problems could not be read from the repository; checked what a reloaded client gets back in every state on top of B4 (room, role data, drawer word choices already covered by `b4-reconnect`). Gap found: a reload during **GAME_OVER** lost the results (the modal only opens on `game_over`, which was not re-sent). Drawing history (`draw_sync` on canvas mount) and timer (`room_data.timeRemaining`) were already restored — now covered by a test.
 - **Fix:** `RoundManager.endGameMatch` keeps the payload as `room.lastGameOver` (cleared in `returnToLobby`); `rejoin_room` re-sends it to the rejoining socket while the room is in GAME_OVER. Existing event, no contract change.
 - **Status:** DONE (automated); MANUAL NOT TESTED (real browser reload). `tests/e2e/t1-07-reload.e2e.js` 6/6 (PLAYING: rejoined, timer 0 < t < 60, drawing history begin/path/end, no game_over; GAME_OVER: same results re-sent; back in LOBBY: no stale results). Not changed: chat history is not kept across a reload.
+
+### T1-01 — Team: the opposing team guesses
+
+- **Problem:** in Team mode every non-drawer could guess, including the drawer's own teammates; the guesser count for scoring was `players.length - 1`, and the round waited for the teammates too.
+- **Fix:** `RoundManager.isGuesser` / `getGuessers` / `guesserCount` — Team: only players of the team opposite the drawer guess (FFA / Solo unchanged: everyone but the drawer). `chatHandler.js`: a drawing-team player typing the answer gets a private System notice, no points, and the message is not broadcast; guesser and drawer points are scaled by the opposing team size. `endRoundIfAllGuessed` (P0-1) uses the same guesser list, so the round ends as soon as every connected opposing guesser is correct. Team scores: guess points → the guessing team, drawer points → the drawing team (existing accumulation). `TeamGame.jsx`: a banner during WORD_SELECTION / PLAYING ("TEAM RED DRAWS · TEAM BLUE GUESSES" + the viewer's own role) and DRAWING / GUESSING tags on the rosters. Team picker = T1-15 (unchanged). No event / payload change.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-01-team-guessing.e2e.js` 15/15 (teammate guess rejected, not broadcast, no score; opposing guesses score for their team; round ends when both opposing guessers are correct; drawer points = 2/2 guessers; roles flip on the next turn). `tests/render/t1-01-team-roles.test.jsx` 9/9. Regression: T1-02 6/6, T1-15 7/7, T1-22 7/7, P0-1 5/5, P2.2 9/9, P2.4 4/4, P3.2 5/5, SEC-2 37/37, server log clean; render b2-mobile-order 4/4, p2.4-answer-reveal 8/8; client build; browser t1-04-score-overflow 5/5, b2-layout-overflow 9/9 at 375 px and 820 px. Full suite not run for this commit.
+  - Not changed: the chat placeholder for a drawing-team player still says "TYPE YOUR GUESS HERE..." (`ChatBox.jsx`, outside the approved files); the banner explains the role.
 
 ### T1-02 — Result ranking order (P0 part)
 

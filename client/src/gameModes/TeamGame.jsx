@@ -34,6 +34,15 @@ export default function TeamGame({ roomData, username, wordOptions }) {
   const redPlayers = roomData.players.filter((p) => p.team === 'Red');
   const bluePlayers = roomData.players.filter((p) => p.team === 'Blue');
 
+  // T1-01: the drawer's team draws, the other team guesses (display only — the server decides who may guess)
+  const teamOf = (name) => (roomData.players.find((p) => p.username === name) || {}).team;
+  const inTurn = roomData.status === GAME_STATUS.WORD_SELECTION || roomData.status === GAME_STATUS.PLAYING;
+  const drawingTeam = inTurn ? teamOf(roomData.currentDrawer) : null;
+  const guessingTeam = drawingTeam === 'Red' ? 'Blue' : drawingTeam === 'Blue' ? 'Red' : null;
+  const myTeamDraws = !!drawingTeam && teamOf(username) === drawingTeam;
+  const teamIcon = (t) => (t === 'Red' ? '🔴' : '🔵');
+  const roleTag = (t) => (!drawingTeam ? null : t === drawingTeam ? '✏️ DRAWING' : '💬 GUESSING');
+
   return (
     <div className="w-full flex flex-col gap-space-lg">
       {/* TOP ARENA STATUS BAR (Cabinet Neo-Brutalist Header) */}
@@ -59,7 +68,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
             <span className="material-symbols-outlined text-border-dark text-[20px]">lightbulb</span>
             <div className="flex flex-col">
               <span className="font-label-sm text-label-sm text-on-tertiary-fixed uppercase font-bold">
-                {revealedWord ? '✅ THE ANSWER WAS' : isDrawer ? '🎯 YOUR SECRET WORD' : 'TEAM GUESS WORD'}
+                {revealedWord ? '✅ THE ANSWER WAS' : isDrawer ? '🎯 YOUR SECRET WORD' : myTeamDraws ? '✏️ YOUR TEAM IS DRAWING' : 'TEAM GUESS WORD'}
               </span>
               <span className="font-headline-md text-headline-md text-border-dark tracking-wider font-black uppercase">
                 {currentSecretWord}
@@ -80,6 +89,17 @@ export default function TeamGame({ roomData, username, wordOptions }) {
         </div>
       </div>
 
+      {guessingTeam && (
+        <div id="teamRoles" className="w-full bg-tertiary-fixed rounded-xl p-space-sm border-3 border-border-dark shadow-[4px_4px_0px_0px_#18181B] flex flex-wrap items-center justify-center gap-x-space-md gap-y-space-xs text-center text-on-tertiary-fixed">
+          <span className="font-headline-sm text-headline-sm uppercase font-black">
+            {teamIcon(drawingTeam)} TEAM {drawingTeam.toUpperCase()} DRAWS · {teamIcon(guessingTeam)} TEAM {guessingTeam.toUpperCase()} GUESSES
+          </span>
+          <span className="font-label-md text-label-md uppercase font-bold">
+            {isDrawer ? 'You are drawing for your team' : myTeamDraws ? "Your team is drawing — you can't guess this turn" : 'Your team is guessing — type the word in the chat'}
+          </span>
+        </div>
+      )}
+
       <ChallengeTurnPopup roomData={roomData} username={username} />
       <ChallengeOverlay
         challenge={roomData.currentChallenge}
@@ -98,7 +118,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
             {/* Red Team Roster */}
             <div className="flex flex-col gap-space-xs">
               <div className="bg-timer-red text-on-error font-label-md text-label-md px-space-sm py-1 rounded-lg border border-border-dark font-black flex justify-between items-center">
-                <span>🔴 TEAM RED</span>
+                <span>🔴 TEAM RED{roleTag('Red') && ` · ${roleTag('Red')}`}</span>
                 <span>{redPlayers.length} PLAYERS</span>
               </div>
               {redPlayers.map((p) => (
@@ -112,7 +132,7 @@ export default function TeamGame({ roomData, username, wordOptions }) {
             {/* Blue Team Roster */}
             <div className="flex flex-col gap-space-xs pt-space-xs border-t border-border-dark/30">
               <div className="bg-accent-blue text-on-tertiary font-label-md text-label-md px-space-sm py-1 rounded-lg border border-border-dark font-black flex justify-between items-center">
-                <span>🔵 TEAM BLUE</span>
+                <span>🔵 TEAM BLUE{roleTag('Blue') && ` · ${roleTag('Blue')}`}</span>
                 <span>{bluePlayers.length} PLAYERS</span>
               </div>
               {bluePlayers.map((p) => (
