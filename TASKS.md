@@ -804,7 +804,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-11 | Avatars | P1 | DONE | see section T1-11 |
 | T1-12 | Mini-challenge UI | P5 | DONE | heading + one-line explanation; see section T1-12 |
 | T1-13 | Lobby chat | P7 | TODO | optional |
-| T1-14 | Settings / Modifiers + Solo restriction UX | P5 | TODO | Solo switch refusal + reason already in SOLO-1 |
+| T1-14 | Settings / Modifiers + Solo restriction UX | P5 | DONE | one MATCH SETTINGS view; see section T1-14 |
 | T1-15 | Team selection / switching (= U9) | P2 | DONE | merged with U9; see section T1-15 |
 | T1-16 | Modifiers empty / purple area | — | DONE (merged into T1-17) | card blank band removed |
 | T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | IN PROGRESS | P0 part DONE (section T1-17); further layout items in P5 |
@@ -884,6 +884,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** the lobby's Mini-Challenge section was headed by a small label "SELECT MINI-CHALLENGES FOR THIS ROOM" with no explanation of what a mini-challenge does.
 - **Fix:** `client/src/components/RoomLobby.jsx` (MODIFIERS & TWISTS tab) — heading is now an `<h3>` "MINI-CHALLENGES" (headline size, `casino` icon, the `N / 4 ACTIVE` badge kept) followed by one line for every player: "Each turn, one enabled challenge is picked at random and adds a drawing rule for the drawer." (matches `RoundManager.startTurnSelection`). Toggle cards, host hint and the SETTINGS-tab list unchanged. Client only.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-12-mini-challenge-heading.test.jsx` 11/11 (host / guest / Solo: heading, explanation, 4 cards with ENABLED / DISABLED and the ACTIVE count, host hint only for the host) — fails on the previous `RoomLobby.jsx` (5/11). `tests/render/solo-lobby.test.jsx` check updated to the new heading id, 14/14. Regression: render t1-08 7/7, t1-01 9/9, c4 3/3; browser d1-difficulty-setting 6/6, t1-15-team-picker 6/6, b2-layout-overflow 9/9 at 375 px and 820 px (Room lobby incl.), t1-17-initial-viewport 2/2; client build.
+
+### T1-14 — One match-settings view + Solo restriction UX
+
+- **Problem (tester item 14):** lobby settings were split over two tabs (MODIFIERS & TWISTS / SETTINGS); mini-challenges could be toggled in both (cards + a second "ENABLED MINI-CHALLENGES" list); the server refuses Solo while others are in the room with a System *chat* message, but the lobby has no chat, so the refusal was only a small grey line.
+- **Fix:** `client/src/components/RoomLobby.jsx` only — tabs merged into one MATCH SETTINGS panel (fewer changes than moving four settings: the tab state and tab buttons go away): 1. GAME MODE, 2. ROUND TIMER, 3. TOTAL ROUNDS, 4. WORD DIFFICULTY, 5. MAX PLAYERS (hidden in Solo, as before), then the MINI-CHALLENGES cards (T1-12 heading) — the only place to toggle challenges; the duplicate list is removed. Host with others in the room: SOLO VS AI stays disabled and the reason is a visible notice (`role="status"`, "SOLO VS AI unavailable — …"); the server rejection is unchanged. Guests: every control disabled, READ-ONLY GUEST VIEW badge, cards not clickable (unchanged). Same handlers and payloads; no server / socket change. Solo summary text now says "Change these in MATCH SETTINGS."
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-14-match-settings.test.jsx` 11/11 (no tabs, order, each challenge once, values from `roomData`, host enabled, Solo reason, Solo hides MAX PLAYERS, guest read-only) — fails on the previous `RoomLobby.jsx` (3/11). `tests/browser/t1-14-match-settings.browser.jsx` 10/10 (host clicks send the same `update_room_settings` payloads — roundTime / totalRounds / maxPlayers / wordDifficulty / gameMode / enabledChallenges, last card cannot be turned off, disabled Solo sends nothing, guest sends nothing). Tests that opened the old SETTINGS tab updated: render solo-lobby 14/14, browser d1-difficulty-setting 6/6, live `d1-difficulty-ui.live.jsx` 6/6 (real server). Regression: render t1-12 11/11, t1-08 7/7, t1-01 9/9, c4 3/3; browser t1-15-team-picker 6/6, b2-layout-overflow 9/9 at 375 px and 820 px, t1-17-initial-viewport 2/2; client build; server log clean.
 
 ### T1-06 — Chat overflow
 

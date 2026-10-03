@@ -57,9 +57,7 @@ const setInput = (el, value) => act(() => {
   guest.emit('toggle_ready');
 
   step('guest joined');
-  // Host picks the difficulty in the Settings tab
-  await waitFor(() => btn(/SETTINGS/));
-  click(btn(/SETTINGS/));
+  // Host picks the difficulty in the lobby's match settings (T1-14: one view, no tab)
   await waitFor(() => btn(new RegExp(`^${LEVEL}$`)));
   click(btn(new RegExp(`^${LEVEL}$`)));
   await waitFor(() => guestLast && guestLast.wordDifficulty === LEVEL, 3000);

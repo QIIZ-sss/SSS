@@ -6,13 +6,8 @@ import RoomLobby from '../../client/src/components/RoomLobby.jsx';
 const results = []; const check = (n, c, d = '') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
 const base = { code: '12345', name: 'R', host: 'Ann', maxPlayers: 8, roundTime: 60, totalRounds: 3, wordDifficulty: null, status: 'LOBBY',
   teams: { Red: { score: 0 }, Blue: { score: 0 } }, players: [{ username: 'Ann', score: 0, isReady: false, team: 'Red' }] };
-// The SETTINGS tab holds rounds / timer / difficulty / max players; render it by starting on that tab
-const render = (room, me = 'Ann', tab) => {
-  const real = React.useState;
-  let first = true;
-  React.useState = (init) => { if (first && tab) { first = false; return real(tab); } first = false; return real(init); };
-  try { return renderToStaticMarkup(<RoomLobby roomData={room} username={me} />); } finally { React.useState = real; }
-};
+// T1-14: one match-settings view (no tabs) — every setting is in the first render; `tab` is kept for the old call sites
+const render = (room, me = 'Ann', tab) => renderToStaticMarkup(<RoomLobby roomData={room} username={me} />);
 const solo = { ...base, gameMode: 'SOLO_AI' };
 const soloMain = render(solo), soloSettings = render(solo, 'Ann', 'SETTINGS');
 check('Solo: no PLAYER ROSTER', !soloMain.includes('PLAYER ROSTER'));

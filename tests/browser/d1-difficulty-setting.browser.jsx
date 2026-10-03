@@ -11,7 +11,7 @@ const room = { code: '1', host: 'Host', gameMode: 'MULTIPLAYER_FFA', maxPlayers:
   enabledChallenges: ['NONE'], players: [{ username: 'Host', score: 0, isReady: false, team: 'Red' }, { username: 'Guest', score: 0, isReady: true, team: 'Red' }] };
 const host = document.getElementById('root');
 let root = createRoot(host);
-const openSettings = () => act(() => [...host.querySelectorAll('button')].find((b) => /SETTINGS/.test(b.textContent)).click());
+const openSettings = () => {}; // T1-14: settings are in the one lobby view, no tab to open
 const levelBtn = (label) => [...host.querySelectorAll('button')].find((b) => b.textContent.trim() === label);
 act(() => root.render(<RoomLobby roomData={room} username="Host" />));
 openSettings();

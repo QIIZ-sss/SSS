@@ -5,7 +5,6 @@ import { CHALLENGE_DETAILS, GAME_MODES } from '../../../shared/gameConfig';
 import { GAME_RULES, WORD_DIFFICULTY } from '../../../shared/contract';
 
 export default function RoomLobby({ roomData, username }) {
-  const [activeTab, setActiveTab] = useState('CHALLENGES');
   const [copied, setCopied] = useState(false);
 
   const isHost = roomData.host === username;
@@ -117,37 +116,152 @@ export default function RoomLobby({ roomData, username }) {
 
       {/* Main Grid Layout: Left Controls (7 cols) + Right Roster (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg pt-space-lg">
-        {/* LEFT SECTION (Columns 1-7): Tab Navigation & Cards/Settings */}
+        {/* LEFT SECTION (Columns 1-7): match settings (T1-14: one view, no tabs) */}
         <div className="lg:col-span-7 flex flex-col gap-space-md">
-          {/* Tab Navigation Buttons */}
-          <div className="flex items-center gap-space-xs">
-            <button
-              className={`px-space-md py-space-xs rounded-t-xl font-headline-sm text-headline-sm uppercase border-[3px] border-border-dark border-b-0 transition-all ${
-                activeTab === 'CHALLENGES'
-                  ? 'bg-surface-card-subtle text-border-dark font-black shadow-[2px_-2px_0px_#18181B]'
-                  : 'bg-canvas-paper text-on-surface-variant hover:bg-surface-container'
-              }`}
-              onClick={() => setActiveTab('CHALLENGES')}
-              type="button"
-            >
-              MODIFIERS & TWISTS
-            </button>
-            <button
-              className={`px-space-md py-space-xs rounded-t-xl font-headline-sm text-headline-sm uppercase border-[3px] border-border-dark border-b-0 transition-all ${
-                activeTab === 'SETTINGS'
-                  ? 'bg-surface-card-subtle text-border-dark font-black shadow-[2px_-2px_0px_#18181B]'
-                  : 'bg-canvas-paper text-on-surface-variant hover:bg-surface-container'
-              }`}
-              onClick={() => setActiveTab('SETTINGS')}
-              type="button"
-            >
-              SETTINGS {isHost && '⚙️'}
-            </button>
-          </div>
+          <div className="w-full bg-surface-card-subtle rounded-xl p-space-md md:p-space-lg border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] flex flex-col gap-space-md">
+            {/* T1-14: one match-settings view — host controls, read-only for guests; mini-challenges only here */}
+            <div className="flex flex-col gap-space-md">
+              <div className="flex items-center justify-between pb-space-xs border-b border-border-dark/30">
+                <h3 className="font-headline-sm text-headline-sm text-border-dark uppercase font-black">MATCH SETTINGS</h3>
+                <span className={`font-label-sm text-label-sm px-2 py-0.5 rounded-full border border-border-dark font-bold ${
+                  isHost ? 'bg-tertiary-fixed text-on-tertiary-fixed' : 'bg-surface-card text-on-surface-variant'
+                }`}>
+                  {isHost ? '👑 HOST CONTROLS ACTIVE' : 'READ-ONLY GUEST VIEW'}
+                </span>
+              </div>
 
-          <div className="w-full bg-surface-card-subtle rounded-xl rounded-tl-none p-space-md md:p-space-lg border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] flex flex-col gap-space-md">
-            {activeTab === 'CHALLENGES' ? (
-              <div className="flex flex-col gap-space-md">
+              {/* Game Mode Selection */}
+              <div className="flex flex-col gap-space-xs">
+                <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">1. GAME MODE</span>
+                <div className="grid grid-cols-3 gap-space-xs">
+                  {[
+                    { mode: GAME_MODES.MULTIPLAYER_FFA, label: 'FREE-FOR-ALL', icon: 'groups', color: 'bg-primary-container text-on-primary' },
+                    { mode: GAME_MODES.TEAM, label: 'TEAM CLASH', icon: 'diversity_3', color: 'bg-accent-blue text-on-tertiary' },
+                    { mode: GAME_MODES.SOLO_AI, label: 'SOLO VS AI', icon: 'smart_toy', color: 'bg-tertiary-fixed text-on-tertiary-fixed' }
+                  ].map((item) => {
+                    const soloBlocked = item.mode === GAME_MODES.SOLO_AI && othersInRoom;
+                    return (
+                      <button
+                        key={item.mode}
+                        disabled={!isHost || soloBlocked}
+                        title={soloBlocked ? SOLO_BLOCKED : undefined}
+                        className={`flex flex-col items-center justify-center p-space-xs rounded-xl border-2 border-border-dark transition-all text-center ${
+                          roomData.gameMode === item.mode ? `${item.color} shadow-[2px_2px_0px_#18181B] font-bold` : 'bg-canvas-paper text-on-surface hover:bg-surface-container'
+                        } ${!isHost ? 'cursor-default opacity-90' : soloBlocked ? 'opacity-40 cursor-not-allowed' : 'hover:translate-x-[-1px] hover:translate-y-[-1px]'}`}
+                        onClick={() => handleUpdateSetting({ gameMode: item.mode })}
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined text-[20px] mb-0.5">{item.icon}</span>
+                        <span className="font-label-sm text-label-sm leading-tight">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* T1-14: the server refuses Solo while others are here — say why, visibly (the lobby has no chat) */}
+                {isHost && othersInRoom && (
+                  <p role="status" className="font-body-sm text-body-sm font-bold text-border-dark bg-tertiary-fixed border-2 border-border-dark rounded-lg px-space-sm py-1 flex items-center gap-1.5" id="soloBlockedReason">
+                    <span className="material-symbols-outlined text-[18px]" aria-hidden="true">info</span>
+                    SOLO VS AI unavailable — {SOLO_BLOCKED}.
+                  </p>
+                )}
+              </div>
+
+              {/* Round Controls & Capacity */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+                {/* Round Time Selector */}
+                <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-col justify-between gap-space-xs shadow-sm">
+                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">2. ROUND TIMER</span>
+                  <div className="flex items-center justify-between gap-1 flex-wrap pt-1">
+                    {[30, 45, 60, 90, 120].map((sec) => (
+                      <button
+                        key={sec}
+                        disabled={!isHost}
+                        className={`px-2 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all ${
+                          roomData.roundTime === sec
+                            ? 'bg-timer-red text-on-error font-black shadow-[2px_2px_0px_#18181B]'
+                            : 'bg-surface-card text-on-surface hover:bg-surface-container'
+                        } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
+                        onClick={() => handleUpdateSetting({ roundTime: sec })}
+                        type="button"
+                      >
+                        {sec}s
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Total Rounds */}
+                <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-col justify-between gap-space-xs shadow-sm">
+                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">3. TOTAL ROUNDS</span>
+                  <div className="flex items-center justify-between gap-1 pt-1">
+                    {[3, 5, 7, 10].map((r) => (
+                      <button
+                        key={r}
+                        disabled={!isHost}
+                        className={`w-8 h-8 rounded-lg font-headline-sm text-headline-sm border-2 border-border-dark transition-all flex items-center justify-center ${
+                          roomData.totalRounds === r
+                            ? 'bg-secondary-fixed text-on-secondary-fixed font-black shadow-[2px_2px_0px_#18181B]'
+                            : 'bg-surface-card text-on-surface hover:bg-surface-container'
+                        } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
+                        onClick={() => handleUpdateSetting({ totalRounds: r })}
+                        type="button"
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Word Difficulty (D1) — null = Mixed */}
+              <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-wrap items-center justify-between gap-space-xs shadow-sm">
+                <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">4. WORD DIFFICULTY:</span>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {[null, WORD_DIFFICULTY.EASY, WORD_DIFFICULTY.MEDIUM, WORD_DIFFICULTY.HARD].map((level) => (
+                    <button
+                      key={level || 'MIXED'}
+                      disabled={!isHost}
+                      aria-pressed={(roomData.wordDifficulty || null) === level}
+                      className={`px-2.5 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all flex items-center justify-center ${
+                        (roomData.wordDifficulty || null) === level
+                          ? 'bg-primary-container text-on-primary font-black shadow-[2px_2px_0px_#18181B]'
+                          : 'bg-surface-card text-on-surface hover:bg-surface-container'
+                      } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
+                      onClick={() => handleUpdateSetting({ wordDifficulty: level })}
+                      type="button"
+                    >
+                      {level || 'MIXED'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Max Capacity (not for Solo vs AI) */}
+              {!isSolo && (
+              <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex items-center justify-between shadow-sm">
+                <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">5. MAX PLAYERS:</span>
+                <div className="flex items-center gap-1">
+                  {[4, 8, 10, 12, 16].map((cap) => (
+                    <button
+                      key={cap}
+                      disabled={!isHost}
+                      className={`px-2.5 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all flex items-center justify-center ${
+                        roomData.maxPlayers === cap
+                          ? 'bg-tertiary-fixed text-on-tertiary-fixed font-black shadow-[2px_2px_0px_#18181B]'
+                          : 'bg-surface-card text-on-surface hover:bg-surface-container'
+                      } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
+                      onClick={() => handleUpdateSetting({ maxPlayers: cap })}
+                      type="button"
+                    >
+                      {cap}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              )}
+
+              {/* Mini-challenges (the only place to turn them on / off) */}
+              <div className="flex flex-col gap-space-md pt-space-xs">
                 {/* T1-12: clear heading + one-line explanation for new players */}
                 <div className="flex flex-col gap-1 pb-space-xs border-b border-border-dark/30">
                   <div className="flex items-center justify-between flex-wrap gap-2">
@@ -208,173 +322,7 @@ export default function RoomLobby({ roomData, username }) {
                   })}
                 </div>
               </div>
-            ) : (
-              /* SETTINGS TAB: Interactive controls for Host, read-only for Guest */
-              <div className="flex flex-col gap-space-md">
-                <div className="flex items-center justify-between pb-space-xs border-b border-border-dark/30">
-                  <h4 className="font-headline-sm text-headline-sm text-border-dark uppercase font-black">MATCH CONFIGURATION</h4>
-                  <span className={`font-label-sm text-label-sm px-2 py-0.5 rounded-full border border-border-dark font-bold ${
-                    isHost ? 'bg-tertiary-fixed text-on-tertiary-fixed' : 'bg-surface-card text-on-surface-variant'
-                  }`}>
-                    {isHost ? '👑 HOST CONTROLS ACTIVE' : 'READ-ONLY GUEST VIEW'}
-                  </span>
-                </div>
-
-                {/* Game Mode Selection */}
-                <div className="flex flex-col gap-space-xs">
-                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">1. GAME MODE</span>
-                  <div className="grid grid-cols-3 gap-space-xs">
-                    {[
-                      { mode: GAME_MODES.MULTIPLAYER_FFA, label: 'FREE-FOR-ALL', icon: 'groups', color: 'bg-primary-container text-on-primary' },
-                      { mode: GAME_MODES.TEAM, label: 'TEAM CLASH', icon: 'diversity_3', color: 'bg-accent-blue text-on-tertiary' },
-                      { mode: GAME_MODES.SOLO_AI, label: 'SOLO VS AI', icon: 'smart_toy', color: 'bg-tertiary-fixed text-on-tertiary-fixed' }
-                    ].map((item) => {
-                      const soloBlocked = item.mode === GAME_MODES.SOLO_AI && othersInRoom;
-                      return (
-                        <button
-                          key={item.mode}
-                          disabled={!isHost || soloBlocked}
-                          title={soloBlocked ? SOLO_BLOCKED : undefined}
-                          className={`flex flex-col items-center justify-center p-space-xs rounded-xl border-2 border-border-dark transition-all text-center ${
-                            roomData.gameMode === item.mode ? `${item.color} shadow-[2px_2px_0px_#18181B] font-bold` : 'bg-canvas-paper text-on-surface hover:bg-surface-container'
-                          } ${!isHost ? 'cursor-default opacity-90' : soloBlocked ? 'opacity-40 cursor-not-allowed' : 'hover:translate-x-[-1px] hover:translate-y-[-1px]'}`}
-                          onClick={() => handleUpdateSetting({ gameMode: item.mode })}
-                          type="button"
-                        >
-                          <span className="material-symbols-outlined text-[20px] mb-0.5">{item.icon}</span>
-                          <span className="font-label-sm text-label-sm leading-tight">{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {isHost && othersInRoom && (
-                    <p className="font-body-sm text-body-sm text-on-surface-variant" id="soloBlockedReason">{SOLO_BLOCKED}.</p>
-                  )}
-                </div>
-
-                {/* Granular Mini-Challenges Selection */}
-                <div className="flex flex-col gap-space-xs">
-                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">2. ENABLED MINI-CHALLENGES</span>
-                  <div className="grid grid-cols-2 gap-space-xs">
-                    {Object.entries(CHALLENGE_DETAILS).map(([key, val]) => {
-                      const isEnabled = enabledChallenges.includes(key);
-                      return (
-                        <button
-                          key={key}
-                          disabled={!isHost}
-                          onClick={() => handleToggleChallenge(key)}
-                          type="button"
-                          className={`flex items-center gap-2 p-2 rounded-xl border-2 border-border-dark transition-all text-left ${
-                            isEnabled
-                              ? 'bg-primary-container text-on-primary font-bold shadow-[2px_2px_0px_#18181B]'
-                              : 'bg-canvas-paper text-on-surface-variant opacity-60 hover:opacity-100'
-                          } ${!isHost ? 'cursor-default' : 'hover:translate-x-[-1px]'}`}
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            {isEnabled ? 'check_box' : 'check_box_outline_blank'}
-                          </span>
-                          <span className="font-thai-safe text-label-sm truncate">{val.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Round Controls & Capacity */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
-                  {/* Round Time Selector */}
-                  <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-col justify-between gap-space-xs shadow-sm">
-                    <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">3. ROUND TIMER</span>
-                    <div className="flex items-center justify-between gap-1 flex-wrap pt-1">
-                      {[30, 45, 60, 90, 120].map((sec) => (
-                        <button
-                          key={sec}
-                          disabled={!isHost}
-                          className={`px-2 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all ${
-                            roomData.roundTime === sec
-                              ? 'bg-timer-red text-on-error font-black shadow-[2px_2px_0px_#18181B]'
-                              : 'bg-surface-card text-on-surface hover:bg-surface-container'
-                          } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
-                          onClick={() => handleUpdateSetting({ roundTime: sec })}
-                          type="button"
-                        >
-                          {sec}s
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Total Rounds */}
-                  <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-col justify-between gap-space-xs shadow-sm">
-                    <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">4. TOTAL ROUNDS</span>
-                    <div className="flex items-center justify-between gap-1 pt-1">
-                      {[3, 5, 7, 10].map((r) => (
-                        <button
-                          key={r}
-                          disabled={!isHost}
-                          className={`w-8 h-8 rounded-lg font-headline-sm text-headline-sm border-2 border-border-dark transition-all flex items-center justify-center ${
-                            roomData.totalRounds === r
-                              ? 'bg-secondary-fixed text-on-secondary-fixed font-black shadow-[2px_2px_0px_#18181B]'
-                              : 'bg-surface-card text-on-surface hover:bg-surface-container'
-                          } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
-                          onClick={() => handleUpdateSetting({ totalRounds: r })}
-                          type="button"
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Word Difficulty (D1) — null = Mixed */}
-                <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex flex-wrap items-center justify-between gap-space-xs shadow-sm">
-                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">6. WORD DIFFICULTY:</span>
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {[null, WORD_DIFFICULTY.EASY, WORD_DIFFICULTY.MEDIUM, WORD_DIFFICULTY.HARD].map((level) => (
-                      <button
-                        key={level || 'MIXED'}
-                        disabled={!isHost}
-                        aria-pressed={(roomData.wordDifficulty || null) === level}
-                        className={`px-2.5 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all flex items-center justify-center ${
-                          (roomData.wordDifficulty || null) === level
-                            ? 'bg-primary-container text-on-primary font-black shadow-[2px_2px_0px_#18181B]'
-                            : 'bg-surface-card text-on-surface hover:bg-surface-container'
-                        } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
-                        onClick={() => handleUpdateSetting({ wordDifficulty: level })}
-                        type="button"
-                      >
-                        {level || 'MIXED'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Max Capacity (not for Solo vs AI) */}
-                {!isSolo && (
-                <div className="bg-canvas-paper p-space-sm rounded-xl border-2 border-border-dark flex items-center justify-between shadow-sm">
-                  <span className="font-label-md text-label-md uppercase text-on-surface-variant font-bold">5. MAX PLAYERS:</span>
-                  <div className="flex items-center gap-1">
-                    {[4, 8, 10, 12, 16].map((cap) => (
-                      <button
-                        key={cap}
-                        disabled={!isHost}
-                        className={`px-2.5 py-1 rounded-lg font-label-md text-label-md border-2 border-border-dark transition-all flex items-center justify-center ${
-                          roomData.maxPlayers === cap
-                            ? 'bg-tertiary-fixed text-on-tertiary-fixed font-black shadow-[2px_2px_0px_#18181B]'
-                            : 'bg-surface-card text-on-surface hover:bg-surface-container'
-                        } ${!isHost ? 'cursor-default' : 'hover:scale-105'}`}
-                        onClick={() => handleUpdateSetting({ maxPlayers: cap })}
-                        type="button"
-                      >
-                        {cap}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                )}
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -394,7 +342,7 @@ export default function RoomLobby({ roomData, username }) {
                   <li>Words: <strong>{roomData.wordDifficulty || 'MIXED'}</strong></li>
                   <li><strong>{enabledChallenges.length}</strong> mini-challenge(s)</li>
                 </ul>
-                <p className="font-label-sm text-label-sm text-on-surface-variant">Change these in SETTINGS / MODIFIERS.</p>
+                <p className="font-label-sm text-label-sm text-on-surface-variant">Change these in MATCH SETTINGS.</p>
               </div>
             ) : (
             <>
