@@ -799,7 +799,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-06 | Chat overflow | P0 | DONE | see section T1-06 |
 | T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
 | T1-08 | Host START / player READY UI | P1 | DONE | see section T1-08 |
-| T1-09 | Online count | P5 | TODO | |
+| T1-09 | Online count | P5 | DONE | fake count removed; see section T1-09 |
 | T1-10 | Header / leaderboard | P5 | TODO | |
 | T1-11 | Avatars | P1 | DONE | see section T1-11 |
 | T1-12 | Mini-challenge UI | P5 | TODO | |
@@ -866,6 +866,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Fix:** `server/src/config/database.js` only — 75 words, 25 per difficulty, grouped by difficulty in the file. The 20 original words keep their id, text and difficulty (ids 1–20, incl. `Astronaut`); 55 words added (ids 21–75), each a DoodleNet class name, plain letters / spaces so they are guessable as written. No logic change: `getRandomWords`, D1 filter + small-pool fallback, W1 tracking, `select_word` validation unchanged. `SOLO_AI.GAME_WORDS` (`shared/`) not changed → Solo AI still uses the same 19 words (EASY 9 / MEDIUM 6 / HARD 4). No socket / contract change.
 - **Status:** DONE (automated); MANUAL NOT TESTED. New `tests/e2e/t1-05-word-bank.e2e.js` 20/20 (in-process, real RoundManager: size 60–90, ≥ 20 per difficulty, unique ids / words, original 20 kept, added words are DoodleNet classes; D1: 3 distinct words of the chosen level, every word reachable; A8: Solo words all in the bank, ≥ 3 per level; W1 on the full bank: 25 distinct targets per level then reuse, unused first incl. the top-up turns, LOBBY reset, Solo HARD 4 then reuse) — fails on the old bank (16/19) and with the LOBBY reset removed (19/20). `w1-no-repeat-words.e2e.js` updated (its live checks assumed a 5-word HARD / 9-word EASY pool; exhaustion and LOBBY reset now checked in-process in the T1-05 test) 14/14. Regression on a fresh server: d1-difficulty 14/14, sec-select-word 12/12, a8-a9-solo-ai 20/20, p3.1-answer-leak 7/7, server log clean. Full suite not run.
   - Not changed: adding the new words to Solo AI needs `SOLO_AI.GAME_WORDS` in `shared/contract.js` (approval).
+
+### T1-09 — Online count
+
+- **Problem:** the home ticker bar showed a hardcoded "1,420 PLAYERS ONLINE" with a pulsing dot. The server has no online count (no event / field), so the number was fake.
+- **Fix:** `client/src/App.jsx` — the online-count block (dot + text) removed; no replacement number, no server / socket change. The rest of the ticker bar (ARCADE LOBBY NETWORK, LIVE SEASON 04) unchanged.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-09-online-count.test.jsx` 3/3 (fails on the previous `App.jsx`: 1/3). Regression: browser t1-17-initial-viewport 2/2, b2-layout-overflow 9/9 at 375 px and 820 px; render c1-default-name 3/3, solo-lobby 14/14; client build.
 
 ### T1-06 — Chat overflow
 

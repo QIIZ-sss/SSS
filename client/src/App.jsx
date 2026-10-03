@@ -371,12 +371,6 @@ export default function App() {
                     <span className="font-headline-sm text-headline-sm uppercase tracking-wider text-on-surface">ARCADE LOBBY NETWORK</span>
                     <span className="px-space-sm py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm border border-border-dark font-bold">LIVE SEASON 04</span>
                   </div>
-                  <div className="flex items-center gap-space-lg">
-                    <div className="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md">
-                      <span className="w-2.5 h-2.5 rounded-full bg-primary animate-ping"></span>
-                      <span className="font-bold text-on-surface">1,420 PLAYERS ONLINE</span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Main Split Architecture Bento Stage */}
