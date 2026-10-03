@@ -12,6 +12,13 @@ const asObject = (p) => (p && typeof p === 'object' && !Array.isArray(p) ? p : {
 const asString = (v) => (typeof v === 'string' ? v : undefined);
 // T1-11: only the shared avatar set is accepted
 const asAvatar = (v) => (AVATARS.some((a) => a.emoji === v) ? v : undefined);
+// T1-20: room name — server is the source of truth: control characters removed, trimmed, cut to
+// GAME_RULES.ROOM_NAME_MAX_LENGTH characters (code points); empty → undefined (caller uses the default)
+const asRoomName = (v) => {
+  if (typeof v !== 'string') return undefined;
+  const clean = Array.from(v.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').trim()).slice(0, GAME_RULES.ROOM_NAME_MAX_LENGTH).join('').trim();
+  return clean || undefined;
+};
 const asPositiveNumber = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
 const reply = (callback, data) => { if (typeof callback === 'function') callback(data); };
 
@@ -39,7 +46,7 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     };
     const newRoom = roomManager.createRoom(
       null, // auto-generates 5-digit code
-      asString(roomConfig.name),
+      asRoomName(roomConfig.name) || asRoomName(`${username}'s Room`),
       username,
       Object.values(GAME_MODES).includes(roomConfig.gameMode) ? roomConfig.gameMode : GAME_MODES.MULTIPLAYER_FFA,
       options

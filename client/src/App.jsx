@@ -464,6 +464,20 @@ export default function App() {
                             <span className="font-label-sm text-label-sm text-on-surface-variant">HOST CONTROLS</span>
                           </div>
 
+                          {/* T1-20: optional room name; the server trims / cuts it and uses "<host>'s Room" when empty */}
+                          <div className="flex flex-col gap-space-xs">
+                            <label className="font-label-md text-label-md uppercase text-on-surface-variant" htmlFor="roomNameInput">ROOM NAME (OPTIONAL)</label>
+                            <input
+                              className="w-full bg-canvas-paper text-on-surface font-body-md text-body-md px-space-md py-space-xs rounded-xl border-2 border-border-dark focus:outline-none focus:ring-2 focus:ring-secondary-container shadow-inner"
+                              id="roomNameInput"
+                              maxLength={GAME_RULES.ROOM_NAME_MAX_LENGTH}
+                              value={newRoomName}
+                              onChange={(e) => setNewRoomName(e.target.value)}
+                              placeholder={`${username || 'Player'}'s Room`}
+                              type="text"
+                            />
+                          </div>
+
                           <div className="flex flex-col gap-space-xs">
                             <span className="font-label-md text-label-md uppercase text-on-surface-variant">GAME MODE</span>
                             <div className="grid grid-cols-3 gap-space-xs">

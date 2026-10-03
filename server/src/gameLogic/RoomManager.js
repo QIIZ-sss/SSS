@@ -19,7 +19,7 @@ class RoomManager {
 
   seedInitialRoom() {
     const defaultCode = '83921';
-    const room = this.createRoom(defaultCode, 'Public Neo Lounge 🎨', 'System', GAME_MODES.MULTIPLAYER_FFA);
+    const room = this.createRoom(defaultCode, 'Public Neo Lounge 🎨', GAME_RULES.PUBLIC_ROOM_HOST, GAME_MODES.MULTIPLAYER_FFA);
     this.rooms.set(defaultCode, room);
   }
 

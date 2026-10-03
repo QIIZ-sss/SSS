@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { socket } from '../services/socket';
 import { SOCKET_EVENTS } from '../../../shared/events';
+import { GAME_RULES } from '../../../shared/contract';
 
 export default function RoomList({ username, avatar, onJoinRoom }) {
   const [rooms, setRooms] = useState([]);
@@ -113,12 +114,17 @@ export default function RoomList({ username, avatar, onJoinRoom }) {
               className="bg-canvas-paper p-space-md rounded-xl border-2 border-border-dark shadow-[3px_3px_0px_#18181B] flex flex-col justify-between gap-space-sm hover:-translate-y-0.5 transition-all"
             >
               <div className="flex items-start justify-between">
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <span className="font-label-sm text-[10px] uppercase text-primary font-bold tracking-wider">
                     {room.gameMode}
                   </span>
-                  <h4 className="font-headline-sm text-headline-sm text-border-dark font-bold">{room.name}</h4>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">Host: {room.host}</span>
+                  <h4 className="font-headline-sm text-headline-sm text-border-dark font-bold break-words">{room.name}</h4>
+                  {/* T1-20: the server's own public room has no player host */}
+                  {room.host === GAME_RULES.PUBLIC_ROOM_HOST ? (
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-bold">PUBLIC ROOM</span>
+                  ) : (
+                    <span className="font-label-sm text-label-sm text-on-surface-variant">Host: {room.host}</span>
+                  )}
                 </div>
                 <span className="bg-tertiary-fixed text-on-tertiary-fixed font-headline-sm text-label-sm px-2 py-0.5 rounded-full border border-border-dark font-black">
                   #{room.code || room.id}

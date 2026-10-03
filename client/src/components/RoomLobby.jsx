@@ -106,10 +106,13 @@ export default function RoomLobby({ roomData, username }) {
         </div>
 
         {/* Right: Room Name & Host Badge */}
-        <div className="flex items-center gap-space-md">
-          <div className="flex flex-col text-right">
-            <span className="font-headline-sm text-headline-sm text-border-dark font-black uppercase">{roomData.name || 'JUST DRAW IT ARENA'}</span>
-            {!isSolo && <span className="font-label-sm text-label-sm text-on-surface-variant">HOST: {roomData.host} 👑</span>}
+        <div className="flex items-center gap-space-md min-w-0">
+          <div className="flex flex-col text-right min-w-0">
+            <span className="font-headline-sm text-headline-sm text-border-dark font-black uppercase break-words" id="roomNameDisplay">{roomData.name || 'JUST DRAW IT ARENA'}</span>
+            {/* T1-20: the server's own public room has no player host */}
+            {!isSolo && (roomData.host === GAME_RULES.PUBLIC_ROOM_HOST
+              ? <span className="font-label-sm text-label-sm text-on-surface-variant font-bold" id="publicRoomLabel">PUBLIC ROOM</span>
+              : <span className="font-label-sm text-label-sm text-on-surface-variant">HOST: {roomData.host} 👑</span>)}
           </div>
         </div>
       </div>
