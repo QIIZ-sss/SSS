@@ -1,6 +1,13 @@
 // Security: empty / malformed socket payloads (and non-function acks) never crash the server or corrupt room state.
 // Every handler that reads a payload is hit from a context that reaches its deeper code; afterwards a normal game still works.
+const path = require('path');
 const L = require('../lib/e2e-lib');
+const { RATE_LIMITS } = require(path.join(__dirname, '..', '..', 'shared', 'contract.js'));
+const { SOCKET_EVENTS } = require(path.join(__dirname, '..', '..', 'shared', 'events.js'));
+// U4: pace each event under its rate limit so every malformed payload still reaches the handler
+const KEY = Object.fromEntries(Object.entries(SOCKET_EVENTS).map(([k, v]) => [v, k]));
+const gap = (ev) => { const lim = RATE_LIMITS[KEY[ev]] || (RATE_LIMITS.DRAW.events.includes(KEY[ev]) ? RATE_LIMITS.DRAW : null);
+  return lim ? Math.max(60, Math.ceil(lim.windowMs / lim.max) + 20) : 60; };
 const NONE = Symbol('no payload');
 const GENERIC = [NONE, null, 'str', 42, [1, 2], {}];
 const label = (p) => (p === NONE ? 'no payload' : JSON.stringify(p).replace(/(\[(?:[^\[\],]*,){3})[^\]]{40,}\]/g, '$1…]'));
@@ -11,7 +18,7 @@ const alive = () => new Promise((r) => {
 });
 // fire every payload, then check the server still accepts connections
 async function hit(name, p, ev, payloads, extra = []) {
-  for (const pl of payloads) { fire(p, ev, pl, ...extra); await L.sleep(60); }
+  for (const pl of payloads) { fire(p, ev, pl, ...extra); await L.sleep(gap(ev)); }
   await L.sleep(250);
   L.check(`${name}: ${ev} with ${payloads.map(label).join(' | ')}${extra.length ? ' + non-function ack' : ''} → server still up`, await alive());
 }

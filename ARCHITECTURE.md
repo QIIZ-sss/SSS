@@ -91,7 +91,7 @@ At baseline `README.md` documented the legacy game and file layout, not the live
 - ~~Drawer chat is broadcast to all — `chatHandler.js:70-74` (A6).~~ **Fixed in P3.2:** drawer messages are dropped during WORD_SELECTION/PLAYING (`GAME_RULES.DRAWER_CAN_CHAT`); `ChatBox.jsx` disables input.
 - `select_word` does not validate `word` against `room.wordOptions` — `gameHandler.js:135`.
 - `DONT_LIFT_PEN` and `GEOMETRIC_ONLY` enforced only in the client — `client/src/components/Canvas.jsx:157-165`.
-- No payload validation or rate limiting in any live handler (`server/src/socket/*.js`).
+- ~~No payload validation or rate limiting in any live handler (`server/src/socket/*.js`).~~ **Fixed:** payload types validated (SEC-2); per-socket rate limits (U4: `RATE_LIMITS` in `shared/contract.js`, `server/src/socket/rateLimiter.js` as `socket.use()` middleware — over the limit the event is dropped silently; drawing events share a high cap).
 - CORS `origin: '*'` — `server/src/server.js:21-26`.
 
 ### 3.3 Identity

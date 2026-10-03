@@ -30,6 +30,23 @@ export const GAME_RULES = Object.freeze({
   PUBLIC_ROOM_HOST: 'System',     // T1-20: host ของห้องสาธารณะ 83921 ที่ server สร้างเอง (UI ไม่แสดงเป็นชื่อผู้เล่น)
 });
 
+// ---------- U4: จำกัดความถี่ของ event ต่อ socket (server บังคับ, เกินแล้วทิ้งเงียบ ๆ ไม่ตัดการเชื่อมต่อ) ----------
+// key = ชื่อ key ใน SOCKET_EVENTS; max ครั้งภายใน windowMs (หน้าต่างเลื่อน)
+// DRAW = ทุก event การวาดรวมกัน (events) — เพดานสูงมาก ไม่ให้การวาดเร็วตามปกติสะดุด
+// solo_ai_predict ใช้ SOLO_AI.SERVER_MIN_INTERVAL_MS แยกต่างหาก (มีอยู่แล้ว)
+export const RATE_LIMITS = Object.freeze({
+  SEND_CHAT: Object.freeze({ max: 5, windowMs: 2000 }),
+  CREATE_ROOM: Object.freeze({ max: 5, windowMs: 10000 }),
+  JOIN_ROOM: Object.freeze({ max: 10, windowMs: 10000 }),
+  REJOIN_ROOM: Object.freeze({ max: 10, windowMs: 10000 }),
+  TOGGLE_READY: Object.freeze({ max: 10, windowMs: 5000 }),
+  UPDATE_ROOM_SETTINGS: Object.freeze({ max: 20, windowMs: 5000 }),
+  SWITCH_TEAM: Object.freeze({ max: 10, windowMs: 5000 }),
+  SELECT_WORD: Object.freeze({ max: 10, windowMs: 5000 }),
+  DRAW: Object.freeze({ max: 600, windowMs: 1000,
+    events: Object.freeze(['DRAW_BEGIN', 'DRAW_PATH', 'DRAW_END', 'DRAW_CLEAR', 'DRAW_FILL', 'SHAPE_PREVIEW']) }),
+});
+
 // ---------- เวลาแสดงผลฝั่ง client (UX เท่านั้น ไม่ใช่กติกาที่ server บังคับ) ----------
 export const UI = Object.freeze({
   CHALLENGE_POPUP_MS: 3000,       // D3: ป็อปอัปชาเลนจ์ต้นเทิร์นปิดเองหลัง 3 วินาที (หรือกด GOT IT)
@@ -107,6 +124,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     GAME_STATUS,
     GAME_RULES,
+    RATE_LIMITS,
     UI,
     WORD_DIFFICULTY,
     SOLO_AI,

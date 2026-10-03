@@ -14,6 +14,7 @@ const RoundManager = require('./gameLogic/RoundManager');
 const { setupGameHandlers } = require('./socket/gameHandler');
 const { setupDrawHandlers } = require('./socket/drawHandler');
 const { setupChatHandlers } = require('./socket/chatHandler');
+const { attachRateLimit } = require('./socket/rateLimiter');
 
 const app = express();
 const server = http.createServer(app);
@@ -40,6 +41,7 @@ app.get('/api/leaderboard', leaderboardController.getLeaderboard);
 
 // Socket.io connections
 io.on('connection', (socket) => {
+  attachRateLimit(socket); // U4: before any handler
   setupGameHandlers(io, socket, timerManager, roundManager);
   setupDrawHandlers(io, socket);
   setupChatHandlers(io, socket, timerManager, roundManager);
