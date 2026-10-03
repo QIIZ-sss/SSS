@@ -78,6 +78,8 @@ async function refresh(old, code, sessionId, name) { // simulate page refresh: d
     await L.waitFor(() => B.events.some(e => e.ev === 'round_end' && /drawer left/i.test(e.data.reason)), 40000);
     const dt = (Date.now() - t0) / 1000;
     L.check('W4 drawer removed after RECONNECT_GRACE_MS (~30 s) and the turn ends', dt >= 29 && dt <= 32, `${dt.toFixed(1)} s`);
+    // round_end is emitted just before the room_data that carries the new host: wait for that update, not only for round_end
+    await L.waitFor(() => L.last(B).host !== A.name, 2000);
     L.check('W4 host passed to a connected player', L.last(B).host !== A.name, L.last(B).host);
     L.closeAll(B, C);
   }

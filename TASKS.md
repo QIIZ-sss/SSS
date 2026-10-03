@@ -899,6 +899,7 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** the toolbar used emoji (✏️ 🧹 🪣 ⚪ ⬜ 🔺 📏 🗑️) that render differently per platform (🪣 is missing on older systems) and do not match the Material Symbols icons used everywhere else; buttons had no accessible name.
 - **Fix (client only, `Canvas.jsx`):** Material Symbols icons (edit, ink_eraser, format_color_fill, circle, crop_square, change_history, horizontal_rule, delete) next to the existing text labels; every tool has `aria-label` and `title` (the bucket keeps its QA-4 "Not allowed during Don't Lift Pen" title when blocked).
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-24-tool-icons.test.jsx` 4/4. Regression: B1 canvas markup 3/3, D2 16/16, QA-4 Fill 8/8, D3 popup 19/19, client build.
+  - Process note: the full suite for this commit had 1 failure (`b4-reconnect` W4 "host passed to a connected player", 19/20) and the commit was made before the result was read. Cause: a race in the test (it read the host right after `round_end`, which the server emits just before the `room_data` carrying the new host) — not a T1-24 issue (client toolbar only). Fixed in `test(B4): wait for the host hand-over` (3/3 runs 20/20) and the full suite re-run.
 
 ---
 
