@@ -800,7 +800,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
 | T1-08 | Host START / player READY UI | P1 | DONE | see section T1-08 |
 | T1-09 | Online count | P5 | DONE | fake count removed; see section T1-09 |
-| T1-10 | Header / leaderboard | P5 | TODO | |
+| T1-10 | Header / leaderboard | P5 | DONE | crown + gold tint on LEADERBOARD; see section T1-10 |
 | T1-11 | Avatars | P1 | DONE | see section T1-11 |
 | T1-12 | Mini-challenge UI | P5 | TODO | |
 | T1-13 | Lobby chat | P7 | TODO | optional |
@@ -872,6 +872,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** the home ticker bar showed a hardcoded "1,420 PLAYERS ONLINE" with a pulsing dot. The server has no online count (no event / field), so the number was fake.
 - **Fix:** `client/src/App.jsx` — the online-count block (dot + text) removed; no replacement number, no server / socket change. The rest of the ticker bar (ARCADE LOBBY NETWORK, LIVE SEASON 04) unchanged.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-09-online-count.test.jsx` 3/3 (fails on the previous `App.jsx`: 1/3). Regression: browser t1-17-initial-viewport 2/2, b2-layout-overflow 9/9 at 375 px and 820 px; render c1-default-name 3/3, solo-lobby 14/14; client build.
+
+### T1-10 — Header LEADERBOARD item
+
+- **Problem:** the LEADERBOARD nav item looked like plain grey text next to FIND ROOM & LOBBY and was easy to miss.
+- **Fix:** `client/src/App.jsx` header nav only — LEADERBOARD gets a Material Symbols `crown` icon (theme gold `text-tertiary`) and, while not selected, a gold tint (`bg-tertiary-fixed/40`, `border-tertiary-container`, bold); when selected it uses the same style as the other selected item. Same `onClick` (`setActiveNav('leaderboard')`); FIND ROOM & LOBBY unchanged; the nav stays `hidden md:flex` (not shown on phones, as before). No server / socket change.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-10-leaderboard-nav.test.jsx` 5/5 (fails on the previous `App.jsx`). `tests/browser/t1-10-leaderboard-nav-overflow.browser.jsx` 7/7 at 1280 px (real Tailwind + fonts: crown drawn as a 20×20 glyph, gold tint, no header overflow, LEADERBOARD → HALL OF FAME → back to the lobby). Regression: b2-layout-overflow 9/9 at 375 px and 820 px (Home screen incl. the header nav at 820 px), t1-17-initial-viewport 2/2; render t1-09 3/3, c1 3/3; client build.
 
 ### T1-06 — Chat overflow
 

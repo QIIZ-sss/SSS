@@ -315,14 +315,17 @@ export default function App() {
                 >
                   FIND ROOM & LOBBY
                 </button>
+                {/* T1-10: LEADERBOARD stands out — crown icon and a gold tint while not selected */}
                 <button
-                  className={`px-space-md py-space-xs rounded-lg transition-all border-2 ${
+                  id="navLeaderboard"
+                  className={`inline-flex items-center gap-1.5 px-space-md py-space-xs rounded-lg transition-all border-2 ${
                     activeNav === 'leaderboard'
                       ? 'bg-secondary-fixed text-on-secondary-fixed font-bold border-border-dark shadow-[2px_2px_0px_#18181B]'
-                      : 'border-transparent text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                      : 'border-tertiary-container bg-tertiary-fixed/40 text-on-surface font-bold hover:bg-tertiary-fixed'
                   }`}
                   onClick={() => setActiveNav('leaderboard')}
                 >
+                  <span className="material-symbols-outlined text-[20px] leading-none text-tertiary" aria-hidden="true">crown</span>
                   LEADERBOARD
                 </button>
               </>
