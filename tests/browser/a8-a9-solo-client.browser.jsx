@@ -36,7 +36,8 @@ setTimeout(() => {
   check('a result for another word (stale) is ignored', !/Current Guess\s*Sun/.test(text()) && /Not sure yet…/.test(text()));
   fire(res({ guess: 'Clock', confidence: 97, isConfident: true, top3: [{ label: 'Clock', confidence: 97 }, { label: 'Sun', confidence: 2 }], modelSees: { label: 'alarm clock', confidence: 30 }, isCorrect: true }));
   check('confident result shows the guess, top predictions and what the model sees', /Clock/.test(text()) && /alarm clock/.test(text()) && /#2 Sun/.test(text()));
-  check(`correct guess flash shows +${SOLO_AI.CORRECT_SCORE}`, text().includes(`+${SOLO_AI.CORRECT_SCORE}`));
+  // T1-23: points now follow the FFA drawer / guesser rule (server), so the flash shows no fixed amount
+  check('correct guess flash shows AI GUESSED CORRECTLY (no fixed point amount)', text().includes('AI GUESSED CORRECTLY') && !text().includes(`+${SOLO_AI.CORRECT_SCORE}`));
   act(() => root.render(<SoloAIGame roomData={{ ...room, currentRound: 3, currentWord: 'Sun' }} username="Solo" />));
   check('next server word resets the AI panel', /Target: Sun/.test(text()) && /Waiting for strokes/.test(text()));
   out.textContent = results.join('\n') + `\n\n${results.filter((r) => r.startsWith('PASS')).length}/${results.length} PASS`;

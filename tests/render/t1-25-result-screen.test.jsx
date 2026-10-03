@@ -1,10 +1,9 @@
 // T1-25: universal result screen content — FFA podium + full ranking, Team sections (winner first, WINNER / DEFEATED /
-// TIE, totals, own Top 3 + ranking, never merged), Solo (score + result, no AI score), ties, 0-point players, server
+// TIE, totals, own Top 3 + ranking, never merged), Solo (T1-23: human vs AI, WINNER / TIE), ties, 0-point players, server
 // order kept (T1-02), winner highlighted / others dimmed, stopped match, LEAVE ROOM, nothing beyond the payload shown.
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ResultScreen from '../../client/src/components/ResultScreen.jsx';
-import { SOLO_AI } from '../../shared/contract.js';
 const results = []; const check = (n, c, d = '') => results.push(`${c ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
 const P = (u, s, t = 'Red') => ({ username: u, avatar: '🐶', score: s, team: t });
 const base = { winnerText: 'from server', stopped: false, reason: '', teamScores: { Red: { score: 0 }, Blue: { score: 0 } } };
@@ -58,13 +57,21 @@ const rows = (h, id) => [...block(h, id, id.startsWith('podium') ? 'ol' : 'ul').
   check('Team tie: banner TIE, both teams TIE (Red first), nobody dimmed, no WINNER', /id="resultBanner">TIE</.test(tie) && ts.join(',') === 'Red:TIE,Blue:TIE'
     && !/WINNER|DEFEATED/.test(tie) && !/opacity-60/.test(tie), ts.join(','));
 }
-{ // Solo: score + result, no AI score
-  const h = html({ ...base, gameMode: 'SOLO_AI', finalScores: [P('Ann', 3 * SOLO_AI.CORRECT_SCORE)] });
-  check('Solo: player score shown', new RegExp(`id="soloScore">${3 * SOLO_AI.CORRECT_SCORE} PTS<`).test(h));
-  check('Solo: result = drawings the AI guessed (score / SOLO_AI.CORRECT_SCORE)', /the AI guessed 3 of your drawings/.test(h));
-  check('Solo: no AI score, no podium / ranking / banner', !/AI[^<]*PTS|PTS[^<]*AI/.test(h) && (h.match(/PTS/g) || []).length === 1 && !h.includes('podium') && !h.includes('resultBanner'));
-  const z = html({ ...base, gameMode: 'SOLO_AI', finalScores: [P('Ann', 0)] });
-  check('Solo with 0 points: 0 PTS, AI guessed 0 drawings', /id="soloScore">0 PTS</.test(z) && /guessed 0 of your drawings/.test(z));
+{ // Solo (T1-23): human vs AI from the payload, WINNER / TIE, no invented AI score
+  const solo = (human, ai, extra = {}) => html({ ...base, gameMode: 'SOLO_AI', finalScores: [P('Ann', human)], ...(ai === undefined ? {} : { aiScore: ai }), ...extra });
+  const win = solo(760, 300);
+  check('Solo: human and AI scores shown', /id="soloScore">760 PTS</.test(win) && /id="soloAiScore">300 PTS</.test(win));
+  check('Solo: human ahead → WINNER: Ann, AI card dimmed', /id="resultBanner">WINNER: Ann</.test(win)
+    && /id="soloPlayerCard" data-winner="true"/.test(win) && /id="soloAiCard" data-winner="false"[^>]*opacity-60/.test(win));
+  const lose = solo(100, 800);
+  check('Solo: AI ahead → WINNER: AI', /id="resultBanner">WINNER: AI</.test(lose) && /id="soloAiCard" data-winner="true"/.test(lose));
+  const tie = solo(300, 300);
+  check('Solo: equal scores → TIE, both highlighted, nobody dimmed', /id="resultBanner">TIE</.test(tie) && !/WINNER/.test(tie) && (tie.match(/data-winner="true"/g) || []).length === 2 && !/opacity-60/.test(tie));
+  const zero = solo(0, 0);
+  check('Solo: 0 – 0 → TIE with both 0 PTS shown', /TIE/.test(zero) && /id="soloScore">0 PTS</.test(zero) && /id="soloAiScore">0 PTS</.test(zero));
+  const none = solo(500);
+  check('Solo: payload without aiScore → no AI card, no banner (no invented score)', !none.includes('soloAiCard') && !none.includes('resultBanner') && (none.match(/PTS/g) || []).length === 1);
+  check('Solo: no podium / ranking lists', !win.includes('podium') && !win.includes('fullRanking'));
 }
 { // stopped match (T1-22), LEAVE ROOM, no extra data
   const h = html({ ...base, gameMode: 'MULTIPLAYER_FFA', stopped: true, reason: 'Not enough players left', finalScores: [P('Ann', 300), P('Bo', 0)] });

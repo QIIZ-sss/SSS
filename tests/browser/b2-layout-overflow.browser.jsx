@@ -28,6 +28,7 @@ const screens = [
   ['FFA word selection (drawer)', () => <MultiplayerGame roomData={{ ...room, status: 'WORD_SELECTION', currentWord: '' }} username="Alice" wordOptions={['Helicopter', 'Eiffel Tower', 'Basketball']} />],
   ['Team game (guesser)', () => <TeamGame roomData={{ ...room, gameMode: 'TEAM' }} username="Bobby_long_name" wordOptions={[]} />],
   ['Solo AI', () => <SoloAIGame roomData={{ ...room, gameMode: 'SOLO_AI', players: [room.players[0]] }} username="Alice" />],
+  ['Solo AI (AI drawing, T1-23)', () => <SoloAIGame roomData={{ ...room, gameMode: 'SOLO_AI', players: [room.players[0]], soloTurn: 'AI', currentDrawer: null, currentWord: '', aiScore: 300 }} username="Alice" />],
   ['Leaderboard', () => <Leaderboard />],
 ];
 const host = document.getElementById('root');

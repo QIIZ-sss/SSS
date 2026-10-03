@@ -1,6 +1,5 @@
 import React from 'react';
 import { GAME_MODES } from '../../../shared/gameConfig';
-import { SOLO_AI } from '../../../shared/contract';
 
 // T1-25: one result screen for FFA, Team and Solo, built only from the server's game_over payload
 // ({ gameMode, finalScores (ranked: score desc, stable ties — T1-02), teamScores, stopped, reason }).
@@ -112,23 +111,36 @@ function TeamResult({ result }) {
 
 function SoloResult({ result, username }) {
   const me = (result.finalScores || [])[0] || { username, score: 0 };
-  const drawings = Math.floor(scoreOf(me) / SOLO_AI.CORRECT_SCORE);
-  // Contenders are a list so the AI can be added once it scores (T1-23); until then only the player is shown.
-  const contenders = [{ key: 'player', name: me.username, avatar: me.avatar || '🐶', score: scoreOf(me) }];
+  // T1-23: human vs AI, both scores from the server (aiScore); no AI card if the payload has no AI score
+  const ai = typeof result.aiScore === 'number' ? result.aiScore : null;
+  const contenders = [{ key: 'player', name: me.username, avatar: me.avatar || '🐶', score: scoreOf(me) }]
+    .concat(ai === null ? [] : [{ key: 'ai', name: 'AI', avatar: '🤖', score: ai }]);
+  const decided = ai !== null && !result.stopped;
+  const top = Math.max(...contenders.map((c) => c.score));
+  const winners = decided ? contenders.filter((c) => c.score === top).map((c) => c.key) : [];
+  const tie = winners.length > 1;
   return (
     <>
+      {decided && (
+        <p className="font-headline-md text-headline-md font-black text-border-dark" id="resultBanner">
+          {tie ? 'TIE' : `WINNER: ${contenders.find((c) => c.key === winners[0]).name}`}
+        </p>
+      )}
       <div className="flex flex-wrap justify-center gap-space-sm" id="soloContenders">
-        {contenders.map((c) => (
-          <div key={c.key} className="min-w-[10rem] flex flex-col items-center gap-1 rounded-xl border-2 border-border-dark bg-tertiary-fixed p-space-sm shadow-[3px_3px_0px_#18181B]">
-            <span className="text-3xl">{c.avatar}</span>
-            <span className="font-label-md text-label-md font-bold text-border-dark">{c.name}</span>
-            <span className="font-headline-md text-headline-md font-black text-border-dark" id="soloScore">{c.score} PTS</span>
-          </div>
-        ))}
+        {contenders.map((c) => {
+          const win = winners.includes(c.key);
+          return (
+            <div key={c.key} id={c.key === 'ai' ? 'soloAiCard' : 'soloPlayerCard'} data-winner={win ? 'true' : 'false'}
+              className={`min-w-[9rem] flex-1 flex flex-col items-center gap-1 rounded-xl border-2 border-border-dark p-space-sm ${
+                win ? 'bg-tertiary-fixed shadow-[3px_3px_0px_#18181B]' : `bg-surface-container ${decided ? 'opacity-60' : ''}`}`}>
+              <span className="text-3xl">{c.avatar}</span>
+              <span className="font-label-md text-label-md font-bold text-border-dark">{c.name}</span>
+              <span className="font-headline-md text-headline-md font-black text-border-dark" id={c.key === 'ai' ? 'soloAiScore' : 'soloScore'}>{c.score} PTS</span>
+            </div>
+          );
+        })}
       </div>
-      <p className="font-body-md text-body-md text-border-dark" id="soloResult">
-        {result.stopped ? 'Practice stopped.' : `Practice complete — the AI guessed ${drawings} of your drawing${drawings === 1 ? '' : 's'}.`}
-      </p>
+      <p className="font-body-md text-body-md text-border-dark" id="soloResult">{result.stopped ? 'Practice stopped.' : 'You vs the AI — practice complete.'}</p>
     </>
   );
 }

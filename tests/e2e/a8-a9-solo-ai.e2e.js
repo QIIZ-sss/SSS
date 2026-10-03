@@ -70,7 +70,7 @@ const keysOf = (o) => Object.keys(o).sort().join(',');
   }
   // Only doodles the real model is shown above to recognise (House is the deliberate not-confident example)
   const RECOGNISED = ['Sun', 'Clock'];
-  { // Correct drawing scores SOLO_AI.CORRECT_SCORE and ends the turn (EASY pool contains Sun and Clock; try up to 10 turns)
+  { // Correct drawing ends the turn; T1-23: human = FFA drawer points, AI = FFA guesser points (EASY pool contains Sun and Clock; try up to 10 turns)
     const A = L.player(L.nextName('S'), { autoSelect: false, autoGuess: false });
     await L.makeRoom(A, { gameMode: 'SOLO_AI', roundTime: 15 }); // shortest allowed round (U11 clamp)
     A.s.emit('update_room_settings', { wordDifficulty: WORD_DIFFICULTY.EASY, totalRounds: 10 }); await L.sleep(300);
@@ -84,12 +84,14 @@ const keysOf = (o) => Object.keys(o).sort().join(',');
         A.s.emit('solo_ai_predict', { targetWord: cur.currentWord, pixels: doodles[cur.currentWord]() });
         await L.waitFor(() => A.events.some((e) => e.ev === 'round_end' && /AI guessed correctly/.test(e.data.reason)), 3000);
         await L.sleep(200);
-        scored = { word: cur.currentWord, score: L.last(A).players[0].score, end: A.events.find((e) => e.ev === 'round_end' && /AI guessed correctly/.test(e.data.reason)) };
+        scored = { word: cur.currentWord, score: L.last(A).players[0].score, aiScore: L.last(A).aiScore, end: A.events.find((e) => e.ev === 'round_end' && /AI guessed correctly/.test(e.data.reason)) };
       }
     }
     if (scored) {
       L.check(`A8 correct ${scored.word} doodle ends the turn ("AI guessed correctly")`, !!scored.end);
-      L.check(`A8 solo player gets SOLO_AI.CORRECT_SCORE (${SOLO_AI.CORRECT_SCORE})`, scored.score === SOLO_AI.CORRECT_SCORE, String(scored.score));
+      // T1-23: the human never guessed here, so their score is the drawer points of this turn (FFA rule: 1 of 1 guesser → 300)
+      L.check('A8 / T1-23 human gets the FFA drawer points (300), the AI gets FFA guesser points (100–500)', scored.score === 300 && scored.aiScore >= 100 && scored.aiScore <= 500,
+        `human ${scored.score}, ai ${scored.aiScore}`);
     } else {
       console.log(`INFO  correct-drawing path not exercised: target was never Sun/Clock in ${seen.length} turns (${seen.join(' ')})`);
     }

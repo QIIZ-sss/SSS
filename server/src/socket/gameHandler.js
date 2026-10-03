@@ -2,6 +2,7 @@
 const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES, AVATARS, MINI_CHALLENGES } = require('../../../shared/gameConfig');
 const { GAME_STATUS, GAME_RULES, WORD_DIFFICULTY, SOLO_AI, isValidPredictRequest } = require('../../../shared/contract');
+const { calculateGuesserScore } = require('../../../shared/utils');
 const roomManager = require('../gameLogic/RoomManager');
 const aiPredictor = require('../utils/aiPredictor');
 const crypto = require('crypto');
@@ -249,6 +250,9 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     room.players.forEach(p => { p.score = 0; });
     room.teams.Red.score = 0;
     room.teams.Blue.score = 0;
+    room.aiScore = 0; // T1-23: Solo starts with the human's drawing turn
+    room.soloNextTurn = SOLO_AI.TURNS.HUMAN;
+    room.aiDrawnWords = [];
 
     roundManager.startTurnSelection(io, room);
   });
@@ -286,8 +290,10 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
     socket.emit(SOCKET_EVENTS.SOLO_AI_PREDICTION_RESULT, result);
 
     if (result.isCorrect) {
-      const player = room.players.find(p => p.username === socket.data.username);
-      if (player) player.score += SOLO_AI.CORRECT_SCORE;
+      // T1-23: the AI is the guesser on the human's turn → FFA guesser points for the AI; the human gets the FFA drawer
+      // points in endRound (the human is never worse off for drawing well)
+      room.soloAiGuessed = true;
+      room.aiScore = (room.aiScore || 0) + calculateGuesserScore(1, 1, timerManager.getRemainingTime(room.id), room.roundTime);
       roundManager.endRound(io, room, `AI guessed correctly as "${targetWord}"! 🤖`);
     }
   });

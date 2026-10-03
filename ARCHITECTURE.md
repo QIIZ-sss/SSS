@@ -205,14 +205,14 @@ Event names from `shared/events.js`. Payloads as observed in live code.
 | C→S | `draw_clear`, `draw_sync` | — | `Canvas.jsx`, `SoloAIGame.jsx:43` |
 | C→S | `send_chat` | `{text}` | `ChatBox.jsx:30` |
 | C→S | `solo_ai_predict` | **since A8:** `{targetWord, pixels}` (baseline `{pixels}`) | `SoloAIGame.jsx` |
-| S→C | `room_data` | `sanitizeRoom()` output — **per player since P3.1** (`currentWord` only for drawer / reveal states) | `RoomManager.js` `sanitizeRoom`, `emitRoomData` |
+| S→C | `room_data` | `sanitizeRoom()` output — **per player since P3.1** (`currentWord` only for drawer / reveal states); **since T1-23 (approved), Solo only:** `soloTurn` (`'HUMAN'` \| `'AI'` \| null — authoritative turn indicator) and `aiScore`; on AI-draw turns `currentDrawer` is `null` (also in `round_change` / `round_start`) and the human gets `currentWord: ''` + `wordLength` until ROUND_OVER | `RoomManager.js` `sanitizeRoom`, `emitRoomData` |
 | S→C | `room_list_updated` | room summaries (**Solo AI rooms omitted since SOLO-1**) | `RoomManager.js` `getPublicRoomList` |
 | S→C | `round_change` | `{currentDrawer, currentRound, totalRounds, status}` | `RoundManager.js:43-48` |
 | S→C | `word_selection` | `{words}` — drawer socket only | `RoundManager.js:54-60` |
 | S→C | `round_start` | `{drawer, round, totalRounds, challenge, forcedColor, roundTime}` | `RoundManager.js:75-82` |
 | S→C | `timer_tick` | `{timeRemaining}` | `TimerManager.js:20,24` |
 | S→C | `round_end` | `{word, reason, drawerPoints, correctGuessers}` — **no client listener** | `RoundManager.js:108-113` |
-| S→C | `game_over` | `{winnerText, finalScores, teamScores}` **+ `stopped`, `reason` since T1-22** (match stopped early: too few players); **since T1-02** `finalScores` is ranked and `gameMode` is included; **since the T1-02 sort fix** every mode ranks by player score, highest first (stable ties, all players incl. 0 pts — Team no longer grouped by team) | `RoundManager.js:155-159` |
+| S→C | `game_over` | `{winnerText, finalScores, teamScores}` **+ `stopped`, `reason` since T1-22** (match stopped early: too few players); **since T1-02** `finalScores` is ranked and `gameMode` is included; **since the T1-02 sort fix** every mode ranks by player score, highest first (stable ties, all players incl. 0 pts — Team no longer grouped by team); **since T1-23 (approved), Solo only:** `aiScore` | `RoundManager.js:155-159` |
 | S→C | `chat_message` | `{sender, text, isSystem?, isCorrectNotice?, guesser?, isConcealedChat?}` | `chatHandler.js`, `gameHandler.js` |
 | S→C | `correct_guess` | `{points}` — guesser only | `chatHandler.js:47` |
 | S→C | `solo_ai_prediction_result` | **since A8:** `{targetWord, ready, guess, confidence, isConfident, top3, modelSees, isCorrect}` | `aiPredictor.js` |

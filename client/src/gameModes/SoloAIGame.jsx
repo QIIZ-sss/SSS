@@ -7,6 +7,7 @@ import { SOCKET_EVENTS } from '../../../shared/events';
 import { GAME_STATUS, SOLO_AI } from '../../../shared/contract';
 import { canvasToPixels } from '../utils/canvasToPixels';
 import TimerBadge from '../components/TimerBadge';
+import ChatBox from '../components/ChatBox';
 import useGameTimer from '../hooks/useGameTimer';
 
 // A8: the server owns the target word (room_data.currentWord — the solo player is the drawer, so it is sent to them).
@@ -15,16 +16,22 @@ const EMPTY_PREDICTION = { ready: true, guess: null, confidence: 0, isConfident:
 
 export default function SoloAIGame({ roomData, username }) {
   const [prediction, setPrediction] = useState(EMPTY_PREDICTION);
+  // T1-23: soloTurn is the authoritative turn indicator (currentDrawer is null while the AI draws — still a live turn)
+  const aiTurn = roomData?.soloTurn === SOLO_AI.TURNS.AI;
   const targetWord = roomData?.currentWord || '';
   const isPlaying = roomData?.status === GAME_STATUS.PLAYING;
   const me = roomData?.players?.find((p) => p.username === username);
   const score = me ? me.score : 0;
+  const aiScore = roomData?.aiScore || 0;
+  // on the AI's turn the word stays hidden until the turn ends (P3.1): show blanks only
+  const blanks = Array.from({ length: roomData?.wordLength || 0 }, () => '_').join(' ');
+  const shownWord = targetWord || (aiTurn ? blanks : '') || '…';
   const timeRemaining = useGameTimer(roomData?.timeRemaining || 0); // T1-03: server round timer
 
   const targetRef = useRef(targetWord);
   const playingRef = useRef(isPlaying);
   targetRef.current = targetWord;
-  playingRef.current = isPlaying;
+  playingRef.current = isPlaying && !aiTurn; // the AI only guesses on the human's turn
 
   // New turn (new server word) → clear the previous AI result
   useEffect(() => {
@@ -93,18 +100,25 @@ export default function SoloAIGame({ roomData, username }) {
         </div>
         <div className="grid grid-cols-3 gap-space-xs w-full md:w-auto">
           <div className="bg-tertiary-fixed border-2 border-border-dark rounded-xl px-space-sm py-space-xs text-center min-w-0">
-            <span className="font-label-sm text-label-sm text-on-tertiary-fixed block uppercase">Target Word</span>
-            <span className="font-headline-sm text-headline-sm text-border-dark uppercase truncate block font-black">{targetWord || '…'}</span>
+            <span className="font-label-sm text-label-sm text-on-tertiary-fixed block uppercase">{aiTurn ? 'Guess the word' : 'Target Word'}</span>
+            <span className="font-headline-sm text-headline-sm text-border-dark uppercase truncate block font-black" id="soloWord">{shownWord}</span>
           </div>
           <div className="bg-surface-card border-2 border-border-dark rounded-xl px-space-sm py-space-xs text-center">
             <span className="font-label-sm text-label-sm text-on-surface-variant block uppercase">Round</span>
             <span className="font-headline-sm text-headline-sm text-secondary font-black">{roomData?.currentRound} / {roomData?.totalRounds}</span>
           </div>
           <div className="bg-primary-container text-on-primary border-2 border-border-dark rounded-xl px-space-sm py-space-xs text-center shadow-[2px_2px_0px_#18181B]">
-            <span className="font-label-sm text-label-sm text-on-primary block uppercase">Score</span>
-            <span className="font-headline-sm text-headline-sm text-on-primary font-black">{score}</span>
+            <span className="font-label-sm text-label-sm text-on-primary block uppercase">You · AI</span>
+            <span className="font-headline-sm text-headline-sm text-on-primary font-black" id="soloScores">{score} · {aiScore}</span>
           </div>
         </div>
+        {/* T1-23: whose turn it is */}
+        {roomData?.soloTurn && (
+          <p id="soloTurnBanner" className={`md:col-span-2 rounded-xl border-2 border-border-dark px-space-sm py-space-xs font-headline-sm text-headline-sm font-black uppercase text-center ${
+            aiTurn ? 'bg-secondary-fixed text-on-secondary-fixed' : 'bg-tertiary-fixed text-on-tertiary-fixed'}`}>
+            {aiTurn ? '🤖 AI is drawing — guess the word in the chat' : '✏️ Your turn to draw — the AI guesses'}
+          </p>
+        )}
         {isPlaying && (
           <div className="md:col-span-2 flex justify-end">
             <TimerBadge seconds={timeRemaining} />
@@ -127,21 +141,25 @@ export default function SoloAIGame({ roomData, username }) {
             <div className="flex items-center gap-2">
               {isSuccessFlash && (
                 <span className="bg-secondary text-on-secondary px-3 py-1 rounded-full font-headline-sm text-label-sm font-black uppercase animate-bounce shadow-md">
-                  🎉 AI GUESSED CORRECTLY! +{SOLO_AI.CORRECT_SCORE}
+                  🎉 AI GUESSED CORRECTLY!
                 </span>
               )}
               <span className="font-label-sm text-label-sm bg-surface-container px-space-sm py-1 rounded-full border border-border-dark text-on-surface-variant uppercase font-bold">
-                Target: {targetWord || '…'}
+                {aiTurn ? 'AI drawing' : `Target: ${targetWord || '…'}`}
               </span>
             </div>
           </div>
           <div className="flex justify-center min-w-0">
-            <Canvas isDrawer={true} challenge={roomData?.currentChallenge} forcedColor={roomData?.forcedColor} />
+            <Canvas isDrawer={!aiTurn} challenge={roomData?.currentChallenge} forcedColor={roomData?.forcedColor} />
           </div>
         </main>
 
-        {/* AI Guesser Sidebar */}
+        {/* AI Guesser Sidebar (T1-23: on the AI's turn the human guesses in the chat instead) */}
         <aside className="lg:col-span-4 flex flex-col gap-space-md">
+          {aiTurn ? (
+            <ChatBox username={username} isDrawer={false} roomStatus={roomData?.status} />
+          ) : (
+          <>
           <div className="bg-canvas-paper rounded-xl p-space-md border-3 border-border-dark shadow-[4px_4px_0px_#18181B] flex flex-col gap-space-md">
             <div className="flex items-center justify-between gap-space-sm pb-space-xs border-b-2 border-border-dark">
               <div className="flex items-center gap-space-xs min-w-0">
@@ -220,6 +238,8 @@ export default function SoloAIGame({ roomData, username }) {
               <p>• วาดเส้นโครงร่างที่สื่อถึงวัตถุชัดเจน เช่น พระอาทิตย์มีแฉก, บ้านมีหลังคา</p>
             </div>
           </div>
+          </>
+          )}
         </aside>
       </div>
     </section>

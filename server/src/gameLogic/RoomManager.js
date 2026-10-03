@@ -120,7 +120,9 @@ class RoomManager {
       currentChallenge: room.currentChallenge,
       forcedColor: room.forcedColor,
       timeRemaining: timerRemaining,
-      wordLength: room.currentWord ? room.currentWord.length : 0
+      wordLength: room.currentWord ? room.currentWord.length : 0,
+      // T1-23: Solo only — whose turn it is (authoritative; currentDrawer is null on AI turns) and the AI's score
+      ...(room.gameMode === GAME_MODES.SOLO_AI ? { soloTurn: room.soloTurn || null, aiScore: room.aiScore || 0 } : {})
     };
   }
 

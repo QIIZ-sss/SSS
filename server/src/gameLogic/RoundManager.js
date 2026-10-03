@@ -2,8 +2,9 @@
 const { SOCKET_EVENTS } = require('../../../shared/events');
 const { GAME_MODES, MINI_CHALLENGES, DEFAULT_COLOR_PALETTE } = require('../../../shared/gameConfig');
 const { calculateGuesserScore, calculateDrawerScore, normalizeGuess } = require('../../../shared/utils');
-const { GAME_RULES } = require('../../../shared/contract');
+const { GAME_RULES, SOLO_AI } = require('../../../shared/contract');
 const Word = require('../models/Word');
+const aiDrawer = require('../utils/aiDrawer');
 const Score = require('../models/Score');
 
 class RoundManager {
@@ -32,9 +33,18 @@ class RoundManager {
 
     if (room.players.length === 0) return;
 
+    // T1-23: Solo alternates HUMAN turns (human draws, AI guesses) and AI turns (AI draws, human guesses) in each round.
+    // soloTurn is the authoritative turn indicator; on AI turns currentDrawer is null (the AI is not a player).
+    const isSolo = room.gameMode === GAME_MODES.SOLO_AI;
+    const aiTurn = isSolo && room.soloNextTurn === SOLO_AI.TURNS.AI;
+    if (isSolo) {
+      room.soloTurn = aiTurn ? SOLO_AI.TURNS.AI : SOLO_AI.TURNS.HUMAN;
+      room.soloAiGuessed = false;
+    }
+
     // Pick drawer
     const drawerObj = room.players[room.drawerIndex % room.players.length];
-    room.currentDrawer = drawerObj.username;
+    room.currentDrawer = aiTurn ? null : drawerObj.username;
 
     // Pick challenge randomly from room's enabled challenges list
     const availableChallenges = (room.enabledChallenges && room.enabledChallenges.length > 0)
@@ -42,13 +52,18 @@ class RoundManager {
       : (room.miniChallengeEnabled !== false ? [MINI_CHALLENGES.NONE, MINI_CHALLENGES.COLOUR_FIX, MINI_CHALLENGES.DONT_LIFT_PEN, MINI_CHALLENGES.GEOMETRIC_ONLY] : [MINI_CHALLENGES.NONE]);
 
     room.currentChallenge = availableChallenges[Math.floor(Math.random() * availableChallenges.length)];
+    if (aiTurn) room.currentChallenge = MINI_CHALLENGES.NONE; // the AI's templates follow no drawing challenge
     if (room.currentChallenge === MINI_CHALLENGES.COLOUR_FIX) {
       room.forcedColor = DEFAULT_COLOR_PALETTE[Math.floor(Math.random() * DEFAULT_COLOR_PALETTE.length)];
     } else {
       room.forcedColor = null;
     }
 
-    const isSolo = room.gameMode === GAME_MODES.SOLO_AI;
+    if (aiTurn) {
+      this.startAiDrawTurn(io, room);
+      return;
+    }
+
     // A8: Solo AI only uses words the model can recognise (SOLO_AI.GAME_WORDS)
     // W1: unused eligible words come first; if fewer than 3 remain, top up with used words from the same pool;
     // once every eligible word was used the list starts over
@@ -98,6 +113,30 @@ class RoundManager {
     });
   }
 
+  // T1-23: AI-draw turn — the word comes only from the template words (SOLO_AI.AI_DRAW_WORDS); the AI does not repeat a
+  // word until all of them were drawn (own list, so a reset of the human's W1 pool does not affect it);
+  // the human never receives it before the turn ends (currentDrawer null → P3.1 hides it); the AI draws progressively.
+  startAiDrawTurn(io, room) {
+    const pool = Word.getRandomWords(Number.MAX_SAFE_INTEGER, { aiOnly: true }).map(w => w.word).filter(w => SOLO_AI.AI_DRAW_WORDS.includes(w));
+    if (!room.aiDrawnWords || room.aiDrawnWords.length >= pool.length) room.aiDrawnWords = [];
+    const word = pool.find(w => !room.aiDrawnWords.includes(w));
+    room.aiDrawnWords.push(word);
+    room.wordOptions = [];
+
+    io.to(room.id).emit(SOCKET_EVENTS.ROUND_CHANGE, {
+      currentDrawer: null,
+      currentRound: room.currentRound,
+      totalRounds: room.totalRounds,
+      status: 'WORD_SELECTION'
+    });
+    this.roomManager.emitRoomData(io, room, 10);
+    io.to(room.id).emit(SOCKET_EVENTS.DRAW_CLEAR);
+
+    room.currentWord = word;
+    this.startRoundDrawing(io, room);
+    aiDrawer.start(io, room, word, this.roomManager);
+  }
+
   startRoundDrawing(io, room) {
     this.timerManager.stopTimer(room.id);
     room.status = 'PLAYING';
@@ -122,11 +161,17 @@ class RoundManager {
 
   endRound(io, room, reason = '') {
     this.timerManager.stopTimer(room.id);
+    aiDrawer.stop(room.id);
     room.status = 'ROUND_OVER';
 
+    // T1-23: on a Solo HUMAN turn the AI is the one guesser (room.soloAiGuessed when DoodleNet recognised the drawing)
+    const soloTurn = room.gameMode === GAME_MODES.SOLO_AI ? room.soloTurn : null;
     const totalGuessers = Math.max(1, this.guesserCount(room));
-    const correctCount = room.correctGuessers ? room.correctGuessers.length : 0;
+    const correctCount = (room.correctGuessers ? room.correctGuessers.length : 0) + (soloTurn === SOLO_AI.TURNS.HUMAN && room.soloAiGuessed ? 1 : 0);
     const drawerPoints = calculateDrawerScore(correctCount, totalGuessers);
+
+    // T1-23: on a Solo AI turn the AI is the drawer and gets the drawer points
+    if (soloTurn === SOLO_AI.TURNS.AI) room.aiScore = (room.aiScore || 0) + drawerPoints;
 
     const drawerPlayer = room.players.find(p => p.username === room.currentDrawer);
     if (drawerPlayer) {
@@ -144,6 +189,17 @@ class RoundManager {
     });
 
     this.roomManager.emitRoomData(io, room, 0);
+
+    // T1-23: after the human's turn the AI draws in the same round; after the AI's turn the round moves on as usual
+    if (soloTurn === SOLO_AI.TURNS.HUMAN) {
+      room.soloNextTurn = SOLO_AI.TURNS.AI;
+      this.timerManager.scheduleTransition(room.id, 4000, () => {
+        if (room.players.length === 0) this.endGameMatch(io, room);
+        else this.startTurnSelection(io, room);
+      });
+      return;
+    }
+    if (soloTurn) room.soloNextTurn = SOLO_AI.TURNS.HUMAN;
 
     // Increment drawer index for next turn
     room.drawerIndex++;
@@ -245,6 +301,7 @@ class RoundManager {
   // stoppedReason: set when the match was stopped early (T1-22); such a match is not recorded on the leaderboard
   endGameMatch(io, room, stoppedReason = null) {
     this.timerManager.stopTimer(room.id);
+    aiDrawer.stop(room.id);
     room.status = 'GAME_OVER';
 
     if (room.gameMode !== GAME_MODES.SOLO_AI && !stoppedReason) {
@@ -272,7 +329,8 @@ class RoundManager {
       finalScores: this.rankPlayers(room).map(p => ({ username: p.username, avatar: p.avatar, score: p.score, team: p.team })),
       teamScores: room.teams,
       stopped: !!stoppedReason,
-      reason: stoppedReason || ''
+      reason: stoppedReason || '',
+      ...(room.gameMode === GAME_MODES.SOLO_AI ? { aiScore: room.aiScore || 0 } : {}) // T1-23
     };
     io.to(room.id).emit(SOCKET_EVENTS.GAME_OVER, room.lastGameOver);
 
@@ -297,6 +355,12 @@ class RoundManager {
     room.currentWord = '';
     room.wordOptions = [];
     room.usedWords = []; // W1
+    aiDrawer.stop(room.id); // T1-23
+    room.aiScore = 0;
+    room.soloTurn = null;
+    room.soloNextTurn = SOLO_AI.TURNS.HUMAN;
+    room.soloAiGuessed = false;
+    room.aiDrawnWords = [];
     room.lastGameOver = null; // T1-07
     room.correctGuessers = [];
     room.currentChallenge = MINI_CHALLENGES.NONE;

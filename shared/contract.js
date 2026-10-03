@@ -79,6 +79,12 @@ export const SOLO_AI = Object.freeze({
   MODEL_NAME: 'DoodleNet (Yining Shi, 345 classes)',
   MODEL_DIR: 'ai_model',          // อยู่ใน server/src/
 
+  // T1-23: Solo สลับตา — HUMAN = คนวาด / AI ทาย, AI = AI วาด / คนทาย (room_data.soloTurn เป็นตัวบอกตาที่ถูกต้อง)
+  TURNS: Object.freeze({ HUMAN: 'HUMAN', AI: 'AI' }),
+  // คำที่ AI วาดได้ (มี stroke template ใน server/src/utils/aiDrawer.js) — Stage 1 มี 7 คำเท่านั้น
+  AI_DRAW_WORDS: Object.freeze(['Sun', 'House', 'Tree', 'Apple', 'Clock', 'Rainbow', 'Car']),
+  AI_STROKE_INTERVAL_MS: 60,      // server ส่งจุดของเส้นที่ AI วาดทีละจุดทุก 60 ms (draw_begin / draw_path / draw_end เดิม)
+
   // คำในเกม -> ชื่อหมวดในโมเดล DoodleNet
   GAME_WORDS: Object.freeze({
     'Apple': 'apple', 'Cat': 'cat', 'House': 'house', 'Car': 'car', 'Tree': 'tree',

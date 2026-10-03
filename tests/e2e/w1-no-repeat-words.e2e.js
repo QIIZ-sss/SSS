@@ -88,16 +88,18 @@ async function playMatch(room, rounds, ms = 120000) {
     L.closeAll(...room.ps);
   }
 
-  { // Solo AI + HARD: 4 model-supported HARD words, 6 turns → exhausted and reused, never an empty target
+  { // Solo AI + HARD: 4 model-supported HARD words. T1-23: each round is a HUMAN turn (server word from this pool) then an
+    // AI-draw turn (template words, own list) → only the human turns (1st, 3rd, … round_end) are checked here.
     const aiHard = hard.filter((w) => Object.prototype.hasOwnProperty.call(SOLO_AI.GAME_WORDS, w));
-    const room = await setupRoom(HARD, 6, { gameMode: 'SOLO_AI', roundTime: 15 });
+    const room = await setupRoom(HARD, 5, { gameMode: 'SOLO_AI', roundTime: 15 });
     room.A.s.emit('update_room_settings', { roundTime: 15 }); await L.sleep(200);
-    const t0 = await playMatch(room, null, 200000);
-    const t = targets(room.A, t0);
-    L.check(`W1 Solo AI HARD: 6 turns, every target a non-empty AI-supported HARD word [${aiHard.join(', ')}]`,
-      t.length === 6 && t.every((w) => aiHard.includes(w)), t.join(','));
+    const t0 = await playMatch(room, null, 260000);
+    const all = targets(room.A, t0), t = all.filter((_, i) => i % 2 === 0), ai = all.filter((_, i) => i % 2 === 1);
+    L.check(`W1 Solo AI HARD: 5 human turns, every human target a non-empty AI-supported HARD word [${aiHard.join(', ')}]`,
+      all.length === 10 && t.length === 5 && t.every((w) => aiHard.includes(w)), all.join(','));
     L.check('W1 Solo AI HARD: no repeat before the 4-word pool is exhausted, reuse after', aiHard.length === 4 && distinct(t.slice(0, 4)) && t.slice(0, 4).includes(t[4]),
       t.join(','));
+    L.check('T1-23: the 5 AI turns drew 5 different template words', ai.length === 5 && distinct(ai) && ai.every((w) => SOLO_AI.AI_DRAW_WORDS.includes(w)), ai.join(','));
     L.closeAll(...room.ps);
   }
   L.finish();
