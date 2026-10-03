@@ -148,14 +148,20 @@ export default function RoomLobby({ roomData, username }) {
           <div className="w-full bg-surface-card-subtle rounded-xl rounded-tl-none p-space-md md:p-space-lg border-[3px] border-border-dark shadow-[4px_4px_0px_0px_#18181B] flex flex-col gap-space-md">
             {activeTab === 'CHALLENGES' ? (
               <div className="flex flex-col gap-space-md">
-                <div className="flex items-center justify-between pb-space-xs border-b border-border-dark/30 flex-wrap gap-2">
-                  <span className="font-thai-safe text-label-md text-border-dark uppercase tracking-wider flex items-center gap-1.5 font-bold">
-                    <span className="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
-                    SELECT MINI-CHALLENGES FOR THIS ROOM
-                  </span>
-                  <span className="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full border border-border-dark font-bold bg-tertiary-fixed text-on-tertiary-fixed">
-                    {enabledChallenges.length} / {Object.keys(CHALLENGE_DETAILS).length} ACTIVE
-                  </span>
+                {/* T1-12: clear heading + one-line explanation for new players */}
+                <div className="flex flex-col gap-1 pb-space-xs border-b border-border-dark/30">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <h3 className="font-headline-sm text-headline-sm text-border-dark uppercase tracking-wider flex items-center gap-1.5 font-black" id="miniChallengeHeading">
+                      <span className="material-symbols-outlined text-[22px] text-primary" aria-hidden="true">casino</span>
+                      MINI-CHALLENGES
+                    </h3>
+                    <span className="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full border border-border-dark font-bold bg-tertiary-fixed text-on-tertiary-fixed">
+                      {enabledChallenges.length} / {Object.keys(CHALLENGE_DETAILS).length} ACTIVE
+                    </span>
+                  </div>
+                  <p className="font-thai-safe text-body-sm text-on-surface-variant" id="miniChallengeHelp">
+                    Each turn, one enabled challenge is picked at random and adds a drawing rule for the drawer.
+                  </p>
                 </div>
 
                 {isHost && (

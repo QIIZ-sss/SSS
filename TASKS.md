@@ -802,7 +802,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-09 | Online count | P5 | DONE | fake count removed; see section T1-09 |
 | T1-10 | Header / leaderboard | P5 | DONE | crown + gold tint on LEADERBOARD; see section T1-10 |
 | T1-11 | Avatars | P1 | DONE | see section T1-11 |
-| T1-12 | Mini-challenge UI | P5 | TODO | |
+| T1-12 | Mini-challenge UI | P5 | DONE | heading + one-line explanation; see section T1-12 |
 | T1-13 | Lobby chat | P7 | TODO | optional |
 | T1-14 | Settings / Modifiers + Solo restriction UX | P5 | TODO | Solo switch refusal + reason already in SOLO-1 |
 | T1-15 | Team selection / switching (= U9) | P2 | DONE | merged with U9; see section T1-15 |
@@ -878,6 +878,12 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** the LEADERBOARD nav item looked like plain grey text next to FIND ROOM & LOBBY and was easy to miss.
 - **Fix:** `client/src/App.jsx` header nav only — LEADERBOARD gets a Material Symbols `crown` icon (theme gold `text-tertiary`) and, while not selected, a gold tint (`bg-tertiary-fixed/40`, `border-tertiary-container`, bold); when selected it uses the same style as the other selected item. Same `onClick` (`setActiveNav('leaderboard')`); FIND ROOM & LOBBY unchanged; the nav stays `hidden md:flex` (not shown on phones, as before). No server / socket change.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-10-leaderboard-nav.test.jsx` 5/5 (fails on the previous `App.jsx`). `tests/browser/t1-10-leaderboard-nav-overflow.browser.jsx` 7/7 at 1280 px (real Tailwind + fonts: crown drawn as a 20×20 glyph, gold tint, no header overflow, LEADERBOARD → HALL OF FAME → back to the lobby). Regression: b2-layout-overflow 9/9 at 375 px and 820 px (Home screen incl. the header nav at 820 px), t1-17-initial-viewport 2/2; render t1-09 3/3, c1 3/3; client build.
+
+### T1-12 — Mini-challenge section heading
+
+- **Problem:** the lobby's Mini-Challenge section was headed by a small label "SELECT MINI-CHALLENGES FOR THIS ROOM" with no explanation of what a mini-challenge does.
+- **Fix:** `client/src/components/RoomLobby.jsx` (MODIFIERS & TWISTS tab) — heading is now an `<h3>` "MINI-CHALLENGES" (headline size, `casino` icon, the `N / 4 ACTIVE` badge kept) followed by one line for every player: "Each turn, one enabled challenge is picked at random and adds a drawing rule for the drawer." (matches `RoundManager.startTurnSelection`). Toggle cards, host hint and the SETTINGS-tab list unchanged. Client only.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-12-mini-challenge-heading.test.jsx` 11/11 (host / guest / Solo: heading, explanation, 4 cards with ENABLED / DISABLED and the ACTIVE count, host hint only for the host) — fails on the previous `RoomLobby.jsx` (5/11). `tests/render/solo-lobby.test.jsx` check updated to the new heading id, 14/14. Regression: render t1-08 7/7, t1-01 9/9, c4 3/3; browser d1-difficulty-setting 6/6, t1-15-team-picker 6/6, b2-layout-overflow 9/9 at 375 px and 820 px (Room lobby incl.), t1-17-initial-viewport 2/2; client build.
 
 ### T1-06 — Chat overflow
 

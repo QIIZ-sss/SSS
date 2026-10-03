@@ -19,7 +19,7 @@ check('Solo: no PLAYER ROSTER', !soloMain.includes('PLAYER ROSTER'));
 check('Solo: no READY button', !soloMain.includes('id="readyButton"') && !soloMain.includes('TOGGLE READY'));
 check('Solo: no MAX PLAYERS setting', soloSettings.includes('SETTINGS') && !soloSettings.includes('MAX PLAYERS'));
 check('Solo: START SOLO button, enabled', /<button[^>]*>(?:(?!<\/button>).)*START SOLO/.test(soloMain) && !/disabled=""[^>]*>(?:(?!<\/button>).)*START SOLO/.test(soloMain));
-check('Solo: mini-challenges still offered', soloMain.includes('SELECT MINI-CHALLENGES'));
+check('Solo: mini-challenges still offered', soloMain.includes('id="miniChallengeHeading"'));
 check('Solo: rounds / timer / difficulty settings kept', /ROUND/i.test(soloSettings) && /MIXED/.test(soloSettings) && /HARD/.test(soloSettings));
 // T1-19: no room code to share, no host line, a summary of the solo setup
 check('Solo (T1-19): SOLO PRACTICE badge instead of a shareable room code', soloMain.includes('id="soloBadge"') && !soloMain.includes('roomCodeDisplay') && !soloMain.includes('Copy Room ID'));
