@@ -1,5 +1,7 @@
 // W1 no repeated target words within a match: unused words first, always 3 choices (top-up with used words of the
 // same pool), per-room tracking, reset on exhaustion and on LOBBY / new match.
+// T1-05: the bank has 25 words per difficulty, so a short live match no longer exhausts a pool; exhaustion, top-up
+// and the LOBBY reset on the full bank are checked in-process in t1-05-word-bank.e2e.js.
 const path = require('path');
 const L = require('../lib/e2e-lib');
 const db = require(path.join(__dirname, '..', '..', 'server', 'src', 'config', 'database.js')); // the server's word bank (source of truth)
@@ -40,16 +42,16 @@ async function playMatch(room, rounds, ms = 120000) {
 
 (async () => {
   const hard = bank(HARD), easy = bank(EASY);
-  L.check('W1 setup: HARD pool has 5 words (bank unchanged)', hard.length === 5, hard.join(','));
+  L.check('W1 setup: HARD pool has more than 6 words (a 6-turn match never exhausts it)', hard.length > 6, `${hard.length} HARD words`);
 
   { // in-process: difficulty filter first, then excluded words removed (no Mixed fallback because the HARD pool itself has ≥ 3)
-    const picked = db.getRandomWords(3, { difficulty: HARD, exclude: hard.slice(0, 3) }).map((w) => w.word);
+    const picked = db.getRandomWords(3, { difficulty: HARD, exclude: hard.slice(2) }).map((w) => w.word);
     L.check('W1 exclude applies after the difficulty filter (2 unused HARD words left → only those 2)',
-      picked.length === 2 && picked.every((w) => hard.slice(3).includes(w)), picked.join(','));
+      picked.length === 2 && picked.every((w) => hard.slice(0, 2).includes(w)), picked.join(','));
     L.check('W1 every word excluded → nothing returned (caller resets)', db.getRandomWords(3, { difficulty: HARD, exclude: hard }).length === 0);
   }
 
-  { // 1, 2, 5: HARD match, 6 turns > 5 words
+  { // 1, 2: HARD match, 6 turns
     const room = await setupRoom(HARD, 3);
     const t0 = await playMatch(room);
     const o = offers(t0, ...room.ps), t = targets(room.A, t0);
@@ -57,11 +59,9 @@ async function playMatch(room, rounds, ms = 120000) {
     L.check('W1 always 3 distinct choices per turn', o.every((w) => w.length === 3 && distinct(w)), o.map((w) => w.join('/')).join(' | '));
     L.check('W1 difficulty: every offered and target word is HARD', o.flat().every((w) => hard.includes(w)) && t.every((w) => hard.includes(w)),
       `outside: ${o.flat().concat(t).filter((w) => !hard.includes(w)).join(',') || 'none'}`);
-    L.check('W1 no repeated target before the pool is exhausted (first 5 targets distinct)', distinct(t.slice(0, 5)), t.join(','));
+    L.check('W1 no repeated target in the match (6 distinct targets)', distinct(t), t.join(','));
     const bad = unusedFirstViolations(o, t, hard);
-    L.check('W1 unused words come first; with < 3 unused, all of them are offered and topped up with used HARD words', bad.length === 0,
-      bad.join('; ') || o.map((w) => w.join('/')).join(' | '));
-    L.check('W1 after exhaustion the list resets: turn 6 reuses a word', t.slice(0, 5).includes(t[5]), `turn 6 offered ${o[5] && o[5].join(',')}, target ${t[5]}`);
+    L.check('W1 unused words come first (no offered word was already drawn)', bad.length === 0, bad.join('; ') || o.map((w) => w.join('/')).join(' | '));
     L.closeAll(...room.ps);
   }
 
@@ -76,18 +76,14 @@ async function playMatch(room, rounds, ms = 120000) {
     L.closeAll(...R1.ps, ...R2.ps);
   }
 
-  { // 3: LOBBY / new match resets tracking (EASY, 9 words: 6 used in match 1 leaves exactly 3 unused)
+  { // 3: LOBBY / new match (EASY): difficulty kept, no repeats in the new match (reset itself: t1-05-word-bank)
     const room = await setupRoom(EASY, 3);
     const t1 = await playMatch(room);
-    const t = targets(room.A, t1), left = easy.filter((w) => !t.includes(w));
+    const t = targets(room.A, t1);
     const back = await L.waitFor(() => L.last(room.A).status === 'LOBBY', 15000);
     const t2 = await playMatch(room, 2);
-    const o2 = offers(t2, ...room.ps), tg2 = targets(room.A, t2);
-    // without the reset turn 1 would offer exactly the 3 words left over and the first targets would all come from them
-    const carried = o2[0] && sameSet(o2[0], left) && tg2.slice(0, 3).every((w) => left.includes(w));
-    L.check('W1 LOBBY / new match resets tracking (offers not restricted to the words left over from match 1)',
-      back && t.length === 6 && left.length === 3 && o2.length === 4 && !carried,
-      `left over: ${left.join(',')}; new match: ${o2.map((w) => w.join('/')).join(' | ')}`);
+    const tg2 = targets(room.A, t2);
+    L.check('W1 EASY match 1: 6 distinct targets, then back in LOBBY', back && t.length === 6 && distinct(t), t.join(','));
     L.check('W1 new match: 4 distinct EASY targets (difficulty kept)', tg2.length === 4 && distinct(tg2) && tg2.every((w) => easy.includes(w)), tg2.join(','));
     L.closeAll(...room.ps);
   }

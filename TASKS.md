@@ -795,7 +795,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-02 | Team result / ranking (sort) | P0 / P2 | DONE | sort by player score in every mode (section T1-02); result screen presentation → T1-25 |
 | T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
 | T1-04 | Score UI overflow | P1 | DONE | see section T1-04 |
-| T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
+| T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | DONE | 75 words, 25 per difficulty; see section T1-05 |
 | T1-06 | Chat overflow | P0 | DONE | see section T1-06 |
 | T1-07 | Reconnect / reload | P0 | DONE | see section T1-07 |
 | T1-08 | Host START / player READY UI | P1 | DONE | see section T1-08 |
@@ -859,6 +859,13 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Status:** ranking DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-02-ranking.e2e.js` 6/6 (FFA sorted + winner first + gameMode; Team: leading team first, sorted within each team). `tests/browser/t1-02-team-results.browser.jsx` 3/3. Remaining T1-02 scope (Team result presentation after the T1-01 rule change) → T1-25.
 - **Sort fix (2026-10-03):** `rankPlayers()` sorted Team players by team total first, so a top scorer on the losing team ranked below every player of the winning team. Now every mode sorts by player score, highest first (numeric, stable for ties = join order); every player is kept, 0 pts too. Team totals and the Team winner text are unchanged (still from `teamScores`). Result screen not redesigned (→ T1-25).
 - **Status (sort fix):** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-02-rank-sort.e2e.js` 7/7 (in-process, fixed scores: Team not grouped by team, FFA numeric + stable ties, 0 pts kept, Solo) — fails on the previous sort (6/7). `tests/e2e/t1-02-ranking.e2e.js` Team checks updated to the new rule.
+
+### T1-05 — Word bank expansion / reorganization
+
+- **Problem:** the bank had 20 words (EASY 9, MEDIUM 6, HARD 5), so words came back quickly, especially at one difficulty; the tester asked for 60–90 words. (The full tester report is not in the repository; read as "more words, organized by difficulty".)
+- **Fix:** `server/src/config/database.js` only — 75 words, 25 per difficulty, grouped by difficulty in the file. The 20 original words keep their id, text and difficulty (ids 1–20, incl. `Astronaut`); 55 words added (ids 21–75), each a DoodleNet class name, plain letters / spaces so they are guessable as written. No logic change: `getRandomWords`, D1 filter + small-pool fallback, W1 tracking, `select_word` validation unchanged. `SOLO_AI.GAME_WORDS` (`shared/`) not changed → Solo AI still uses the same 19 words (EASY 9 / MEDIUM 6 / HARD 4). No socket / contract change.
+- **Status:** DONE (automated); MANUAL NOT TESTED. New `tests/e2e/t1-05-word-bank.e2e.js` 20/20 (in-process, real RoundManager: size 60–90, ≥ 20 per difficulty, unique ids / words, original 20 kept, added words are DoodleNet classes; D1: 3 distinct words of the chosen level, every word reachable; A8: Solo words all in the bank, ≥ 3 per level; W1 on the full bank: 25 distinct targets per level then reuse, unused first incl. the top-up turns, LOBBY reset, Solo HARD 4 then reuse) — fails on the old bank (16/19) and with the LOBBY reset removed (19/20). `w1-no-repeat-words.e2e.js` updated (its live checks assumed a 5-word HARD / 9-word EASY pool; exhaustion and LOBBY reset now checked in-process in the T1-05 test) 14/14. Regression on a fresh server: d1-difficulty 14/14, sec-select-word 12/12, a8-a9-solo-ai 20/20, p3.1-answer-leak 7/7, server log clean. Full suite not run.
+  - Not changed: adding the new words to Solo AI needs `SOLO_AI.GAME_WORDS` in `shared/contract.js` (approval).
 
 ### T1-06 — Chat overflow
 
