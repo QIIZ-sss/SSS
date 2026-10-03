@@ -43,7 +43,9 @@ const saw = (p, word, since) => p.chats.slice(since).some((m) => typeof m.text =
   const roundEnd = new Promise((r) => A.s.once('round_end', r));
   D.s.emit('send_chat', { text: w1 });
   const end = await Promise.race([roundEnd, L.sleep(3000).then(() => null)]);
-  L.check('all opposing guessers correct → round ends at once (C not waited for)', end && Date.now() - before < 3000 && L.last(A).status !== 'PLAYING', end ? `${Date.now() - before} ms` : 'no round_end');
+  // round_end is emitted just before the ROUND_OVER room_data → wait for that frame too
+  const over = end && await L.waitFor(() => L.last(A).status === 'ROUND_OVER', 3000 - (Date.now() - before));
+  L.check('all opposing guessers correct → round ends at once (C not waited for)', end && over && Date.now() - before < 3000, end ? `${Date.now() - before} ms, ${L.last(A).status}` : 'no round_end');
   const expDrawer = calculateDrawerScore(2, 2);
   L.check('drawer points use the opposing team size (2/2 guessers)', end && end.drawerPoints === expDrawer, `${end && end.drawerPoints} vs ${expDrawer}`);
   await L.sleep(300);

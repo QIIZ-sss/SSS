@@ -235,18 +235,11 @@ class RoundManager {
     return true;
   }
 
-  // T1-02: final ranking. Team: players of the higher-scoring team first (Red first on a tie), then by player score;
-  // FFA / Solo: by score. Equal scores keep join order (stable sort).
+  // T1-02: final ranking in every mode = player score, highest first (numeric). Every player is kept, 0 pts too;
+  // equal scores keep join order (stable sort). Team totals are shown separately (teamScores).
   rankPlayers(room) {
-    const teamScore = (p) => (room.gameMode === GAME_MODES.TEAM && room.teams[p.team] ? room.teams[p.team].score : 0);
-    const teamOrder = (p) => (p.team === 'Red' ? 0 : 1);
-    return [...room.players].sort((a, b) => {
-      if (room.gameMode === GAME_MODES.TEAM) {
-        if (teamScore(b) !== teamScore(a)) return teamScore(b) - teamScore(a);
-        if (a.team !== b.team) return teamOrder(a) - teamOrder(b);
-      }
-      return b.score - a.score;
-    });
+    const score = (p) => Number(p.score) || 0;
+    return [...room.players].sort((a, b) => score(b) - score(a));
   }
 
   // stoppedReason: set when the match was stopped early (T1-22); such a match is not recorded on the leaderboard

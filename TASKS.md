@@ -792,7 +792,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 |---|---|---|---|---|
 | P0-1 | All connected guessers correct → round advances at once (not tied to a T1 line) | P0 | DONE | see section P0-1 |
 | T1-01 | Team guessing rule (opposing team guesses) + Team scoring | P2 | DONE | see section T1-01 |
-| T1-02 | Team result / ranking (sort) | P0 / P2 | IN PROGRESS | ranking sort DONE (section T1-02); Team result presentation continues in T1-25 / after T1-01 |
+| T1-02 | Team result / ranking (sort) | P0 / P2 | DONE | sort by player score in every mode (section T1-02); result screen presentation → T1-25 |
 | T1-03 | Solo AI timer | P0 | DONE | see section T1-03 |
 | T1-04 | Score UI overflow | P1 | DONE | see section T1-04 |
 | T1-05 | Word bank expansion / reorganization (60–90 words) | P4 | TODO | |
@@ -849,7 +849,7 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Problem:** in Team mode every non-drawer could guess, including the drawer's own teammates; the guesser count for scoring was `players.length - 1`, and the round waited for the teammates too.
 - **Fix:** `RoundManager.isGuesser` / `getGuessers` / `guesserCount` — Team: only players of the team opposite the drawer guess (FFA / Solo unchanged: everyone but the drawer). `chatHandler.js`: a drawing-team player typing the answer gets a private System notice, no points, and the message is not broadcast; guesser and drawer points are scaled by the opposing team size. `endRoundIfAllGuessed` (P0-1) uses the same guesser list, so the round ends as soon as every connected opposing guesser is correct. Team scores: guess points → the guessing team, drawer points → the drawing team (existing accumulation). `TeamGame.jsx`: a banner during WORD_SELECTION / PLAYING ("TEAM RED DRAWS · TEAM BLUE GUESSES" + the viewer's own role) and DRAWING / GUESSING tags on the rosters. Team picker = T1-15 (unchanged). No event / payload change.
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-01-team-guessing.e2e.js` 15/15 (teammate guess rejected, not broadcast, no score; opposing guesses score for their team; round ends when both opposing guessers are correct; drawer points = 2/2 guessers; roles flip on the next turn). `tests/render/t1-01-team-roles.test.jsx` 9/9. Regression: T1-02 6/6, T1-15 7/7, T1-22 7/7, P0-1 5/5, P2.2 9/9, P2.4 4/4, P3.2 5/5, SEC-2 37/37, server log clean; render b2-mobile-order 4/4, p2.4-answer-reveal 8/8; client build; browser t1-04-score-overflow 5/5, b2-layout-overflow 9/9 at 375 px and 820 px. Full suite not run for this commit.
-  - Not changed: the chat placeholder for a drawing-team player still says "TYPE YOUR GUESS HERE..." (`ChatBox.jsx`, outside the approved files); the banner explains the role.
+  - Not changed: the chat placeholder for a drawing-team player still says "TYPE YOUR GUESS HERE..." (`ChatBox.jsx`, outside the approved files); the banner explains the role. **Fix later:** see U12.
 
 ### T1-02 — Result ranking order (P0 part)
 
@@ -857,6 +857,8 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Fix:** `RoundManager.rankPlayers()` — Team: players of the higher-scoring team first (Red first on a tie), then by player score; FFA / Solo: by score; stable for ties. Used for `finalScores` and the FFA winner text. Results modal (`App.jsx`) shows both team totals and each player's team in Team mode.
 - **Socket contract change (authorized):** `game_over.finalScores` is now ranked; `game_over` gains `gameMode`. ARCHITECTURE.md §7.
 - **Status:** ranking DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-02-ranking.e2e.js` 6/6 (FFA sorted + winner first + gameMode; Team: leading team first, sorted within each team). `tests/browser/t1-02-team-results.browser.jsx` 3/3. Remaining T1-02 scope (Team result presentation after the T1-01 rule change) → T1-25.
+- **Sort fix (2026-10-03):** `rankPlayers()` sorted Team players by team total first, so a top scorer on the losing team ranked below every player of the winning team. Now every mode sorts by player score, highest first (numeric, stable for ties = join order); every player is kept, 0 pts too. Team totals and the Team winner text are unchanged (still from `teamScores`). Result screen not redesigned (→ T1-25).
+- **Status (sort fix):** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-02-rank-sort.e2e.js` 7/7 (in-process, fixed scores: Team not grouped by team, FFA numeric + stable ties, 0 pts kept, Solo) — fails on the previous sort (6/7). `tests/e2e/t1-02-ranking.e2e.js` Team checks updated to the new rule.
 
 ### T1-06 — Chat overflow
 
@@ -935,3 +937,4 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 | U9 | No client UI for the existing `switch_team` event; a team emptied by a leave in LOBBY blocks START until someone joins — **resolved in T1-15** | `client/src` (no `SWITCH_TEAM` usage) | new UI task |
 | U8 | Header logo click clears `currentRoomId` without emitting `leave_room` → player stays in the room server-side | `client/src/App.jsx` header logo `onClick` | P2.3 or new task |
 | U11 | `update_room_settings` (host, LOBBY) and `create_room` accept any array for `enabledChallenges` without checking the items against `MINI_CHALLENGES`; an unknown string could become a turn's `currentChallenge` and the client may render it oddly. **NOT VERIFIED** (code reading, self-review 2026-10-02) | `gameHandler.js` update_room_settings / create_room, `RoundManager.startTurnSelection` | validation task |
+| U12 | Team mode: a drawing-team player (drawer's teammate) still sees the chat placeholder "TYPE YOUR GUESS HERE..." although they cannot guess (T1-01); the server rejects their guess and the banner explains it, but the ChatBox text is misleading. **Fix later** (code reading + T1-01) | `client/src/components/ChatBox.jsx` placeholder | small UI task |

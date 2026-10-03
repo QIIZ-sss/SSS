@@ -1,4 +1,4 @@
-// T1-02: game_over.finalScores is ranked — FFA by score; Team: higher-scoring team's players first, then by score.
+// T1-02: game_over.finalScores is ranked by player score, highest first, in every mode (FFA and Team).
 const L = require('../lib/e2e-lib');
 const desc = (xs) => xs.every((x, i) => i === 0 || xs[i - 1] >= x);
 
@@ -22,13 +22,9 @@ async function play(mode, n) {
 
   const team = await play('TEAM', 4);
   if (team) {
-    const ts = team.teamScores, fsT = team.finalScores;
-    const lead = ts.Red.score >= ts.Blue.score ? 'Red' : 'Blue';
-    const firstOther = fsT.findIndex((p) => p.team !== lead);
-    const grouped = firstOther === -1 || fsT.slice(firstOther).every((p) => p.team !== lead);
-    const within = ['Red', 'Blue'].every((t) => desc(fsT.filter((p) => p.team === t).map((p) => p.score)));
-    L.check('Team: players of the leading team are ranked first', fsT[0].team === lead && grouped, `${JSON.stringify(ts)} → ${fsT.map((p) => `${p.team}:${p.score}`).join(' ')}`);
-    L.check('Team: within each team sorted by score', within, fsT.map((p) => `${p.team}:${p.score}`).join(' '));
+    const fsT = team.finalScores;
+    L.check('Team: finalScores sorted by player score, highest first (not grouped by team)', fsT.length === 4 && desc(fsT.map((p) => p.score)), `${JSON.stringify(team.teamScores)} → ${fsT.map((p) => `${p.team}:${p.score}`).join(' ')}`);
+    L.check('Team: every player listed with a team', fsT.every((p) => p.team === 'Red' || p.team === 'Blue'), fsT.map((p) => p.team).join(','));
     L.check('Team: gameMode TEAM in game_over', team.gameMode === 'TEAM');
   } else L.check('Team game finished', false);
   L.finish();
