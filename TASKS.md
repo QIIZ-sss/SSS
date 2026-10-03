@@ -807,7 +807,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-14 | Settings / Modifiers + Solo restriction UX | P5 | DONE | one MATCH SETTINGS view; see section T1-14 |
 | T1-15 | Team selection / switching (= U9) | P2 | DONE | merged with U9; see section T1-15 |
 | T1-16 | Modifiers empty / purple area | — | DONE (merged into T1-17) | card blank band removed |
-| T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | IN PROGRESS | P0 part DONE (section T1-17); further layout items in P5 |
+| T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | DONE | P0 part + P5 home room browser (section T1-17) |
 | T1-18 | Room-not-found UI | P0 / P1 | DONE | see section T1-18 |
 | T1-19 | Solo lobby | P1 | DONE | see section T1-19 (on top of SOLO-1) |
 | T1-20 | Room name | P5 | TODO | |
@@ -903,11 +903,15 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Fix:** `client/src/App.jsx` (PIN form) and `client/src/components/RoomList.jsx` show the server's reason inline (`role="alert"`, red box above the JOIN button / room grid); the PIN stays for correction and the message clears when the PIN is edited. No server or contract change (the server already sends `{success:false, message}`).
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-18-room-not-found.browser.jsx` 7/7 (incomplete PIN → message, nothing sent; edit clears; not found → server message inline; PIN kept; room list failure inline; no `alert()`). Regression: B3 PIN 9/9, B4 client 6/6.
 
-### T1-17 / T1-16 — Initial viewport and Modifiers layout (P0 part)
+### T1-17 / T1-16 — Initial viewport and Modifiers layout
 
 - **Interpretation (from screenshots, headless Chrome + real Tailwind):** on first load at 1280×800 the main action CREATE PRIVATE ROOM sat below the fold (y≈893); in the lobby, the MODIFIERS mini-challenge cards had an empty band between the icon row and the text (`justify-between` in equal-height grid rows) — taken as the "empty area" of T1-16.
 - **Fix:** `client/src/App.jsx` — the CREATE PRIVATE ROOM button is `sticky bottom-space-sm` (stays at the bottom of the viewport while the form is longer than the screen); the home panel uses `overflow-clip` instead of `overflow-hidden` (same clipping, but not a scroll container, so sticky works). `client/src/components/RoomLobby.jsx` — cards `justify-start`. `tests/check_all.sh` also runs `*viewport*` browser tests with the Tailwind CDN.
-- **Status:** P0 part DONE (automated); MANUAL NOT TESTED (real phones / iPad). `tests/browser/t1-17-initial-viewport.browser.jsx` 2/2 (button inside a 1280×813 window on load: 745–805 px, was 855–915; card text 8 px below the icon row, was a stretched band). Regression: B2 layout 375 / 820 px 9/9. Remaining T1-17 layout work (P5) stays open.
+- **Status:** P0 part DONE (automated); MANUAL NOT TESTED (real phones / iPad). `tests/browser/t1-17-initial-viewport.browser.jsx` 2/2 (button inside a 1280×813 window on load: 745–805 px, was 855–915; card text 8 px below the icon row, was a stretched band). Regression: B2 layout 375 / 820 px 9/9.
+- **T1-16 after T1-14 (2026-10-03):** already met — the card band fix (`justify-start`, d6e8688) still holds after the tab merge: t1-17-initial-viewport "4 mini-challenge cards, text right below the icon row" gap 8,8,8,8 px; the MODIFIERS tab itself no longer exists (one MATCH SETTINGS view). No code change for it.
+- **P5 part — scope:** the remaining items were not written down; candidates measured at 1280×813 (real Tailwind) and the human chose only the home page. Not selected, left as is: lobby settings panel 867 px tall (mini-challenge cards below the fold for the host; START still visible at 462–528 px), blank area under the lobby roster card.
+- **P5 fix (home):** the PUBLIC ROOM BROWSER sat in a 170 px column next to the 767 px setup card, leaving ~570 px of blank page beside it. `client/src/App.jsx` — on `lg` the right panel stretches to the row (`lg:self-stretch lg:relative`) and the room browser is a card like the setup card (`lg:absolute lg:inset-0`, border-4, shadow, padding) with `lg:overflow-y-auto`, so it is exactly as tall as the setup card and many rooms scroll inside it instead of growing the page. `client/src/components/RoomList.jsx` — `lg:mt-0` (the top margin is only for the stacked mobile layout). Below `lg` nothing changes. No server / socket change.
+- **Status (P5 part):** DONE (automated); MANUAL NOT TESTED. `tests/browser/t1-17-initial-viewport.browser.jsx` 4/4 (+2: room browser card aligned with the setup card, 184–951 px both; 20 rooms → card stays 767 px, content 1660 px scrolls inside, page height unchanged 983 px) — on the previous code 2/4 (browser 208–378 px; 20 rooms grow the page 983 → 1820 px). Regression: b2-layout-overflow 9/9 at 375 px and 820 px, t1-10-leaderboard-nav-overflow 7/7, t1-18-room-not-found 7/7; render t1-09 3/3, t1-10 5/5, c1 3/3; client build.
 
 ### T1-04 — Score UI overflow
 

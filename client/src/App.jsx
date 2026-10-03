@@ -597,9 +597,12 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* RIGHT PANEL: Public Room Browser (7 Cols) */}
-                  <div className="lg:col-span-7 flex flex-col gap-space-lg">
-                    <RoomList username={username} avatar={avatar} onJoinRoom={(id, res) => { saveSession(res); setCurrentRoomId(id); }} />
+                  {/* RIGHT PANEL: Public Room Browser (7 Cols)
+                      T1-17: on desktop a card as tall as the setup card (no blank area beside it); many rooms scroll inside */}
+                  <div className="lg:col-span-7 flex flex-col gap-space-lg lg:self-stretch lg:relative" id="roomBrowserPanel">
+                    <div className="lg:absolute lg:inset-0 lg:overflow-y-auto lg:bg-canvas-paper lg:rounded-xl lg:border-4 lg:border-border-dark lg:shadow-[6px_6px_0px_#18181B] lg:p-space-lg">
+                      <RoomList username={username} avatar={avatar} onJoinRoom={(id, res) => { saveSession(res); setCurrentRoomId(id); }} />
+                    </div>
                   </div>
                 </div>
               </div>

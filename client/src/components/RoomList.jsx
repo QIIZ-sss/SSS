@@ -41,7 +41,7 @@ export default function RoomList({ username, avatar, onJoinRoom }) {
   });
 
   return (
-    <div className="w-full flex flex-col gap-space-md mt-space-lg">
+    <div className="w-full flex flex-col gap-space-md mt-space-lg lg:mt-0">
       <div className="flex flex-wrap items-center justify-between gap-space-sm pb-space-xs border-b-2 border-border-dark">
         <div className="flex items-center gap-space-xs">
           <span className="material-symbols-outlined text-primary text-[22px]">hub</span>
