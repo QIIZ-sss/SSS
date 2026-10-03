@@ -19,6 +19,8 @@ export default function RoomLobby({ roomData, username }) {
   const blueCount = roomData.players.filter((p) => p.team === 'Blue').length;
   // Solo vs AI is single-player (server enforces it): no roster, no Ready, no max players
   const isSolo = roomData.gameMode === GAME_MODES.SOLO_AI;
+  const isTeamMode = roomData.gameMode === GAME_MODES.TEAM;
+  const myTeam = (roomData.players.find((p) => p.username === username) || {}).team;
   const othersInRoom = roomData.players.some((p) => p.username !== roomData.host);
   const SOLO_BLOCKED = 'Solo vs AI is single-player: everyone else must leave the room first';
   let startBlockReason = null;
@@ -400,6 +402,29 @@ export default function RoomLobby({ roomData, username }) {
               </span>
             </div>
 
+            {/* T1-15: pick your team in a Team lobby (switch_team, server allows it in LOBBY only) */}
+            {isTeamMode && (
+              <div className="grid grid-cols-2 gap-space-xs" id="teamPicker">
+                {['Red', 'Blue'].map((t) => {
+                  const mine = myTeam === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      aria-pressed={mine}
+                      disabled={mine}
+                      onClick={() => socket.emit(SOCKET_EVENTS.SWITCH_TEAM, { team: t })}
+                      className={`py-space-xs rounded-xl border-2 border-border-dark font-label-md text-label-md uppercase font-black transition-all ${
+                        t === 'Red' ? 'bg-timer-red text-on-error' : 'bg-accent-blue text-on-tertiary'
+                      } ${mine ? 'ring-4 ring-border-dark/40 cursor-default' : 'opacity-80 hover:opacity-100 shadow-[2px_2px_0px_#18181B]'}`}
+                    >
+                      {mine ? `✓ TEAM ${t.toUpperCase()}` : `JOIN ${t.toUpperCase()}`} ({t === 'Red' ? redCount : blueCount})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="flex flex-col gap-space-xs">
               {roomData.players.map((p) => {
                 const isMe = p.username === username;
@@ -421,6 +446,11 @@ export default function RoomLobby({ roomData, username }) {
                           <span className="font-headline-sm text-headline-sm text-border-dark font-bold">{p.username}</span>
                           {isMe && <span className="bg-primary text-on-primary font-label-sm text-[10px] px-1.5 py-0.2 rounded font-bold uppercase">ME</span>}
                           {isRoomHost && <span className="text-xl" title="Room Host">👑</span>}
+                          {isTeamMode && (
+                            <span className={`font-label-sm text-[10px] px-1.5 rounded font-bold uppercase border border-border-dark ${p.team === 'Red' ? 'bg-timer-red text-on-error' : 'bg-accent-blue text-on-tertiary'}`}>
+                              {p.team}
+                            </span>
+                          )}
                         </div>
                         <span className="font-label-sm text-label-sm text-on-surface-variant">Score: {p.score} pts</span>
                       </div>

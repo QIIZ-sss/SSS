@@ -145,7 +145,8 @@ function setupGameHandlers(io, socket, timerManager, roundManager) {
   socket.on(SOCKET_EVENTS.SWITCH_TEAM, (payload) => {
     const { team } = asObject(payload);
     const room = roomManager.getRoom(socket.data.roomId);
-    if (!room || room.gameMode !== GAME_MODES.TEAM) return;
+    // T1-15: teams can only change in the lobby, never during a match
+    if (!room || room.gameMode !== GAME_MODES.TEAM || room.status !== GAME_STATUS.LOBBY) return;
 
     const player = room.players.find(p => p.socketId === socket.id);
     if (player && (team === 'Red' || team === 'Blue')) {

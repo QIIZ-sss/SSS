@@ -805,7 +805,7 @@ Source: human tester round 1 (2026-10-02), recorded from the one-line list in th
 | T1-12 | Mini-challenge UI | P5 | TODO | |
 | T1-13 | Lobby chat | P7 | TODO | optional |
 | T1-14 | Settings / Modifiers + Solo restriction UX | P5 | TODO | Solo switch refusal + reason already in SOLO-1 |
-| T1-15 | Team selection / switching (= U9) | P2 | TODO | merged with U9 |
+| T1-15 | Team selection / switching (= U9) | P2 | DONE | merged with U9; see section T1-15 |
 | T1-16 | Modifiers empty / purple area | — | DONE (merged into T1-17) | card blank band removed |
 | T1-17 | Initial viewport / layout (incl. T1-16) | P0 / P5 | IN PROGRESS | P0 part DONE (section T1-17); further layout items in P5 |
 | T1-18 | Room-not-found UI | P0 / P1 | DONE | see section T1-18 |
@@ -901,6 +901,14 @@ Security follow-ups in this round: U4 rate limiting (P6), U11 unknown challenge 
 - **Status:** DONE (automated); MANUAL NOT TESTED. `tests/render/t1-24-tool-icons.test.jsx` 4/4. Regression: B1 canvas markup 3/3, D2 16/16, QA-4 Fill 8/8, D3 popup 19/19, client build.
   - Process note: the full suite for this commit had 1 failure (`b4-reconnect` W4 "host passed to a connected player", 19/20) and the commit was made before the result was read. Cause: a race in the test (it read the host right after `round_end`, which the server emits just before the `room_data` carrying the new host) — not a T1-24 issue (client toolbar only). Fixed in `test(B4): wait for the host hand-over` (3/3 runs 20/20) and the full suite re-run.
 
+### T1-15 — Team selection (= U9)
+
+- **Problem:** players could not choose a team (no UI for the existing `switch_team` event; teams were only auto-balanced on join), so a team emptied in the LOBBY blocked START until someone new joined; the server also accepted `switch_team` during a match.
+- **Fix:** `client/src/components/RoomLobby.jsx` — Team lobby shows a picker (JOIN RED / JOIN BLUE with counts, own team marked) and a team badge per player; it emits the existing `switch_team {team}`. `server/src/socket/gameHandler.js` — `switch_team` only in LOBBY (Team mode, team `Red`/`Blue`).
+- **Socket contract note:** `switch_team` is now LOBBY-only (ignored during a match). ARCHITECTURE.md §7.
+- **Status:** DONE (automated); MANUAL NOT TESTED. `tests/e2e/t1-15-team-select.e2e.js` 7/7 (auto-balance; switch in lobby; unknown team ignored; all on one team → START blocked; switching to the empty team → START works; no switch during a match; ignored outside Team). `tests/browser/t1-15-team-picker.browser.jsx` 6/6. Regression: P2.2 9/9, T1-22 7/7, SEC-2 37/37.
+  - Process note: the full suite for this commit was stopped before completion (time limit). Steps [1]–[5] and the browser tests up to `t1-04-score-overflow` passed (incl. client build, `t1-15-team-picker` 6/6); later browser layout tests and all e2e in `check_all.sh` were NOT RUN in that pass.
+
 ---
 
 ## Unassigned findings (need human decision before becoming tasks)
@@ -917,6 +925,6 @@ Found during discovery; not part of A–D. Do not fix as side effects.
 | U6 | `qa/package.json` test script points to missing `test_runner.js`; QA scripts contain hardcoded PASS | ARCH §16 | QA cleanup task |
 | U7 | Dead/legacy code tree (ARCH §2.3) | ARCH §2.3 | cleanup task, only with explicit approval |
 | U10 | `create_room` accepts any `roundTime`/`totalRounds`/`maxPlayers` without the 15–180 / 1–10 / 2–16 clamps used by `update_room_settings` | `RoomManager.createRoom`, `gameHandler.js` create_room | validation task |
-| U9 | No client UI for the existing `switch_team` event; a team emptied by a leave in LOBBY blocks START until someone joins | `client/src` (no `SWITCH_TEAM` usage) | new UI task |
+| U9 | No client UI for the existing `switch_team` event; a team emptied by a leave in LOBBY blocks START until someone joins — **resolved in T1-15** | `client/src` (no `SWITCH_TEAM` usage) | new UI task |
 | U8 | Header logo click clears `currentRoomId` without emitting `leave_room` → player stays in the room server-side | `client/src/App.jsx` header logo `onClick` | P2.3 or new task |
 | U11 | `update_room_settings` (host, LOBBY) and `create_room` accept any array for `enabledChallenges` without checking the items against `MINI_CHALLENGES`; an unknown string could become a turn's `currentChallenge` and the client may render it oddly. **NOT VERIFIED** (code reading, self-review 2026-10-02) | `gameHandler.js` update_room_settings / create_room, `RoundManager.startTurnSelection` | validation task |
